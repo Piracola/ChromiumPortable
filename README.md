@@ -27,10 +27,10 @@ jobs:
   portable:
     permissions:
       contents: write
-    uses: Piracola/ChromiumPortable/.github/workflows/portable-browser.yml@v1
+    uses: Piracola/ChromiumPortable/.github/workflows/portable-browser.yml@v1.1
     with:
       builder-repository: Piracola/ChromiumPortable
-      builder-ref: v1
+      builder-ref: v1.1
       config: browser.json
       target: edge_stable
 ```
@@ -86,4 +86,8 @@ $env:PYTHONPATH="<path-to-ChromiumPortable>"
 python -m portable_builder --config examples\edge.browser.json --target edge_stable --workdir . check
 ```
 
-发布稳定版本时给本仓库打 tag，例如 `v1`，子仓库固定引用该 tag。
+Chrome 这类一个仓库同时发布多个渠道的项目，可以直接 checkout 本仓库后调用 `check-targets`、`build-targets`、`render-release-targets` 和 `update-release-targets`。
+
+构建器会优先使用系统 7-Zip 或 PATH 中的 `7z`；如果都不可用，会尝试下载独立解压器，下载失败后再尝试通过 Chocolatey 安装 7-Zip。
+
+发布稳定版本时给本仓库打 tag，例如 `v1.1`，子仓库固定引用该 tag。

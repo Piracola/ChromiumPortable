@@ -7,7 +7,10 @@ from pathlib import Path
 import requests
 
 
-SEVEN_ZIP_URL = "https://www.7-zip.org/a/7zr.exe"
+SEVEN_ZIP_URLS = (
+    "https://www.7-zip.org/a/7zr.exe",
+    "https://raw.githubusercontent.com/develar/7zip-bin/master/win/x64/7za.exe",
+)
 LOCAL_7ZR = "7zr.exe"
 SYSTEM_7Z_PATHS = (
     r"C:\Program Files\7-Zip\7z.exe",
@@ -37,6 +40,31 @@ def download_file(url, path, verify_ssl=True, skip_existing=True):
     return path
 
 
+def install_7z_with_chocolatey():
+    if not shutil.which("choco"):
+        return None
+
+    print("[INFO] Trying to install 7-Zip with Chocolatey.")
+    result = subprocess.run(
+        ["choco", "install", "7zip", "-y", "--no-progress"],
+        capture_output=True,
+        text=True,
+    )
+    if result.stdout:
+        print(result.stdout)
+    if result.returncode != 0:
+        if result.stderr:
+            print(result.stderr)
+        return None
+
+    for path in SYSTEM_7Z_PATHS:
+        if Path(path).exists():
+            return path
+    if shutil.which("7z"):
+        return "7z"
+    return None
+
+
 def find_7z_tool(workdir):
     for path in SYSTEM_7Z_PATHS:
         if Path(path).exists():
@@ -52,9 +80,23 @@ def find_7z_tool(workdir):
         print("[INFO] Using 7z from PATH")
         return "7z"
 
-    print("[INFO] 7-Zip not found. Downloading standalone 7zr.exe.")
-    download_file(SEVEN_ZIP_URL, local_7zr)
-    return str(local_7zr)
+    print("[INFO] 7-Zip not found. Downloading standalone extractor.")
+    last_error = None
+    for url in SEVEN_ZIP_URLS:
+        try:
+            download_file(url, local_7zr, skip_existing=False)
+            return str(local_7zr)
+        except Exception as exc:
+            last_error = exc
+            print(f"[WARN] Failed to download 7-Zip from {url}: {exc}")
+            remove_path(local_7zr)
+
+    chocolatey_7z = install_7z_with_chocolatey()
+    if chocolatey_7z:
+        print(f"[INFO] Using Chocolatey-installed 7-Zip: {chocolatey_7z}")
+        return chocolatey_7z
+
+    raise RuntimeError(f"Unable to locate or install 7-Zip. Last download error: {last_error}")
 
 
 def extract_with_7z(archive, output_dir, seven_zip_path):

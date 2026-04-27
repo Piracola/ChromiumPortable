@@ -11,9 +11,9 @@ jobs:
   portable:
     permissions:
       contents: write
-    uses: your-name/ChromiumPortable/.github/workflows/portable-browser.yml@v1
+    uses: your-name/ChromiumPortable/.github/workflows/portable-browser.yml@v1.1
     with:
       builder-repository: your-name/ChromiumPortable
-      builder-ref: v1
+      builder-ref: v1.1
       config: browser.json
       target: edge_stable

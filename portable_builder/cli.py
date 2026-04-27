@@ -3,6 +3,7 @@ from pathlib import Path
 
 from .builder import archive_target, build_target
 from .config import get_target, load_config
+from .multi import build_selected_targets, check_targets, render_multi_release, split_targets, update_multi_release
 from .release import check_updates, render_release, update_release
 from .tools import configure_stdout
 
@@ -26,9 +27,14 @@ def main():
     subparsers.add_parser("archive", help="Archive build/release into build/assets")
     subparsers.add_parser("render-release", help="Render release title/tag/body")
     subparsers.add_parser("update-release", help="Update existing GitHub release metadata and remove old assets")
+    subparsers.add_parser("check-targets", help="Check multiple comma-separated targets")
+    subparsers.add_parser("build-targets", help="Build/archive updated comma-separated targets")
+    subparsers.add_parser("render-release-targets", help="Render release metadata for multiple targets")
+    subparsers.add_parser("update-release-targets", help="Update release for multiple targets")
 
     args = parser.parse_args()
-    target = load_target(args)
+    config = load_config(args.config)
+    target = None if args.command.endswith("targets") else get_target(config, args.target)
     workdir = Path(args.workdir).resolve()
 
     if args.command == "check":
@@ -41,3 +47,11 @@ def main():
         render_release(target, workdir)
     elif args.command == "update-release":
         update_release(target, workdir)
+    elif args.command == "check-targets":
+        check_targets(config, split_targets(args.target), workdir)
+    elif args.command == "build-targets":
+        build_selected_targets(config, split_targets(args.target), workdir)
+    elif args.command == "render-release-targets":
+        render_multi_release(config, split_targets(args.target), workdir)
+    elif args.command == "update-release-targets":
+        update_multi_release(config, split_targets(args.target), workdir)

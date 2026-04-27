@@ -1,12 +1,14 @@
 from .direct import get_package as get_direct_package
 from .google_omaha import get_package as get_google_omaha_package
 from .microsoft_edge import get_package as get_microsoft_edge_package
+from .script import get_package as get_script_package
 
 
 PROVIDERS = {
     "direct": get_direct_package,
     "google_omaha": get_google_omaha_package,
     "microsoft_edge": get_microsoft_edge_package,
+    "script": get_script_package,
 }
 
 

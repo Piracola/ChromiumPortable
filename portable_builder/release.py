@@ -54,11 +54,11 @@ def release_version(release, target):
     return extract_version(tag) or extract_version(body)
 
 
-def check_updates(target):
+def check_updates(target, workdir="."):
     event_name = os.getenv("GITHUB_EVENT_NAME", "")
     force_build = event_name == "workflow_dispatch"
 
-    package = get_version_info(target)
+    package = get_version_info(target, workdir)
     upstream_version = package["version"]
     release = latest_release()
     current_version = release_version(release, target) if release else None

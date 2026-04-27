@@ -32,7 +32,7 @@ def main():
     workdir = Path(args.workdir).resolve()
 
     if args.command == "check":
-        check_updates(target)
+        check_updates(target, workdir)
     elif args.command == "build":
         build_target(target, workdir)
     elif args.command == "archive":

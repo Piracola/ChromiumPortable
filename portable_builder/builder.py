@@ -33,8 +33,11 @@ def build_context(target, version=None, date=None):
     }
 
 
-def get_version_info(target):
-    return get_package(target.get("provider", {}))
+def get_version_info(target, workdir=None):
+    provider_config = dict(target.get("provider", {}))
+    if workdir is not None:
+        provider_config["_workdir"] = str(Path(workdir))
+    return get_package(provider_config)
 
 
 def prepare_package(target, workdir, package):
@@ -44,8 +47,19 @@ def prepare_package(target, workdir, package):
     temp_dir.mkdir(parents=True, exist_ok=True)
 
     seven_zip = find_7z_tool(workdir)
-    installer_path = temp_dir / package["file_name"]
-    download_file(package["url"], installer_path, verify_ssl=package.get("verify_ssl", True))
+    source_path = package.get("path") or package.get("installer_path")
+    if source_path:
+        source_path = Path(source_path)
+        if not source_path.is_absolute():
+            source_path = workdir / source_path
+        if not source_path.exists():
+            raise FileNotFoundError(f"Installer path returned by provider does not exist: {source_path}")
+        installer_path = temp_dir / source_path.name
+        if source_path.resolve() != installer_path.resolve():
+            shutil.copy2(source_path, installer_path)
+    else:
+        installer_path = temp_dir / package["file_name"]
+        download_file(package["url"], installer_path, verify_ssl=package.get("verify_ssl", True))
     extract_with_7z(installer_path, temp_dir, seven_zip)
 
     inner_archive = target.get("inner_archive")
@@ -202,7 +216,7 @@ def finalize(target, workdir, staged):
 
 
 def build_target(target, workdir):
-    package = get_version_info(target)
+    package = get_version_info(target, workdir)
     print(f"[INFO] Upstream version: {package['version']}")
 
     prepared = prepare_package(target, workdir, package)

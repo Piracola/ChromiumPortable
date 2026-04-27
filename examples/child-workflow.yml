@@ -1,0 +1,19 @@
+name: build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  portable:
+    permissions:
+      contents: write
+    uses: your-name/ChromiumPortable/.github/workflows/portable-browser.yml@v1
+    with:
+      builder-repository: your-name/ChromiumPortable
+      builder-ref: v1
+      config: browser.json
+      target: edge_stable

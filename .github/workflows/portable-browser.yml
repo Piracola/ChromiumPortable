@@ -1,0 +1,148 @@
+name: Portable Browser Build
+
+on:
+  workflow_call:
+    inputs:
+      config:
+        description: Browser config path in the caller repository.
+        required: false
+        type: string
+        default: browser.json
+      target:
+        description: Target name from the browser config.
+        required: true
+        type: string
+      python-version:
+        description: Python version used by the builder.
+        required: false
+        type: string
+        default: "3.12"
+      artifact-name:
+        description: Uploaded artifact name.
+        required: false
+        type: string
+        default: Portable-Browser-Build
+      artifact-retention-days:
+        description: Artifact retention days.
+        required: false
+        type: number
+        default: 15
+      builder-repository:
+        description: Repository that contains ChromiumPortable builder scripts.
+        required: true
+        type: string
+      builder-ref:
+        description: Ref of the builder repository to checkout.
+        required: false
+        type: string
+        default: v1
+
+jobs:
+  build_and_release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@v4
+
+      - name: Checkout builder repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.builder-repository }}
+          ref: ${{ inputs.builder-ref }}
+          path: _portable_builder
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install requests
+          if (Test-Path requirements.txt) {
+            python -m pip install -r requirements.txt
+          }
+          New-Item -ItemType Directory -Force -Path build/assets | Out-Null
+
+      - name: Check for updates
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PYTHONPATH: _portable_builder
+        run: python -m portable_builder --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . check
+
+      - name: Debug environment
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'push'
+        shell: pwsh
+        run: |
+          Write-Host "UPDATE_NEEDED: $env:UPDATE_NEEDED"
+          Write-Host "UPSTREAM_VERSION: $env:UPSTREAM_VERSION"
+          Write-Host "CREATE_NEW_RELEASE: $env:CREATE_NEW_RELEASE"
+          Write-Host "MINOR_UPDATE: $env:MINOR_UPDATE"
+          Write-Host "RELEASE_ID: $env:RELEASE_ID"
+          Write-Host "RELEASE_TAG: $env:RELEASE_TAG"
+
+      - name: Set build date
+        if: github.event_name != 'schedule' || env.UPDATE_NEEDED == 'true'
+        shell: pwsh
+        run: |
+          $date = Get-Date -Format 'yyyy-MM-dd'
+          "BUILD_DATE=$date" >> $env:GITHUB_ENV
+
+      - name: Build portable browser
+        if: github.event_name != 'schedule' || env.UPDATE_NEEDED == 'true'
+        env:
+          PYTHONPATH: _portable_builder
+        run: python -m portable_builder --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . build
+
+      - name: Archive build
+        if: github.event_name != 'schedule' || env.UPDATE_NEEDED == 'true'
+        env:
+          PYTHONPATH: _portable_builder
+        run: python -m portable_builder --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . archive
+
+      - name: Render release metadata
+        if: github.event_name != 'schedule' || env.UPDATE_NEEDED == 'true'
+        env:
+          PYTHONPATH: _portable_builder
+        run: python -m portable_builder --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . render-release
+
+      - name: Upload artifact
+        if: github.event_name != 'schedule' || env.UPDATE_NEEDED == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: build/assets/*.7z
+          retention-days: ${{ inputs.artifact-retention-days }}
+
+      - name: Update existing release
+        if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'push') && env.UPDATE_NEEDED == 'true' && env.CREATE_NEW_RELEASE == 'false'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PYTHONPATH: _portable_builder
+        run: python -m portable_builder --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . update-release
+
+      - name: Upload assets to existing release
+        if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'push') && env.UPDATE_NEEDED == 'true' && env.CREATE_NEW_RELEASE == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_TITLE }}
+          body_path: ${{ env.RELEASE_BODY_PATH }}
+          files: build/assets/*.7z
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Create new release
+        if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'push') && env.UPDATE_NEEDED == 'true' && env.CREATE_NEW_RELEASE == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_TITLE }}
+          body_path: ${{ env.RELEASE_BODY_PATH }}
+          files: build/assets/*.7z
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

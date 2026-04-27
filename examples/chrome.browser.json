@@ -1,0 +1,52 @@
+{
+  "targets": {
+    "chrome_stable": {
+      "name": "Chrome",
+      "display_name": "Chrome++",
+      "output_dir": "Chrome",
+      "exe_name": "chrome.exe",
+      "architecture": "x64",
+      "provider": {
+        "type": "google_omaha",
+        "channel": "win_stable_x64"
+      },
+      "version_root": "Chrome-bin",
+      "layout": "move_version_root",
+      "chrome_plus_dir": "chrome++",
+      "ini_location": "app_root",
+      "version_dll_location": "app_root",
+      "start_script": "开始.bat",
+      "archive_name": "Chrome++_stable_{version}_{date}.7z",
+      "release": {
+        "tag": "v{version}",
+        "title": "Chrome++ {version}",
+        "asset_match": "stable",
+        "body": "Chrome++ 构建版本\n\n构建时间: {date}\nChrome 版本: {version}\n"
+      }
+    },
+    "chrome_beta": {
+      "name": "Chrome",
+      "display_name": "Chrome++ Beta",
+      "output_dir": "Chrome",
+      "exe_name": "chrome.exe",
+      "architecture": "x64",
+      "provider": {
+        "type": "google_omaha",
+        "channel": "win_beta_x64"
+      },
+      "version_root": "Chrome-bin",
+      "layout": "move_version_root",
+      "chrome_plus_dir": "chrome++",
+      "ini_location": "app_root",
+      "version_dll_location": "app_root",
+      "start_script": "开始.bat",
+      "archive_name": "Chrome++_beta_{version}_{date}.7z",
+      "release": {
+        "tag": "v{version}",
+        "title": "Chrome++ Beta {version}",
+        "asset_match": "beta",
+        "body": "Chrome++ Beta 构建版本\n\n构建时间: {date}\nChrome Beta 版本: {version}\n"
+      }
+    }
+  }
+}

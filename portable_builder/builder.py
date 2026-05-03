@@ -165,7 +165,11 @@ def inject_dll(target, staged):
 
     target_exe = staged["version_dir"] / exe_name
     if not target_exe.exists():
-        raise FileNotFoundError(f"Browser executable not found: {target_exe}")
+        matches = [path for path in staged["app_root"].rglob(Path(exe_name).name) if path.is_file()]
+        if not matches:
+            raise FileNotFoundError(f"Browser executable not found: {target_exe}")
+        target_exe = min(matches, key=lambda path: len(path.relative_to(staged["app_root"]).parts))
+        print(f"[INFO] Browser executable found at {target_exe}")
 
     setdll = staged["setdll"]
     version_dll = staged["version_dll"]

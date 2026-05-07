@@ -117,18 +117,26 @@ def stage_app(target, workdir, prepared):
     }
 
 
-def copy_chrome_plus(target, workdir, staged):
+def copy_chrome_plus(target, workdir, staged, builder_dir=None):
     workdir = Path(workdir)
-    chrome_plus_dir = workdir / target.get("chrome_plus_dir", "chrome++")
-    if not chrome_plus_dir.exists():
-        raise FileNotFoundError(f"chrome++ directory not found: {chrome_plus_dir}")
-
     arch = target.get("architecture", "x64")
     version_dll_name = target.get("version_dll_name", f"version-{arch}.dll")
     setdll_name = target.get("setdll_name", f"setdll-{arch}.exe")
 
-    version_dll_src = chrome_plus_dir / version_dll_name
-    setdll_src = chrome_plus_dir / setdll_name
+    if builder_dir:
+        builder_dir = Path(builder_dir)
+        setdll_src_dir = builder_dir / "setdll"
+        if not setdll_src_dir.exists():
+            raise FileNotFoundError(f"Builder setdll directory not found: {setdll_src_dir}")
+        version_dll_src = setdll_src_dir / version_dll_name
+        setdll_src = setdll_src_dir / setdll_name
+    else:
+        chrome_plus_dir = workdir / target.get("chrome_plus_dir", "chrome++")
+        if not chrome_plus_dir.exists():
+            raise FileNotFoundError(f"chrome++ directory not found: {chrome_plus_dir}")
+        version_dll_src = chrome_plus_dir / version_dll_name
+        setdll_src = chrome_plus_dir / setdll_name
+
     if not version_dll_src.exists():
         raise FileNotFoundError(f"Required DLL not found: {version_dll_src}")
     if not setdll_src.exists():
@@ -142,14 +150,32 @@ def copy_chrome_plus(target, workdir, staged):
     setdll_path = staged["app_root"] / setdll_name
     shutil.copy(setdll_src, setdll_path)
 
-    ini_src = chrome_plus_dir / target.get("ini_name", "chrome++.ini")
-    if not ini_src.exists() and (workdir / target.get("ini_name", "chrome++.ini")).exists():
-        ini_src = workdir / target.get("ini_name", "chrome++.ini")
+    ini_resolved = None
+    sub_ini_candidates = [
+        workdir / "chrome++.ini",
+        workdir / target.get("chrome_plus_dir", "chrome++") / "chrome++.ini",
+    ]
+    for candidate in sub_ini_candidates:
+        if candidate.exists():
+            ini_resolved = candidate
+            break
 
-    if ini_src.exists():
+    if ini_resolved is None and builder_dir:
+        builder_ini = builder_dir / "setdll" / "chrome++.ini"
+        if builder_ini.exists():
+            ini_resolved = builder_ini
+
+    if ini_resolved is None and not builder_dir:
+        ini_src = workdir / target.get("chrome_plus_dir", "chrome++") / target.get("ini_name", "chrome++.ini")
+        if not ini_src.exists() and (workdir / target.get("ini_name", "chrome++.ini")).exists():
+            ini_src = workdir / target.get("ini_name", "chrome++.ini")
+        if ini_src.exists():
+            ini_resolved = ini_src
+
+    if ini_resolved and ini_resolved.exists():
         ini_location = target.get("ini_location", "app_root")
         ini_dir = staged["version_dir"] if ini_location == "version_dir" else staged["app_root"]
-        shutil.copy(ini_src, ini_dir / "chrome++.ini")
+        shutil.copy(ini_resolved, ini_dir / "chrome++.ini")
     else:
         print("[WARN] chrome++.ini not found; continuing without it.")
 
@@ -219,7 +245,7 @@ def finalize(target, workdir, staged):
     return final_app_dir
 
 
-def build_target(target, workdir):
+def build_target(target, workdir, builder_dir=None):
     package = get_version_info(target, workdir)
     print(f"[INFO] Upstream version: {package['version']}")
 
@@ -228,7 +254,7 @@ def build_target(target, workdir):
         print(f"[WARN] Package version {package['version']} differs from directory version {prepared['version']}; using directory version.")
 
     staged = stage_app(target, workdir, prepared)
-    copy_chrome_plus(target, workdir, staged)
+    copy_chrome_plus(target, workdir, staged, builder_dir=builder_dir)
     inject_dll(target, staged)
     final_app_dir = finalize(target, workdir, staged)
 

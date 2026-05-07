@@ -98,7 +98,7 @@ def check_targets(config, target_names, workdir):
     return values
 
 
-def build_selected_targets(config, target_names, workdir):
+def build_selected_targets(config, target_names, workdir, builder_dir=None):
     built = {}
     for target_name in target_names:
         target = get_target(config, target_name)
@@ -110,7 +110,7 @@ def build_selected_targets(config, target_names, workdir):
             print(f"[INFO] Skipping {target_name}; no update required.")
             continue
 
-        result = build_target(target, workdir)
+        result = build_target(target, workdir, builder_dir=builder_dir)
         archive_target(target, workdir, version=result["version"])
         built[target_name] = result["version"]
         write_env({f"{prefix}_VERSION": result["version"]})

@@ -7,6 +7,7 @@ from pathlib import Path
 from .github_env import write_env
 from .providers import get_package
 from .tools import (
+    assert_portable_version_import,
     download_file,
     extract_with_7z,
     find_7z_tool,
@@ -204,14 +205,16 @@ def inject_dll(target, staged):
         result = subprocess.run(verify_cmd, capture_output=True, text=True)
         print(result.stdout)
 
-    if target.get("version_dll_location") == "version_dir":
-        dll_arg = "/d:version.dll"
-        cwd = target_exe.parent
-    else:
-        dll_arg = f"/d:{version_dll.resolve()}"
-        cwd = staged["app_root"]
+    target_exe_path = target_exe.resolve()
+    version_dll_path = version_dll.resolve()
+    try:
+        dll_arg_value = os.path.relpath(version_dll_path, start=target_exe_path.parent)
+    except ValueError:
+        dll_arg_value = str(version_dll_path)
+    dll_arg = f"/d:{dll_arg_value}"
+    cwd = target_exe_path.parent
 
-    cmd = [str(setdll.resolve()), dll_arg, str(target_exe.resolve())]
+    cmd = [str(setdll.resolve()), dll_arg, str(target_exe_path)]
     print(f"[INFO] Injecting version.dll into {target_exe}")
     result = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd)
     if result.stdout:
@@ -220,6 +223,9 @@ def inject_dll(target, staged):
         if result.stderr:
             print(result.stderr)
         raise RuntimeError("DLL injection failed.")
+
+    assert_portable_version_import(target_exe_path)
+    print(f"[INFO] Portable import verified: {target_exe_path}")
 
     if target.get("remove_setdll", True):
         remove_path(setdll)

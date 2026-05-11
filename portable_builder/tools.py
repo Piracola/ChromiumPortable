@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -16,6 +17,7 @@ SYSTEM_7Z_PATHS = (
     r"C:\Program Files\7-Zip\7z.exe",
     r"C:\Program Files (x86)\7-Zip\7z.exe",
 )
+ABSOLUTE_VERSION_DLL = re.compile(rb"[A-Za-z]:\\[^\x00]*version\.dll", re.IGNORECASE)
 
 
 def configure_stdout():
@@ -155,3 +157,15 @@ def remove_path(path):
         shutil.rmtree(path)
     elif path.exists():
         path.unlink()
+
+
+def assert_portable_version_import(path):
+    path = Path(path)
+    matches = sorted(
+        {
+            match.group(0).decode("ascii", errors="replace")
+            for match in ABSOLUTE_VERSION_DLL.finditer(path.read_bytes())
+        }
+    )
+    if matches:
+        raise RuntimeError(f"{path} contains non-portable version.dll import: {matches[0]}")

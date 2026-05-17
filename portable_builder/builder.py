@@ -22,13 +22,16 @@ def format_value(template, context):
     return str(template).format(**context)
 
 
-def build_context(target, version=None, date=None):
+def build_context(target, version=None, date=None, package_version=None):
+    resolved_version = version or ""
+    resolved_package_version = package_version or resolved_version
     return {
         "target": target.get("target", ""),
         "name": target.get("name", target.get("display_name", "")),
         "display_name": target.get("display_name", target.get("name", "")),
         "output_dir": target.get("output_dir", target.get("name", "Browser")),
-        "version": version or "",
+        "version": resolved_version,
+        "package_version": resolved_package_version,
         "date": date or datetime.now().strftime("%Y-%m-%d"),
         "arch": target.get("architecture", "x64"),
     }
@@ -267,22 +270,26 @@ def build_target(target, workdir, builder_dir=None):
     env_values = {
         "BUILT_VERSION": staged["version"],
         "BROWSER_VERSION": staged["version"],
+        "PACKAGE_VERSION": package["version"],
+        "UPSTREAM_VERSION": package["version"],
         "OUTPUT_DIR": target.get("output_dir", target.get("name", "Browser")),
     }
     write_env(env_values)
     print(f"[INFO] Build completed: {final_app_dir}")
     return {
         "version": staged["version"],
+        "package_version": package["version"],
         "output_dir": str(final_app_dir),
     }
 
 
-def archive_target(target, workdir, version=None, build_date=None):
+def archive_target(target, workdir, version=None, build_date=None, package_version=None):
     workdir = Path(workdir)
     seven_zip = find_7z_tool(workdir)
     version = version or os.getenv("BUILT_VERSION") or os.getenv("BROWSER_VERSION")
+    package_version = package_version or os.getenv("PACKAGE_VERSION") or os.getenv("UPSTREAM_VERSION") or version
     build_date = build_date or os.getenv("BUILD_DATE") or datetime.now().strftime("%Y-%m-%d")
-    context = build_context(target, version=version, date=build_date)
+    context = build_context(target, version=version, date=build_date, package_version=package_version)
 
     archive_template = target.get("archive_name", "{display_name}_Portable_{version}_{date}.7z")
     archive_name = format_value(archive_template, context)

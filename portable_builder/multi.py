@@ -111,9 +111,13 @@ def build_selected_targets(config, target_names, workdir, builder_dir=None):
             continue
 
         result = build_target(target, workdir, builder_dir=builder_dir)
-        archive_target(target, workdir, version=result["version"])
-        built[target_name] = result["version"]
-        write_env({f"{prefix}_VERSION": result["version"]})
+        archive_target(target, workdir, version=result["package_version"], package_version=result["package_version"])
+        built[target_name] = result["package_version"]
+        write_env({
+            f"{prefix}_VERSION": result["package_version"],
+            f"{prefix}_BUILD_VERSION": result["version"],
+            f"{prefix}_PACKAGE_VERSION": result["package_version"],
+        })
     return built
 
 
@@ -127,7 +131,11 @@ def render_multi_release(config, target_names, workdir):
     for target_name in target_names:
         target = get_target(config, target_name)
         prefix = target.get("env_prefix") or env_name(target_name)
-        version = os.getenv(f"{prefix}_VERSION") or os.getenv(f"UPSTREAM_{prefix}")
+        version = (
+            os.getenv(f"{prefix}_PACKAGE_VERSION")
+            or os.getenv(f"{prefix}_VERSION")
+            or os.getenv(f"UPSTREAM_{prefix}")
+        )
         packages[target_name] = {"version": version}
 
     context = build_flat_context(config, target_names, packages, build_date)

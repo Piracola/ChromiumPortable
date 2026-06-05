@@ -7,11 +7,13 @@ from .builder import archive_target, build_target, format_value, get_version_inf
 from .config import get_target
 from .github_env import write_env
 from .release import (
-    delete_assets_by_pattern,
+    delete_target_assets,
+    download_release_asset,
+    find_latest_target_asset,
     github_headers,
     latest_release,
     render_release,
-    update_release,
+    target_match_description,
 )
 from .versions import is_major_update, is_minor_update, is_upgrade
 
@@ -42,6 +44,56 @@ def build_flat_context(config, target_names, packages, build_date):
     return context
 
 
+def release_asset_present(config, target_name, release_id):
+    if not release_id:
+        return False
+    target = get_target(config, target_name)
+    return bool(find_latest_target_asset(release_id, target))
+
+
+def validate_target_asset_matchers(config, target_names):
+    sample_names = {}
+    for target_name in target_names:
+        target = get_target(config, target_name)
+        archive_name = target.get("archive_name")
+        if not archive_name:
+            continue
+        sample_names[target_name] = format_value(
+            archive_name,
+            {
+                "target": target_name,
+                "name": target.get("name", target.get("display_name", "")),
+                "display_name": target.get("display_name", target.get("name", "")),
+                "output_dir": target.get("output_dir", target.get("name", "Browser")),
+                "version": "123.456.789.0",
+                "package_version": "123.456.789.0",
+                "date": "2099-12-31",
+                "arch": target.get("architecture", "x64"),
+            },
+        )
+
+    conflicts = []
+    for owner_name in target_names:
+        owner = get_target(config, owner_name)
+        for sample_name, produced_name in sample_names.items():
+            if owner_name == sample_name:
+                continue
+            if any(matcher(produced_name) for _, matcher in target_matchers(owner)):
+                conflicts.append(
+                    f"{owner_name} matcher ({target_match_description(owner)}) also matches {sample_name} archive '{produced_name}'"
+                )
+
+    if conflicts:
+        joined = "; ".join(conflicts)
+        raise RuntimeError(f"Overlapping release asset matchers detected: {joined}")
+
+
+def target_matchers(target):
+    from .release import asset_matchers
+
+    return asset_matchers(target)
+
+
 def check_targets(config, target_names, workdir):
     event_name = os.getenv("GITHUB_EVENT_NAME", "")
     force_build = event_name == "workflow_dispatch"
@@ -49,6 +101,8 @@ def check_targets(config, target_names, workdir):
     release_body = release.get("body", "") if release else ""
     release_id = release.get("id") if release else None
     release_tag = release.get("tag_name") if release else None
+
+    validate_target_asset_matchers(config, target_names)
 
     packages = {}
     updates = {}
@@ -61,9 +115,15 @@ def check_targets(config, target_names, workdir):
         release_config = target.get("release", {})
         current = extract_with_pattern(release_body, release_config.get("version_pattern"))
         current_versions[target_name] = current
-        update = force_build or not current or (package["version"] != current and is_upgrade(package["version"], current))
+        asset_present = release_asset_present(config, target_name, release_id)
+        update = (
+            force_build
+            or not current
+            or not asset_present
+            or (package["version"] != current and is_upgrade(package["version"], current))
+        )
         updates[target_name] = update
-        print(f"[INFO] {target_name}: upstream={package['version']} current={current} update={update}")
+        print(f"[INFO] {target_name}: upstream={package['version']} current={current} asset_present={asset_present} update={update}")
 
     tag_target = config.get("release", {}).get("tag_target", target_names[0])
     create_new_release = not release_id
@@ -118,7 +178,40 @@ def build_selected_targets(config, target_names, workdir, builder_dir=None):
             f"{prefix}_BUILD_VERSION": result["version"],
             f"{prefix}_PACKAGE_VERSION": result["package_version"],
         })
+    ensure_shared_release_assets(config, target_names, workdir)
     return built
+
+
+def ensure_shared_release_assets(config, target_names, workdir):
+    release_id = os.getenv("RELEASE_ID")
+    create_new_release = os.getenv("CREATE_NEW_RELEASE", "false").lower() == "true"
+    if not release_id or not create_new_release:
+        return []
+
+    assets_dir = Path(workdir) / "build" / "assets"
+    assets_dir.mkdir(parents=True, exist_ok=True)
+    carried = []
+    for target_name in target_names:
+        target = get_target(config, target_name)
+        prefix = target.get("env_prefix") or env_name(target_name)
+        should_build = os.getenv(f"{prefix}_UPDATE", "false").lower() == "true"
+        if should_build:
+            continue
+
+        previous_asset = find_latest_target_asset(release_id, target)
+        if not previous_asset:
+            print(f"[WARN] No previous release asset found for {target_name}; shared release will not carry one forward.")
+            continue
+
+        destination = assets_dir / previous_asset["name"]
+        if destination.exists():
+            print(f"[INFO] Reusing carried asset already present: {destination.name}")
+        else:
+            print(f"[INFO] Carrying forward previous asset for {target_name}: {previous_asset['name']}")
+            download_release_asset(previous_asset, destination)
+        carried.append(str(destination))
+
+    return carried
 
 
 def render_multi_release(config, target_names, workdir):
@@ -169,9 +262,7 @@ def update_multi_release(config, target_names, workdir):
         target = get_target(config, target_name)
         prefix = target.get("env_prefix") or env_name(target_name)
         if os.getenv(f"{prefix}_UPDATE", "false").lower() == "true":
-            asset_match = target.get("release", {}).get("asset_match")
-            if asset_match:
-                delete_assets_by_pattern(release_id, asset_match)
+            delete_target_assets(release_id, target)
 
     repo = os.getenv("GITHUB_REPOSITORY")
     data = {

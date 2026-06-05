@@ -94,6 +94,10 @@ python -m portable_builder --config examples\edge.browser.json --target edge_sta
 
 Chrome 这类一个仓库同时发布多个渠道的项目，可以直接 checkout 本仓库后调用 `check-targets`、`build-targets`、`render-release-targets` 和 `update-release-targets`。
 
+多目标共享一个 GitHub Release 时，构建器会优先用每个 target 的 `archive_name` 精确识别和清理对应资产，并在创建新的 shared release 时自动继承未更新 target 的旧资产，避免“发行说明里有版本号但附件缺包”。
+
+如果显式配置 `release.asset_match`，请确保不同 target 之间不会交叉匹配。默认推荐让每个 target 使用可区分的 `archive_name`，由构建器自动按归档命名推导资产匹配规则。
+
 构建器会优先使用系统 7-Zip 或 PATH 中的 `7z`；如果都不可用，会尝试下载独立解压器，下载失败后再尝试通过 Chocolatey 安装 7-Zip。
 
 构建阶段会在 DLL 注入后自动检查浏览器可执行文件里的 `version.dll` 导入项，确保没有把 GitHub Actions 或本机构建机的绝对路径写进产物，避免解压到别的机器后启动时报找不到 `version.dll`。

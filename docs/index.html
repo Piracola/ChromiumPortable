@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chromium Portable Builder</title>
+    <meta
+      name="description"
+      content="展示 Chrome、Edge、Helium 等 Chromium 系便携构建版的静态站点。"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <nav class="topbar">
+          <a class="brand" href="#top">
+            <span class="brand-mark">CB</span>
+            <span class="brand-copy">
+              <strong>Chrome Builder</strong>
+              <span>Portable build showcase</span>
+            </span>
+          </a>
+          <div class="topbar-actions">
+            <a class="ghost-link" id="builderRepoLink" href="#" target="_blank" rel="noreferrer">构建核心</a>
+            <a class="primary-link" id="ctaLatest" href="#catalog">查看全部构建</a>
+          </div>
+        </nav>
+
+        <section class="hero-content" id="top">
+          <div class="hero-copy">
+            <p class="eyebrow">GitHub Pages Static Showcase</p>
+            <h1 id="heroTitle">把所有子构建版集中到一个精致入口页</h1>
+            <p class="hero-description" id="heroDescription"></p>
+            <div class="hero-actions">
+              <a class="primary-link" href="#catalog">浏览构建版</a>
+              <a class="ghost-link" id="allReleasesLink" href="#" target="_blank" rel="noreferrer">查看主仓库</a>
+            </div>
+          </div>
+
+          <div class="hero-panel">
+            <div class="panel-heading">
+              <span>构建概览</span>
+              <span class="panel-badge" id="buildCountBadge">0 builds</span>
+            </div>
+            <div class="hero-stats" id="heroStats"></div>
+          </div>
+        </section>
+      </header>
+
+      <main>
+        <section class="catalog-section" id="catalog">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Build Catalog</p>
+              <h2>全部子构建版</h2>
+            </div>
+            <p class="section-description">
+              每张卡片都会直达对应项目仓库，也保留了 Release、工作流和频道信息。
+            </p>
+          </div>
+
+          <div class="filter-bar" id="filterBar" aria-label="构建版筛选"></div>
+          <div class="build-grid" id="buildGrid"></div>
+        </section>
+
+        <section class="repo-section">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Project Map</p>
+              <h2>项目矩阵</h2>
+            </div>
+            <p class="section-description">
+              除了单个构建目标，也可以从项目维度快速进入各个子仓库。
+            </p>
+          </div>
+
+          <div class="repo-grid" id="repoGrid"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./site-data.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

@@ -4,7 +4,6 @@
   const buildGrid = document.getElementById("buildGrid");
   const repoGrid = document.getElementById("repoGrid");
   const filterBar = document.getElementById("filterBar");
-  const heroStats = document.getElementById("heroStats");
 
   const state = {
     filter: "all"
@@ -18,32 +17,6 @@
     document.getElementById("heroDescription").textContent = data.meta.description;
     document.getElementById("builderRepoLink").href = data.meta.builderRepo;
     document.getElementById("allReleasesLink").href = data.meta.ctaLink;
-    document.getElementById("buildCountBadge").textContent = `${data.builds.length} builds`;
-  }
-
-  function statCard(label, value, copy) {
-    return `
-      <article class="stat-card reveal">
-        <span class="stat-number">${value}</span>
-        <div class="stat-copy">
-          <strong>${label}</strong>
-          <span>${copy}</span>
-        </div>
-      </article>
-    `;
-  }
-
-  function renderStats() {
-    const channels = new Set(data.builds.map((build) => build.channel));
-    const repos = data.repos.length;
-    const architectures = new Set(data.builds.map((build) => build.architecture));
-
-    heroStats.innerHTML = [
-      statCard("构建目标", String(data.builds.length), "个子版本入口"),
-      statCard("子项目", String(repos), "个独立仓库"),
-      statCard("频道类型", String(channels.size), "种更新分支"),
-      statCard("架构", String(architectures.size), "种输出规格")
-    ].join("");
   }
 
   function renderFilters() {
@@ -83,7 +56,7 @@
 
         <p class="build-summary">${build.summary}</p>
 
-        <dl class="build-metrics">
+        <dl class="build-meta">
           <div class="metric">
             <dt>Target</dt>
             <dd>${build.target}</dd>
@@ -130,10 +103,7 @@
           </div>
         </div>
         <p>${repo.summary}</p>
-        <div class="repo-detail">
-          <span>Channels</span>
-          <strong>${channels}</strong>
-        </div>
+        <p class="repo-detail"><span>Channels</span> ${channels}</p>
         <div class="repo-links">
           <a class="link-chip primary" href="${repo.url}" target="_blank" rel="noreferrer">仓库主页</a>
           <a class="link-chip" href="${repo.releasesUrl}" target="_blank" rel="noreferrer">Releases</a>
@@ -148,7 +118,6 @@
   }
 
   setMeta();
-  renderStats();
   renderFilters();
   renderBuilds();
   renderRepos();

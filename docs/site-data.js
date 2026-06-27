@@ -2,7 +2,7 @@ window.SITE_DATA = {
   meta: {
     title: "Chromium Portable Builder",
     description:
-      "集中展示 Chrome、Edge、Helium 等 Chromium 系便携构建版，用一个静态页面承接所有子项目入口。",
+      "Chrome、Edge、Helium 便携构建版的统一索引。按浏览器系列查看目标、频道、仓库和最新发布。",
     builderRepo: "https://github.com/Piracola/ChromiumPortable",
     ctaLink: "https://github.com/Piracola/ChromiumPortable"
   },
@@ -15,6 +15,7 @@ window.SITE_DATA = {
       url: "https://github.com/Piracola/Chrome-Portable",
       releasesUrl: "https://github.com/Piracola/Chrome-Portable/releases/latest",
       workflowUrl: "https://github.com/Piracola/Chrome-Portable/actions/workflows/build.yml",
+      icon: "./assets/chrome.svg",
       accent: "#d8653f",
       badge: "CH",
       summary:
@@ -28,6 +29,7 @@ window.SITE_DATA = {
       url: "https://github.com/betacola/Edge_Portable",
       releasesUrl: "https://github.com/betacola/Edge_Portable/releases/latest",
       workflowUrl: "https://github.com/betacola/Edge_Portable/actions/workflows/build.yml",
+      icon: "./assets/edge.svg",
       accent: "#1d7c84",
       badge: "ED",
       summary:
@@ -41,6 +43,7 @@ window.SITE_DATA = {
       url: "https://github.com/Piracola/Helium_Portable",
       releasesUrl: "https://github.com/Piracola/Helium_Portable/releases/latest",
       workflowUrl: "https://github.com/Piracola/Helium_Portable/actions/workflows/build.yml",
+      icon: "./assets/helium.svg",
       accent: "#5b5bd6",
       badge: "HE",
       summary:
@@ -62,6 +65,7 @@ window.SITE_DATA = {
       target: "chrome_stable",
       highlight: "主力版本",
       color: "#d8653f",
+      icon: "./assets/chrome.svg",
       links: {
         repo: "https://github.com/Piracola/Chrome-Portable",
         releases: "https://github.com/Piracola/Chrome-Portable/releases/latest",
@@ -82,6 +86,7 @@ window.SITE_DATA = {
       target: "chrome_beta",
       highlight: "抢先体验",
       color: "#e08a48",
+      icon: "./assets/chrome.svg",
       links: {
         repo: "https://github.com/Piracola/Chrome-Portable",
         releases: "https://github.com/Piracola/Chrome-Portable/releases/latest",
@@ -102,6 +107,7 @@ window.SITE_DATA = {
       target: "edge_stable",
       highlight: "微软生态",
       color: "#1d7c84",
+      icon: "./assets/edge.svg",
       links: {
         repo: "https://github.com/betacola/Edge_Portable",
         releases: "https://github.com/betacola/Edge_Portable/releases/latest",
@@ -122,6 +128,7 @@ window.SITE_DATA = {
       target: "helium_stable",
       highlight: "轻量分支",
       color: "#5b5bd6",
+      icon: "./assets/helium.svg",
       links: {
         repo: "https://github.com/Piracola/Helium_Portable",
         releases: "https://github.com/Piracola/Helium_Portable/releases/latest",
@@ -142,6 +149,7 @@ window.SITE_DATA = {
       target: "helium_prerelease",
       highlight: "预发行",
       color: "#7b6ff0",
+      icon: "./assets/helium.svg",
       links: {
         repo: "https://github.com/Piracola/Helium_Portable",
         releases: "https://github.com/Piracola/Helium_Portable/releases/latest",

@@ -24,9 +24,9 @@
   function statCard(label, value, copy) {
     return `
       <article class="stat-card reveal">
-        <span class="stat-label">${label}</span>
-        <div class="stat-value">
-          <strong>${value}</strong>
+        <span class="stat-number">${value}</span>
+        <div class="stat-copy">
+          <strong>${label}</strong>
           <span>${copy}</span>
         </div>
       </article>
@@ -69,39 +69,38 @@
     const visible = state.filter === "all" || state.filter === build.family;
     const hiddenClass = visible ? "" : " is-hidden";
     const delay = 80 + index * 60;
-    const gradient = `linear-gradient(135deg, ${build.color}22, ${build.color}08)`;
-    const pillStyle = `background:${build.color}18;color:${build.color};`;
 
     return `
-      <article class="build-card reveal${hiddenClass}" style="animation-delay:${delay}ms;background:${gradient}">
+      <article class="build-card reveal${hiddenClass}" style="--accent:${build.color}; animation-delay:${delay}ms">
         <div class="build-head">
+          <img class="browser-icon" src="${build.icon}" alt="${build.project} 图标" loading="lazy" />
           <div class="build-title">
             <h3>${build.title}</h3>
             <span class="build-subtitle">${build.project} / ${build.channel} / ${build.highlight}</span>
           </div>
-          <span class="channel-pill" style="${pillStyle}">${build.channel}</span>
+          <span class="channel-pill">${build.channel}</span>
         </div>
 
         <p class="build-summary">${build.summary}</p>
 
-        <div class="build-metrics">
-          <article class="metric">
-            <span class="metric-label">Target</span>
-            <div class="metric-copy">${build.target}</div>
-          </article>
-          <article class="metric">
-            <span class="metric-label">Output</span>
-            <div class="metric-copy">${build.outputDir}</div>
-          </article>
-          <article class="metric">
-            <span class="metric-label">Architecture</span>
-            <div class="metric-copy">${build.architecture}</div>
-          </article>
-          <article class="metric">
-            <span class="metric-label">Project</span>
-            <div class="metric-copy">${repo.name}</div>
-          </article>
-        </div>
+        <dl class="build-metrics">
+          <div class="metric">
+            <dt>Target</dt>
+            <dd>${build.target}</dd>
+          </div>
+          <div class="metric">
+            <dt>Output</dt>
+            <dd>${build.outputDir}</dd>
+          </div>
+          <div class="metric">
+            <dt>Architecture</dt>
+            <dd>${build.architecture}</dd>
+          </div>
+          <div class="metric">
+            <dt>Project</dt>
+            <dd>${repo.name}</dd>
+          </div>
+        </dl>
 
         <div class="build-links">
           <a class="link-chip primary" href="${build.links.repo}" target="_blank" rel="noreferrer">进入项目</a>
@@ -124,16 +123,16 @@
     return `
       <article class="repo-card reveal" style="animation-delay:${delay}ms">
         <div class="repo-head">
-          <span class="repo-mark" style="background:linear-gradient(135deg, ${repo.accent}, #13212f)">${repo.badge}</span>
+          <img class="repo-icon" src="${repo.icon}" alt="${repo.name} 图标" loading="lazy" />
           <div class="repo-copy">
             <h3>${repo.name}</h3>
             <span class="repo-meta">${repo.owner} · ${repoBuilds.length} builds</span>
           </div>
         </div>
         <p>${repo.summary}</p>
-        <div class="metric">
-          <span class="metric-label">Channels</span>
-          <div class="metric-copy">${channels}</div>
+        <div class="repo-detail">
+          <span>Channels</span>
+          <strong>${channels}</strong>
         </div>
         <div class="repo-links">
           <a class="link-chip primary" href="${repo.url}" target="_blank" rel="noreferrer">仓库主页</a>

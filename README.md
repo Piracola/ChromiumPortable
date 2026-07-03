@@ -102,6 +102,16 @@ Chrome 这类一个仓库同时发布多个渠道的项目，可以直接 checko
 
 构建阶段会在 DLL 注入后自动检查浏览器可执行文件里的 `version.dll` 导入项，确保没有把 GitHub Actions 或本机构建机的绝对路径写进产物，避免解压到别的机器后启动时报找不到 `version.dll`。
 
+## chrome++ 自动更新
+
+主仓库通过 `.github/workflows/update-chrome-plus.yml` 定时检查 [Bush2021/chrome_plus](https://github.com/Bush2021/chrome_plus/releases) 的最新 `setdll.7z`，只把其中的 `version-x64.dll`、`setdll-x64.exe`、`README.md` 和 `chrome++.ini` 更新到本仓库的 `setdll/` 目录。
+
+子仓库自己的 `chrome++.ini` 不会被这个流程覆盖。构建时仍然优先使用子仓库根目录或子仓库 `chrome++/` 目录里的配置文件，主仓库 `setdll/chrome++.ini` 只是兜底配置。
+
+如果 chrome++ 文件发生变化，workflow 会先提交主仓库更新；只有 `version-x64.dll` 或 `setdll-x64.exe` 变化时，才会调度子仓库的 `workflow_dispatch` 构建。调度时会把这次主仓库更新提交作为 `builder_ref` 传给子仓库，保证子仓库构建使用刚更新的 chrome++ 文件。子仓库的手动触发构建会强制重打包；在浏览器版本没有变化时，会更新现有 GitHub Release 并替换对应附件。
+
+跨仓库调度需要在主仓库配置 `CHILD_REPO_TOKEN` secret。这个 token 需要能访问并触发子仓库 Actions workflow，例如细粒度 token 授权目标子仓库的 `Actions: Read and write` 和 `Contents: Read`。
+
 发布稳定版本时给本仓库打 tag，例如 `v1.1`，子仓库固定引用该 tag。
 
 ## 许可证

@@ -1,0 +1,61 @@
+name: Update chrome++
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "20 18 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-chrome-plus
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      CHILD_WORKFLOWS: >-
+        [
+          {"repository":"Piracola/Chrome-Portable","workflow":"build.yml","ref":"main"},
+          {"repository":"betacola/Edge_Portable","workflow":"build.yml","ref":"main"},
+          {"repository":"Piracola/Helium_Portable","workflow":"build.yml","ref":"main"}
+        ]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Ensure 7-Zip is available
+        shell: bash
+        run: |
+          if command -v 7z >/dev/null 2>&1 || command -v 7zz >/dev/null 2>&1 || command -v 7za >/dev/null 2>&1; then
+            exit 0
+          fi
+          sudo apt-get update
+          sudo apt-get install -y p7zip-full
+
+      - name: Update chrome++ files
+        id: update
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/update_chrome_plus.py
+
+      - name: Commit chrome++ update
+        id: commit
+        if: steps.update.outputs.updated == 'true'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add setdll/version-x64.dll setdll/setdll-x64.exe setdll/README.md setdll/chrome++.ini
+          git commit -m "chore: update chrome++ to ${{ steps.update.outputs.version }}"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          git push
+
+      - name: Dispatch child repository builds
+        if: steps.update.outputs.rebuild_needed == 'true'
+        env:
+          BUILDER_REF: ${{ steps.commit.outputs.sha }}
+          CHILD_REPO_TOKEN: ${{ secrets.CHILD_REPO_TOKEN }}
+        run: python3 scripts/dispatch_child_builds.py

@@ -4,27 +4,35 @@ ChromiumPortable 是 Chromium 系浏览器便携版的可复用构建核心，�
 
 它本身不发布浏览器成品；成品由各个子仓库根据自己的上游浏览器配置自动构建。
 
+> ⚠️ 本仓库**不发布浏览器成品**，只提供可复用的构建流程。如需下载便携版浏览器，请前往：
+> - [Chrome-Portable](https://github.com/Piracola/Chrome-Portable)（Google Chrome，Stable / Beta）
+> - [Edge_Portable](https://github.com/betacola/Edge_Portable)（Microsoft Edge，Stable）
+> - [Helium_Portable](https://github.com/Piracola/Helium_Portable)（Helium，Stable / Preview）
+>
+> 想了解构建系统或新增浏览器支持？继续往下读。
+
 ## 仓库导航
 
-- [Chrome-Portable](https://github.com/Piracola/Chrome-Portable)：Google Chrome 便携版子仓库。
-- [Edge_Portable](https://github.com/betacola/Edge_Portable)：Microsoft Edge 便携版子仓库。
-- [Helium_Portable](https://github.com/Piracola/Helium_Portable)：Helium 便携版子仓库。
+本仓库为构建核心，以下子仓库各自配置上游浏览器并调用本仓库的 reusable workflow：
 
-## 子仓库
-
-- [Chrome-Portable](https://github.com/Piracola/Chrome-Portable)：Google Chrome 便携版，跟随官方 Stable/Beta 更新。
-- [Edge_Portable](https://github.com/betacola/Edge_Portable)：Microsoft Edge 便携版，跟随官方 Stable 更新。
+| 子仓库 | 浏览器 | 渠道 |
+| --- | --- | --- |
+| [Chrome-Portable](https://github.com/Piracola/Chrome-Portable) | Google Chrome | Stable / Beta |
+| [Edge_Portable](https://github.com/betacola/Edge_Portable) | Microsoft Edge | Stable |
+| [Helium_Portable](https://github.com/Piracola/Helium_Portable) | Helium | Stable / Preview |
 
 后续新增浏览器时，优先新建子仓库并引用本仓库的 reusable workflow，而不是复制整套构建脚本。
 
-## 用途
+## 本仓库的用途
 
 - 复用便携化构建流程。
 - 降低新增浏览器支持时的维护成本。
 - 让每个子仓库只维护 `browser.json`、`chrome++` 配置和项目说明。
 - 统一 GitHub Actions 自动检查、构建、打包和发行流程。
 
-## 子仓库接入
+`docs/` 目录是一个 GitHub Pages 静态展示站，汇总各子仓库的最新构建版本，部署方式见 [docs/README.md](./docs/README.md)。
+
+## 快速开始：接入新子仓库
 
 子仓库的 `.github/workflows/build.yml` 可以引用本仓库：
 
@@ -40,6 +48,8 @@ jobs:
       config: browser.json
       target: edge_stable
 ```
+
+> `uses` 和 `builder-ref` 里的 `v1.1` 是本仓库的发布 tag。子仓库固定引用某个 tag；core 发新版本时打新 tag（如 `v1.2`）再让子仓库迁移。详见 [版本与发布](#版本与发布)。
 
 浏览器差异写在子仓库的 `browser.json`。示例见 [examples](./examples)。
 
@@ -80,11 +90,11 @@ jobs:
 
 这样 Chrome、Edge 或其他浏览器的上游变动只需要改各自子仓库里的脚本，主仓库继续保持通用。
 
-## 开发指南
+## 维护者指南
 
 通用构建逻辑位于 [portable_builder](./portable_builder)。新增浏览器时，先尝试通过 `direct`、`google_omaha` 或 `microsoft_edge` provider 配置完成；如果上游版本 API 或安装包结构不同，再新增 `portable_builder/providers/*.py`。
 
-本地测试：
+本地测试（Windows + Python 3）：
 
 ```powershell
 python -m compileall portable_builder
@@ -112,7 +122,9 @@ Chrome 这类一个仓库同时发布多个渠道的项目，可以直接 checko
 
 跨仓库调度需要在主仓库配置 `CHILD_REPO_TOKEN` secret。这个 token 需要能访问并触发子仓库 Actions workflow，例如细粒度 token 授权目标子仓库的 `Actions: Read and write` 和 `Contents: Read`。
 
-发布稳定版本时给本仓库打 tag，例如 `v1.1`，子仓库固定引用该 tag。
+### 版本与发布
+
+发布稳定版本时给本仓库打 tag，例如 `v1.1`，子仓库固定引用该 tag。core 发新版本时打新 tag（如 `v1.2`），再让子仓库迁移 `builder-ref`。
 
 ## 许可证
 

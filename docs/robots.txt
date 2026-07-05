@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://piracola.github.io/ChromiumPortable/sitemap.xml

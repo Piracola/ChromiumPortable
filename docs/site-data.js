@@ -1,8 +1,13 @@
 window.SITE_DATA = {
   meta: {
-    title: "Chromium Portable Builder",
+    siteName: "Chromium Portable Builder",
+    title: "Chromium Portable Builder - Chrome / Edge / Helium 便携版构建索引",
+    heroTitle: "Chromium Portable Builder",
     description:
+      "Chromium Portable Builder 汇总 Chrome++、Microsoft Edge、Helium 等 Chromium 系便携版构建，提供项目仓库、最新发布和自动构建流程入口。",
+    heroDescription:
       "Chrome、Edge、Helium 便携构建版的统一索引。按浏览器系列查看目标、频道、仓库和最新发布。",
+    siteUrl: "https://piracola.github.io/ChromiumPortable/",
     builderRepo: "https://github.com/Piracola/ChromiumPortable",
     ctaLink: "https://github.com/Piracola/ChromiumPortable"
   },

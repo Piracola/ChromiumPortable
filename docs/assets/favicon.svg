@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Chromium Portable Builder">
+  <rect width="64" height="64" rx="14" fill="#16181d"/>
+  <path d="M18 21.5c3.1-4 8-6.5 13.6-6.5 7 0 13 4.1 15.8 10.1h-16a10 10 0 0 0-13.4-3.6z" fill="#f2c94c"/>
+  <path d="M47.4 25.1A17.2 17.2 0 0 1 33.1 49L41 35.4a10 10 0 0 0-9.4-14.9h15.8z" fill="#27ae60"/>
+  <path d="M33.1 49H31.6a17.2 17.2 0 0 1-13.6-27.5l8 13.8a10 10 0 0 0 15 .1z" fill="#eb5757"/>
+  <circle cx="32" cy="32" r="9.5" fill="#2f80ed"/>
+  <circle cx="32" cy="32" r="5.2" fill="#ffffff"/>
+</svg>

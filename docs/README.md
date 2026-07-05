@@ -16,9 +16,10 @@
 - 样式在 `styles.css`
 - 渲染逻辑在 `app.js`
 - 构建版数据在 `site-data.js`
+- 爬虫配置在 `robots.txt` 和 `sitemap.xml`
 - 浏览器图标在 `assets/`
 
-后续如果新增子项目或新增频道，优先修改 `site-data.js`，一般不需要改页面结构。
+后续如果新增子项目或新增频道，优先修改 `site-data.js`，并同步更新 `index.html` 中的静态构建清单与 JSON-LD。这样即使搜索引擎或社交平台不执行 JavaScript，也能正确读取构建版内容。
 
 ## 图标来源
 

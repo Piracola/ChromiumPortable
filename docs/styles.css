@@ -243,6 +243,12 @@ main {
   margin-bottom: 24px;
 }
 
+.noscript-note {
+  margin: 0 0 18px;
+  color: var(--text-muted);
+  font-size: 0.94rem;
+}
+
 .filter-chip {
   appearance: none;
   min-height: 34px;

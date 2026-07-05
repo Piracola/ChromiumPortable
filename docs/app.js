@@ -12,9 +12,16 @@
   const families = ["all", ...new Set(data.builds.map((build) => build.family))];
 
   function setMeta() {
+    const description = document.querySelector('meta[name="description"]');
+
     document.title = data.meta.title;
-    document.getElementById("heroTitle").textContent = data.meta.title;
-    document.getElementById("heroDescription").textContent = data.meta.description;
+    if (description) {
+      description.setAttribute("content", data.meta.description);
+    }
+
+    document.getElementById("heroTitle").textContent = data.meta.heroTitle || data.meta.title;
+    document.getElementById("heroDescription").textContent =
+      data.meta.heroDescription || data.meta.description;
     document.getElementById("builderRepoLink").href = data.meta.builderRepo;
     document.getElementById("allReleasesLink").href = data.meta.ctaLink;
   }

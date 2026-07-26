@@ -109,11 +109,16 @@ def run_browser(executable, args, timeout, cwd):
     return result
 
 
-def assert_no_stray_backups(extracted_root):
-    """setdll leaves '<exe>~' backups; they must never reach an archive."""
-    leftovers = sorted(path.relative_to(extracted_root).as_posix() for path in extracted_root.rglob("*~") if path.is_file())
-    if leftovers:
-        raise RuntimeError(f"Archive contains leftover backup files: {', '.join(leftovers)}")
+def assert_no_setdll_backup(extracted_root, executable):
+    """setdll writes an un-injected '<exe>~' beside its target; inject_dll deletes
+    it. This is only a regression guard, so it checks that one exact path rather
+    than any '*~' in the tree, which would false-positive on unrelated files."""
+    backup = executable.with_name(executable.name + "~")
+    if backup.exists():
+        raise RuntimeError(
+            f"Archive still contains the setdll backup {backup.relative_to(extracted_root).as_posix()}; "
+            "it is an un-injected copy of the browser and must not ship."
+        )
 
 
 def smoke_test(target, extracted_root, app_root, executable):
@@ -178,7 +183,7 @@ def verify_target(target, workdir, archive=None, smoke=True):
 
     executable = locate_executable(target, app_root)
     assert_portable_version_import(executable)
-    assert_no_stray_backups(extracted_root)
+    assert_no_setdll_backup(extracted_root, executable)
 
     if smoke:
         smoke_test(target, extracted_root, app_root, executable)

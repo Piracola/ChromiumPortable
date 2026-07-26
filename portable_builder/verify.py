@@ -66,7 +66,33 @@ def locate_executable(target, app_root):
     return executable
 
 
+def wait_for_directory(path, timeout, interval=0.5):
+    deadline = time.monotonic() + timeout
+    while True:
+        if path.is_dir():
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(interval)
+
+
+def describe_tree(root, depth=2):
+    entries = []
+    for path in sorted(root.rglob("*")):
+        relative = path.relative_to(root)
+        if len(relative.parts) <= depth:
+            entries.append(relative.as_posix() + ("/" if path.is_dir() else ""))
+    return ", ".join(entries) or "(empty)"
+
+
 def run_browser(executable, args, timeout, cwd):
+    """Launch the browser and wait for the direct child to exit.
+
+    The exit code alone proves little: msedge.exe is a launcher stub that returns
+    0 in ~0.1s and does the real work in detached children, so a non-zero code is
+    meaningful but a zero one is not. The portable data directory appearing is the
+    assertion that actually carries weight.
+    """
     command = [str(executable), *args]
     print(f"[INFO] Running {' '.join(command)}")
     try:
@@ -109,11 +135,12 @@ def smoke_test(target, extracted_root, app_root, executable):
     args = list(target.get("smoke_args", DEFAULT_SMOKE_ARGS))
     run_browser(executable, args, target.get("smoke_timeout", 180), app_root)
 
-    if not data_dir.is_dir():
-        present = ", ".join(sorted(item.name for item in extracted_root.iterdir())) or "(empty)"
+    # Poll rather than check once: the launcher exits long before its detached
+    # children have set the profile up.
+    if not wait_for_directory(data_dir, target.get("smoke_data_timeout", 60)):
         raise RuntimeError(
             f"Chrome++ did not create the portable data directory '{data_dir_name}', so the profile "
-            f"went to the user profile instead. Archive root contains: {present}"
+            f"went to the user profile instead. Extracted tree: {describe_tree(extracted_root)}"
         )
     print(f"[INFO] Portable data directory created inside the archive: {data_dir}")
 

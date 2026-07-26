@@ -1,6 +1,16 @@
+<div align="center">
+
 # ChromiumPortable
 
-ChromiumPortable 是 Chromium 系浏览器便携版的可复用构建核心，用来统一处理上游版本检查、安装包下载、解压、`chrome++` 集成、DLL 注入、打包和 GitHub Release 发布。
+Chromium 系浏览器便携版的可复用构建核心
+
+[![核心版本][badge-version]][link-tags]
+[![同步状态][badge-sync]][link-sync]
+[![许可证][badge-license]][link-license]
+
+</div>
+
+ChromiumPortable 用来统一处理上游版本检查、安装包下载、解压、`chrome++` 集成、DLL 注入、打包和 GitHub Release 发布。
 
 它本身不发布浏览器成品；成品由各个子仓库根据自己的上游浏览器配置自动构建。
 
@@ -15,11 +25,11 @@ ChromiumPortable 是 Chromium 系浏览器便携版的可复用构建核心，�
 
 本仓库为构建核心，以下子仓库各自配置上游浏览器并调用本仓库的 reusable workflow：
 
-| 子仓库 | 浏览器 | 渠道 |
-| --- | --- | --- |
-| [Chrome-Portable](https://github.com/Piracola/Chrome-Portable) | Google Chrome | Stable / Beta |
-| [Edge_Portable](https://github.com/betacola/Edge_Portable) | Microsoft Edge | Stable |
-| [Helium_Portable](https://github.com/Piracola/Helium_Portable) | Helium | Stable / Preview |
+| 子仓库 | 浏览器 | 渠道 | 最新版本 | 总下载量 |
+| --- | --- | --- | --- | --- |
+| [Chrome-Portable](https://github.com/Piracola/Chrome-Portable) | Google Chrome | Stable / Beta | [![][badge-chrome-release]][link-chrome] | [![][badge-chrome-downloads]][link-chrome] |
+| [Edge_Portable](https://github.com/betacola/Edge_Portable) | Microsoft Edge | Stable | [![][badge-edge-release]][link-edge] | [![][badge-edge-downloads]][link-edge] |
+| [Helium_Portable](https://github.com/Piracola/Helium_Portable) | Helium | Stable / Preview | [![][badge-helium-release]][link-helium] | [![][badge-helium-downloads]][link-helium] |
 
 后续新增浏览器时，优先新建子仓库并引用本仓库的 reusable workflow，而不是复制整套构建脚本。
 
@@ -130,7 +140,9 @@ python -m portable_builder --config browser.json --target chrome_stable --workdi
 python -m portable_builder --config browser.json --target chrome_stable --workdir . verify --no-smoke  # 只查导入表，不启动浏览器
 ```
 
-可用 target 配置项微调：`smoke_args`（默认 headless + `--dump-dom about:blank`）、`smoke_data_dir`（默认 `Data`）、`smoke_timeout`。
+可用 target 配置项微调：`smoke_args`（默认 headless + `--dump-dom about:blank`）、`smoke_data_dir`（默认 `Data`）、`smoke_timeout`、`smoke_data_timeout`（等待配置目录出现的秒数，默认 60）。
+
+最后一项是必要的：部分浏览器的主 exe 只是启动器（例如 `msedge.exe` 约 0.1 秒就返回 0，真正的浏览器跑在分离的子进程里），所以配置目录要轮询等待，不能启动结束就立刻断言。同理，这类启动器的退出码为 0 并不能证明浏览器真的起来了，真正有分量的判据是配置目录是否出现。
 
 ### 发行说明可用的占位符
 
@@ -159,7 +171,7 @@ python -m portable_builder --config browser.json --target chrome_stable --workdi
 
 ### chrome++.ini 的三层结构
 
-`chrome++.ini` 有 166 行，其中绝大部分是中英双语注释，真正因浏览器而异的只有几个键。所以它由三层合并而成：
+`chrome++.ini` 有一百多行，其中绝大部分是中英双语注释，真正因浏览器而异的只有几个键。所以它由三层合并而成：
 
 | 层 | 文件 | 谁维护 |
 | --- | --- | --- |
@@ -188,3 +200,35 @@ python -m portable_builder --config browser.json --target chrome_stable --workdi
 ## 许可证
 
 本项目源码遵循 MIT 许可证。
+
+---
+
+<div align="center">
+
+<sub>Built and maintained by</sub>
+
+**Piracola**
+
+</div>
+
+<!-- 徽标定义：中文标签需 percent-encode，否则 shields.io 无法解析。 -->
+<!-- 修改标签文字时请一并更新编码，例如 最新版本 -> %E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC -->
+[badge-version]: https://img.shields.io/github/v/tag/Piracola/ChromiumPortable?style=flat-square&color=2f81f7&label=%E6%A0%B8%E5%BF%83%E7%89%88%E6%9C%AC
+[badge-sync]: https://img.shields.io/github/actions/workflow/status/Piracola/ChromiumPortable/update-chrome-plus.yml?branch=main&style=flat-square&label=chrome%2B%2B%20%E5%90%8C%E6%AD%A5
+[badge-license]: https://img.shields.io/github/license/Piracola/ChromiumPortable?style=flat-square&color=6e7681&label=%E8%AE%B8%E5%8F%AF%E8%AF%81
+
+[link-tags]: https://github.com/Piracola/ChromiumPortable/tags
+[link-sync]: https://github.com/Piracola/ChromiumPortable/actions/workflows/update-chrome-plus.yml
+[link-license]: https://github.com/Piracola/ChromiumPortable/blob/main/LICENSE
+
+[badge-chrome-release]: https://img.shields.io/github/v/release/Piracola/Chrome-Portable?display_name=tag&style=flat-square&color=d8653f&label=
+[badge-chrome-downloads]: https://img.shields.io/github/downloads/Piracola/Chrome-Portable/total?style=flat-square&color=2ea043&label=
+[link-chrome]: https://github.com/Piracola/Chrome-Portable/releases/latest
+
+[badge-edge-release]: https://img.shields.io/github/v/release/betacola/Edge_Portable?display_name=tag&style=flat-square&color=1d7c84&label=
+[badge-edge-downloads]: https://img.shields.io/github/downloads/betacola/Edge_Portable/total?style=flat-square&color=2ea043&label=
+[link-edge]: https://github.com/betacola/Edge_Portable/releases/latest
+
+[badge-helium-release]: https://img.shields.io/github/v/release/Piracola/Helium_Portable?display_name=tag&style=flat-square&color=5b5bd6&label=
+[badge-helium-downloads]: https://img.shields.io/github/downloads/Piracola/Helium_Portable/total?style=flat-square&color=2ea043&label=
+[link-helium]: https://github.com/Piracola/Helium_Portable/releases/latest

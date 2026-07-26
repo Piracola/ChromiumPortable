@@ -38,7 +38,61 @@ on:
         default: v1
 
 jobs:
-  build_and_release:
+  # Upstream version discovery is a handful of HTTP calls and needs no Windows,
+  # so it runs on a Linux runner and the Windows job only starts when there is
+  # actually something to build.
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      update_needed: ${{ steps.check.outputs.UPDATE_NEEDED }}
+      create_new_release: ${{ steps.check.outputs.CREATE_NEW_RELEASE }}
+      upstream_version: ${{ steps.check.outputs.UPSTREAM_VERSION }}
+      env_json: ${{ steps.check.outputs.env_json }}
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@v4
+
+      - name: Checkout builder repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.builder-repository }}
+          ref: ${{ inputs.builder-ref }}
+          path: _portable_builder
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install requests
+          if [ -f requirements.txt ]; then python -m pip install -r requirements.txt; fi
+
+      - name: Check for updates
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PYTHONPATH: _portable_builder
+        run: python -m portable_builder --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . check
+
+      - name: Summarize
+        shell: bash
+        run: |
+          echo "UPDATE_NEEDED=${{ steps.check.outputs.UPDATE_NEEDED }}"
+          echo "UPSTREAM_VERSION=${{ steps.check.outputs.UPSTREAM_VERSION }}"
+          echo "CREATE_NEW_RELEASE=${{ steps.check.outputs.CREATE_NEW_RELEASE }}"
+          echo "MINOR_UPDATE=${{ steps.check.outputs.MINOR_UPDATE }}"
+          echo "RELEASE_ID=${{ steps.check.outputs.RELEASE_ID }}"
+          echo "RELEASE_TAG=${{ steps.check.outputs.RELEASE_TAG }}"
+
+  build:
+    needs: check
+    if: github.event_name != 'schedule' || needs.check.outputs.update_needed == 'true'
     runs-on: windows-latest
     permissions:
       contents: write
@@ -68,50 +122,44 @@ jobs:
           }
           New-Item -ItemType Directory -Force -Path build/assets | Out-Null
 
-      - name: Check for updates
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          PYTHONPATH: _portable_builder
-        run: python -m portable_builder --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . check
-
-      - name: Debug environment
-        if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'push'
+      - name: Restore check results
         shell: pwsh
+        env:
+          CHECK_ENV: ${{ needs.check.outputs.env_json }}
         run: |
-          Write-Host "UPDATE_NEEDED: $env:UPDATE_NEEDED"
-          Write-Host "UPSTREAM_VERSION: $env:UPSTREAM_VERSION"
-          Write-Host "CREATE_NEW_RELEASE: $env:CREATE_NEW_RELEASE"
-          Write-Host "MINOR_UPDATE: $env:MINOR_UPDATE"
-          Write-Host "RELEASE_ID: $env:RELEASE_ID"
-          Write-Host "RELEASE_TAG: $env:RELEASE_TAG"
+          if (-not $env:CHECK_ENV) { throw "The check job produced no environment payload." }
+          foreach ($property in ($env:CHECK_ENV | ConvertFrom-Json).PSObject.Properties) {
+            "$($property.Name)=$($property.Value)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+            Write-Host "$($property.Name)=$($property.Value)"
+          }
 
       - name: Set build date
-        if: github.event_name != 'schedule' || env.UPDATE_NEEDED == 'true'
         shell: pwsh
         run: |
           $date = Get-Date -Format 'yyyy-MM-dd'
           "BUILD_DATE=$date" >> $env:GITHUB_ENV
 
       - name: Build portable browser
-        if: github.event_name != 'schedule' || env.UPDATE_NEEDED == 'true'
         env:
           PYTHONPATH: _portable_builder
         run: python -m portable_builder --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . build
 
       - name: Archive build
-        if: github.event_name != 'schedule' || env.UPDATE_NEEDED == 'true'
         env:
           PYTHONPATH: _portable_builder
         run: python -m portable_builder --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . archive
 
+      - name: Verify archive
+        env:
+          PYTHONPATH: _portable_builder
+        run: python -m portable_builder --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . verify
+
       - name: Render release metadata
-        if: github.event_name != 'schedule' || env.UPDATE_NEEDED == 'true'
         env:
           PYTHONPATH: _portable_builder
         run: python -m portable_builder --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . render-release
 
       - name: Upload artifact
-        if: github.event_name != 'schedule' || env.UPDATE_NEEDED == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact-name }}

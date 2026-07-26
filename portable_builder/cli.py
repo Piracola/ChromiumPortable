@@ -7,6 +7,7 @@ from .config import get_target, load_config
 from .multi import build_selected_targets, check_targets, render_multi_release, split_targets, update_multi_release
 from .release import check_updates, render_release, update_release
 from .tools import configure_stdout
+from .verify import verify_target, verify_targets
 
 
 def resolve_builder_dir(args_builder_dir):
@@ -50,6 +51,12 @@ def main():
     subparsers.add_parser("check", help="Check upstream and release versions")
     subparsers.add_parser("build", help="Build portable browser")
     subparsers.add_parser("archive", help="Archive build/release into build/assets")
+    verify_parser = subparsers.add_parser("verify", help="Extract the built archive and verify injection plus portability")
+    verify_parser.add_argument("--archive", default=None, help="Archive path (default: newest match in build/assets)")
+    verify_parser.add_argument("--no-smoke", action="store_true", help="Skip launching the browser; check the import table only")
+
+    verify_targets_parser = subparsers.add_parser("verify-targets", help="Verify archives for multiple comma-separated targets")
+    verify_targets_parser.add_argument("--no-smoke", action="store_true", help="Skip launching the browser; check the import table only")
     subparsers.add_parser("render-release", help="Render release title/tag/body")
     subparsers.add_parser("update-release", help="Update existing GitHub release metadata and remove old assets")
     subparsers.add_parser("check-targets", help="Check multiple comma-separated targets")
@@ -69,6 +76,10 @@ def main():
         build_target(target, workdir, builder_dir=builder_dir)
     elif args.command == "archive":
         archive_target(target, workdir)
+    elif args.command == "verify":
+        verify_target(target, workdir, archive=args.archive, smoke=not args.no_smoke)
+    elif args.command == "verify-targets":
+        verify_targets(config, split_targets(args.target), workdir, smoke=not args.no_smoke)
     elif args.command == "render-release":
         render_release(target, workdir)
     elif args.command == "update-release":

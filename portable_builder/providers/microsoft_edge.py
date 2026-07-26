@@ -69,6 +69,8 @@ def get_download_info(config, version):
         "url": item.get("Url"),
         "file_name": file_name,
         "size": item.get("SizeInBytes"),
+        # The CDP API reports digests base64-encoded; normalize_sha256 handles that.
+        "sha256": (item.get("Hashes") or {}).get("Sha256"),
     }
 
 
@@ -104,4 +106,6 @@ def get_package(config):
         "url": info["url"],
         "file_name": info["file_name"],
         "verify_ssl": config.get("verify_ssl", False),
+        "sha256": info["sha256"],
+        "size": info["size"],
     }

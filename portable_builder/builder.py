@@ -4,7 +4,8 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 
-from .github_env import write_env
+from .github_env import build_run_url, write_env
+from .ini_overlay import merge_ini, parse_overrides, read_ini_text, write_ini_text
 from .providers import get_package
 from .tools import (
     assert_portable_version_import,
@@ -14,7 +15,10 @@ from .tools import (
     find_child_dir,
     find_child_file,
     find_version_dir,
+    human_size,
     remove_path,
+    sha256_file,
+    verify_file_digest,
 )
 
 
@@ -34,6 +38,12 @@ def build_context(target, version=None, date=None, package_version=None):
         "package_version": resolved_package_version,
         "date": date or datetime.now().strftime("%Y-%m-%d"),
         "arch": target.get("architecture", "x64"),
+        # Populated by the archive stage; empty when rendering before archiving.
+        "archive": os.getenv("ARCHIVE_NAME", ""),
+        "sha256": os.getenv("ARCHIVE_SHA256", ""),
+        "size": human_size(os.getenv("ARCHIVE_SIZE") or None),
+        "chrome_plus_version": os.getenv("CHROME_PLUS_VERSION", ""),
+        "run_url": build_run_url(),
     }
 
 
@@ -61,9 +71,16 @@ def prepare_package(target, workdir, package):
         installer_path = temp_dir / source_path.name
         if source_path.resolve() != installer_path.resolve():
             shutil.copy2(source_path, installer_path)
+        verify_file_digest(installer_path, sha256=package.get("sha256"), size=package.get("size"))
     else:
         installer_path = temp_dir / package["file_name"]
-        download_file(package["url"], installer_path, verify_ssl=package.get("verify_ssl", True))
+        download_file(
+            package["url"],
+            installer_path,
+            verify_ssl=package.get("verify_ssl", True),
+            sha256=package.get("sha256"),
+            size=package.get("size"),
+        )
     extract_with_7z(installer_path, temp_dir, seven_zip)
 
     inner_archive = target.get("inner_archive")
@@ -121,6 +138,69 @@ def stage_app(target, workdir, prepared):
     }
 
 
+def resolve_chrome_plus_ini(target, workdir, setdll_src_dir):
+    """Resolve the chrome++.ini content to ship, returning (text, encoding).
+
+    Three layers, each answering a different question:
+
+    1. `setdll/chrome++.ini` — upstream's baseline. Auto-synced by
+       update-chrome-plus.yml, so never hand-edit it; edits would be overwritten.
+    2. `setdll/chrome++.defaults.ini` — our house defaults that apply to every
+       browser. Deliberately outside the sync's file list, so it survives.
+    3. child `chrome++/chrome++.override.ini` — this browser's own deviations.
+
+    A full `chrome++.ini` in the child repo still wins, for backward compatibility,
+    but it shadows the synced baseline so upstream additions never reach users —
+    hence the warning.
+    """
+    workdir = Path(workdir)
+    chrome_plus_dir = workdir / target.get("chrome_plus_dir", "chrome++")
+    ini_name = target.get("ini_name", "chrome++.ini")
+    override_name = target.get("ini_override_name", "chrome++.override.ini")
+
+    baseline_path = setdll_src_dir / "chrome++.ini"
+    defaults_path = setdll_src_dir / "chrome++.defaults.ini"
+    override_path = next(
+        (path for path in (workdir / override_name, chrome_plus_dir / override_name) if path.exists()),
+        None,
+    )
+    full_path = next(
+        (path for path in (workdir / ini_name, chrome_plus_dir / ini_name) if path.exists()),
+        None,
+    )
+
+    if full_path and not override_path:
+        print(
+            f"[WARN] Using the full {full_path} verbatim; it shadows the synced baseline at "
+            f"{baseline_path}, so upstream chrome++ additions will not reach users. "
+            f"Consider replacing it with {override_name}."
+        )
+        return read_ini_text(full_path)
+
+    if not baseline_path.exists():
+        if override_path:
+            raise FileNotFoundError(
+                f"{override_path.name} needs a baseline chrome++.ini at {baseline_path}. "
+                "Point --builder-dir (or PYTHONPATH) at the ChromiumPortable checkout."
+            )
+        return None, None
+
+    if full_path:
+        print(f"[WARN] Ignoring {full_path} because {override_path.name} takes precedence.")
+
+    text, encoding = read_ini_text(baseline_path)
+    print(f"[INFO] chrome++.ini baseline: {baseline_path}")
+    for layer in (defaults_path, override_path):
+        if layer is None or not layer.exists():
+            continue
+        layer_text, _ = read_ini_text(layer)
+        text, applied = merge_ini(text, parse_overrides(layer_text))
+        summary = ", ".join(applied) if applied else "(nothing)"
+        print(f"[INFO] Applied {len(applied)} override(s) from {layer.name}: {summary}")
+
+    return text, encoding
+
+
 def copy_chrome_plus(target, workdir, staged, builder_dir=None):
     workdir = Path(workdir)
     arch = target.get("architecture", "x64")
@@ -135,11 +215,11 @@ def copy_chrome_plus(target, workdir, staged, builder_dir=None):
         version_dll_src = setdll_src_dir / version_dll_name
         setdll_src = setdll_src_dir / setdll_name
     else:
-        chrome_plus_dir = workdir / target.get("chrome_plus_dir", "chrome++")
-        if not chrome_plus_dir.exists():
-            raise FileNotFoundError(f"chrome++ directory not found: {chrome_plus_dir}")
-        version_dll_src = chrome_plus_dir / version_dll_name
-        setdll_src = chrome_plus_dir / setdll_name
+        setdll_src_dir = workdir / target.get("chrome_plus_dir", "chrome++")
+        if not setdll_src_dir.exists():
+            raise FileNotFoundError(f"chrome++ directory not found: {setdll_src_dir}")
+        version_dll_src = setdll_src_dir / version_dll_name
+        setdll_src = setdll_src_dir / setdll_name
 
     if not version_dll_src.exists():
         raise FileNotFoundError(f"Required DLL not found: {version_dll_src}")
@@ -154,34 +234,18 @@ def copy_chrome_plus(target, workdir, staged, builder_dir=None):
     setdll_path = staged["app_root"] / setdll_name
     shutil.copy(setdll_src, setdll_path)
 
-    ini_resolved = None
-    sub_ini_candidates = [
-        workdir / "chrome++.ini",
-        workdir / target.get("chrome_plus_dir", "chrome++") / "chrome++.ini",
-    ]
-    for candidate in sub_ini_candidates:
-        if candidate.exists():
-            ini_resolved = candidate
-            break
+    chrome_plus_version_path = setdll_src_dir / "version.txt"
+    if chrome_plus_version_path.exists():
+        staged["chrome_plus_version"] = chrome_plus_version_path.read_text(encoding="utf-8").strip()
+        print(f"[INFO] Chrome++ version: {staged['chrome_plus_version']}")
 
-    if ini_resolved is None and builder_dir:
-        builder_ini = builder_dir / "setdll" / "chrome++.ini"
-        if builder_ini.exists():
-            ini_resolved = builder_ini
-
-    if ini_resolved is None and not builder_dir:
-        ini_src = workdir / target.get("chrome_plus_dir", "chrome++") / target.get("ini_name", "chrome++.ini")
-        if not ini_src.exists() and (workdir / target.get("ini_name", "chrome++.ini")).exists():
-            ini_src = workdir / target.get("ini_name", "chrome++.ini")
-        if ini_src.exists():
-            ini_resolved = ini_src
-
-    if ini_resolved and ini_resolved.exists():
+    ini_text, ini_encoding = resolve_chrome_plus_ini(target, workdir, setdll_src_dir)
+    if ini_text is None:
+        print("[WARN] chrome++.ini not found; continuing without it.")
+    else:
         ini_location = target.get("ini_location", "app_root")
         ini_dir = staged["version_dir"] if ini_location == "version_dir" else staged["app_root"]
-        shutil.copy(ini_resolved, ini_dir / "chrome++.ini")
-    else:
-        print("[WARN] chrome++.ini not found; continuing without it.")
+        write_ini_text(ini_dir / "chrome++.ini", ini_text, encoding=ini_encoding)
 
     staged["version_dll"] = dll_path
     staged["setdll"] = setdll_path
@@ -230,6 +294,13 @@ def inject_dll(target, staged):
     assert_portable_version_import(target_exe_path)
     print(f"[INFO] Portable import verified: {target_exe_path}")
 
+    # setdll leaves an un-injected backup beside the target. Shipping it wastes
+    # space and hands users a copy that silently writes to their user profile.
+    backup = target_exe_path.with_name(target_exe_path.name + "~")
+    if backup.exists():
+        print(f"[INFO] Removing setdll backup: {backup.name}")
+        remove_path(backup)
+
     if target.get("remove_setdll", True):
         remove_path(setdll)
 
@@ -274,12 +345,15 @@ def build_target(target, workdir, builder_dir=None):
         "UPSTREAM_VERSION": package["version"],
         "OUTPUT_DIR": target.get("output_dir", target.get("name", "Browser")),
     }
+    if staged.get("chrome_plus_version"):
+        env_values["CHROME_PLUS_VERSION"] = staged["chrome_plus_version"]
     write_env(env_values)
     print(f"[INFO] Build completed: {final_app_dir}")
     return {
         "version": staged["version"],
         "package_version": package["version"],
         "output_dir": str(final_app_dir),
+        "chrome_plus_version": staged.get("chrome_plus_version", ""),
     }
 
 
@@ -312,5 +386,13 @@ def archive_target(target, workdir, version=None, build_date=None, package_versi
             print(result.stderr)
         raise RuntimeError("Archive creation failed.")
 
-    write_env({"ARCHIVE_NAME": archive_name, "ASSET_PATH": str(archive_path)})
-    return archive_path
+    digest = sha256_file(archive_path)
+    size = archive_path.stat().st_size
+    print(f"[INFO] Archive SHA256: {digest} ({human_size(size)})")
+    write_env({
+        "ARCHIVE_NAME": archive_name,
+        "ASSET_PATH": str(archive_path),
+        "ARCHIVE_SHA256": digest,
+        "ARCHIVE_SIZE": str(size),
+    })
+    return {"path": archive_path, "name": archive_name, "sha256": digest, "size": size}

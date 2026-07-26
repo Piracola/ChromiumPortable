@@ -21,4 +21,6 @@ def get_package(config):
         "url": url,
         "file_name": config.get("file_name") or url.rstrip("/").split("/")[-1] or "browser-installer.exe",
         "verify_ssl": config.get("verify_ssl", True),
+        "sha256": config.get("sha256"),
+        "size": config.get("size"),
     }

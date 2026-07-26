@@ -165,6 +165,38 @@ def release_version(release, target):
     return extract_version(tag) or extract_version(body)
 
 
+def assert_body_versions(body, expectations):
+    """Verify each target's version_pattern reads its version back out of the body.
+
+    `check` recovers the currently-published version by regex-matching the release
+    body, so the body text is effectively a schema. Reword the body without
+    updating the pattern and the match silently fails, `current` becomes None, and
+    every scheduled run then rebuilds unconditionally, forever. Catching it here
+    turns that silent waste into a build-time error.
+    """
+    problems = []
+    for target_name, pattern, expected in expectations:
+        if not pattern or not expected:
+            continue
+        match = re.search(pattern, body, re.IGNORECASE)
+        if not match:
+            problems.append(f"{target_name}: pattern {pattern!r} matches nothing in the rendered body")
+        elif match.group(1) != expected:
+            problems.append(
+                f"{target_name}: pattern {pattern!r} read {match.group(1)!r}, expected {expected!r}"
+            )
+
+    if problems:
+        raise RuntimeError(
+            "Release body and version_pattern disagree; `check` would not find the published "
+            "version and every scheduled run would rebuild. " + "; ".join(problems)
+        )
+
+    checked = [name for name, pattern, expected in expectations if pattern and expected]
+    if checked:
+        print(f"[INFO] version_pattern round-trip verified for: {', '.join(checked)}")
+
+
 def check_updates(target, workdir="."):
     event_name = os.getenv("GITHUB_EVENT_NAME", "")
     force_build = event_name == "workflow_dispatch"
@@ -222,7 +254,7 @@ def render_release(target, workdir, version=None, build_date=None):
     release_config = target.get("release", {})
 
     tag_template = release_config.get("tag", "v{version}")
-    title_template = release_config.get("title", "{display_name} Portable v{version}")
+    title_template = release_config.get("title", "{display_name} {version}")
     body_template = release_config.get(
         "body",
         "自动构建的 {display_name} 便携版\n\n构建时间: {date}\n{display_name} 版本: {version}\n",
@@ -231,6 +263,8 @@ def render_release(target, workdir, version=None, build_date=None):
     tag = format_value(tag_template, context)
     title = format_value(title_template, context)
     body = format_value(body_template, context)
+
+    assert_body_versions(body, [(target.get("target", "target"), release_config.get("version_pattern"), version)])
 
     body_path = workdir / "build" / "release_body.md"
     body_path.parent.mkdir(parents=True, exist_ok=True)

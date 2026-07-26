@@ -60,10 +60,14 @@ def decode_response(text):
     if not urls:
         raise RuntimeError("No download URL found in Google Omaha response.")
 
+    size = package_node.get("size")
     return {
         "version": manifest_node.get("version"),
         "urls": urls,
         "file_name": package_name,
+        # Omaha publishes the installer digest alongside the download URL.
+        "sha256": package_node.get("hash_sha256"),
+        "size": int(size) if size and str(size).isdigit() else None,
     }
 
 
@@ -88,4 +92,6 @@ def get_package(config):
         "url": download_url,
         "file_name": data["file_name"] or "chrome.7z.exe",
         "verify_ssl": config.get("verify_ssl", True),
+        "sha256": data["sha256"],
+        "size": data["size"],
     }

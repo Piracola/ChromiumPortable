@@ -5,8 +5,9 @@ from pathlib import Path
 
 from .builder import archive_target, build_target, format_value, get_version_info
 from .config import get_target
-from .github_env import write_env
+from .github_env import build_run_url, write_env
 from .release import (
+    assert_body_versions,
     delete_target_assets,
     download_release_asset,
     find_latest_target_asset,
@@ -15,6 +16,7 @@ from .release import (
     render_release,
     target_match_description,
 )
+from .tools import human_size, sha256_file
 from .versions import is_major_update, is_minor_update, is_upgrade
 
 import requests
@@ -35,12 +37,48 @@ def extract_with_pattern(text, pattern):
     return match.group(1) if match else None
 
 
+def asset_facts(config, target_name, release_id):
+    """Archive name / digest / size for a target, however this run produced them.
+
+    A freshly built target has them in the environment. A target that did not
+    change this run has no fresh archive, so fall back to the asset already
+    attached to the release — otherwise its checksum row would render empty.
+    """
+    target = get_target(config, target_name)
+    prefix = target.get("env_prefix") or env_name(target_name)
+
+    name = os.getenv(f"{prefix}_ARCHIVE", "")
+    digest = os.getenv(f"{prefix}_SHA256", "")
+    size = os.getenv(f"{prefix}_SIZE", "")
+
+    if not digest and release_id:
+        try:
+            asset = find_latest_target_asset(release_id, target)
+        except Exception as exc:
+            print(f"[WARN] Could not read the existing release asset for {target_name}: {exc}")
+            asset = None
+        if asset:
+            name = name or asset.get("name", "")
+            size = size or str(asset.get("size", ""))
+            # GitHub reports asset digests as 'sha256:<hex>'.
+            digest = str(asset.get("digest") or "").split(":", 1)[-1]
+
+    return {"archive": name, "sha256": digest, "size": human_size(size or None)}
+
+
 def build_flat_context(config, target_names, packages, build_date):
-    context = {"date": build_date}
+    context = {
+        "date": build_date,
+        "chrome_plus_version": os.getenv("CHROME_PLUS_VERSION", ""),
+        "run_url": build_run_url(),
+    }
+    release_id = os.getenv("RELEASE_ID")
     for target_name in target_names:
         package = packages[target_name]
         prefix = env_name(target_name).lower()
         context[f"{prefix}_version"] = package["version"]
+        for key, value in asset_facts(config, target_name, release_id).items():
+            context[f"{prefix}_{key}"] = value or "-"
     return context
 
 
@@ -171,12 +209,17 @@ def build_selected_targets(config, target_names, workdir, builder_dir=None):
             continue
 
         result = build_target(target, workdir, builder_dir=builder_dir)
-        archive_target(target, workdir, version=result["package_version"], package_version=result["package_version"])
+        archive = archive_target(
+            target, workdir, version=result["package_version"], package_version=result["package_version"]
+        )
         built[target_name] = result["package_version"]
         write_env({
             f"{prefix}_VERSION": result["package_version"],
             f"{prefix}_BUILD_VERSION": result["version"],
             f"{prefix}_PACKAGE_VERSION": result["package_version"],
+            f"{prefix}_ARCHIVE": archive["name"],
+            f"{prefix}_SHA256": archive["sha256"],
+            f"{prefix}_SIZE": str(archive["size"]),
         })
     ensure_shared_release_assets(config, target_names, workdir)
     return built
@@ -211,6 +254,14 @@ def ensure_shared_release_assets(config, target_names, workdir):
             download_release_asset(previous_asset, destination)
         carried.append(str(destination))
 
+        # Publish the carried asset's facts too, so the release notes can show a
+        # checksum for a channel that was not rebuilt in this run.
+        write_env({
+            f"{prefix}_ARCHIVE": destination.name,
+            f"{prefix}_SHA256": sha256_file(destination),
+            f"{prefix}_SIZE": str(destination.stat().st_size),
+        })
+
     return carried
 
 
@@ -233,8 +284,17 @@ def render_multi_release(config, target_names, workdir):
 
     context = build_flat_context(config, target_names, packages, build_date)
     tag = format_value(release_config.get("tag", "v{date}"), context)
-    title = format_value(release_config.get("title", "Portable Browser {date}"), context)
+    title = format_value(release_config.get("title", "{date}"), context)
     body = format_value(release_config.get("body", ""), context)
+
+    assert_body_versions(body, [
+        (
+            target_name,
+            get_target(config, target_name).get("release", {}).get("version_pattern"),
+            packages[target_name]["version"],
+        )
+        for target_name in target_names
+    ])
 
     body_path = Path(workdir) / "build" / "release_body.md"
     body_path.parent.mkdir(parents=True, exist_ok=True)

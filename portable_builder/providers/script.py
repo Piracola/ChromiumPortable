@@ -3,6 +3,8 @@ import shlex
 import subprocess
 from pathlib import Path
 
+from ..tools import normalize_sha256
+
 
 def parse_json_output(stdout):
     text = stdout.strip()
@@ -54,4 +56,11 @@ def get_package(config):
     data.setdefault("verify_ssl", config.get("verify_ssl", True))
     if data.get("url"):
         data.setdefault("file_name", data["url"].rstrip("/").split("/")[-1] or "browser-installer.exe")
+
+    # Fail fast on an unusable digest instead of at download time.
+    if data.get("sha256"):
+        normalize_sha256(data["sha256"])
+    else:
+        print("[WARN] Script provider returned no 'sha256'; the download will not be verified.")
+
     return data

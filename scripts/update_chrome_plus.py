@@ -12,6 +12,11 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SETDLL_DIR = REPO_ROOT / "setdll"
 UPSTREAM_API = "https://api.github.com/repos/Bush2021/chrome_plus/releases/latest"
+# chrome++.ini here is upstream's baseline and is overwritten wholesale on every
+# sync. Never add setdll/chrome++.defaults.ini to this list: it holds our own
+# cross-browser defaults and only survives because the sync ignores it. Per-browser
+# deviations live in each child repo's chrome++/chrome++.override.ini; the builder
+# merges baseline -> defaults -> override at build time.
 REQUIRED_FILES = ("version-x64.dll", "setdll-x64.exe", "README.md", "chrome++.ini")
 REBUILD_TRIGGER_FILES = {"version-x64.dll", "setdll-x64.exe"}
 
@@ -113,6 +118,15 @@ def main():
                 print(f"[INFO] Updated {destination.relative_to(REPO_ROOT)}")
             else:
                 print(f"[INFO] Unchanged {destination.relative_to(REPO_ROOT)}")
+
+    # Record the upstream tag so builds can report which chrome++ they bundled.
+    # Not in REQUIRED_FILES: it is ours, not part of upstream's archive.
+    version_path = SETDLL_DIR / "version.txt"
+    previous_version = version_path.read_text(encoding="utf-8").strip() if version_path.exists() else ""
+    if version and previous_version != version:
+        version_path.write_text(f"{version}\n", encoding="utf-8")
+        changed_files.append("version.txt")
+        print(f"[INFO] Recorded chrome++ version: {previous_version or '(none)'} -> {version}")
 
     updated = bool(changed_files)
     rebuild_needed = any(name in REBUILD_TRIGGER_FILES for name in changed_files)

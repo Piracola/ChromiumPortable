@@ -1,0 +1,419 @@
+{
+  "meta": {
+    "siteName": "Chromium 便携版构建",
+    "siteUrl": "https://piracola.github.io/ChromiumPortable/",
+    "author": "Piracola",
+    "license": "MIT",
+    "builderRepo": "https://github.com/Piracola/ChromiumPortable",
+    "chromePlusRepo": "https://github.com/Bush2021/chrome_plus",
+    "ogImage": "assets/og.png"
+  },
+  "home": {
+    "title": "Chrome / Edge / Helium 便携版下载 — 每日自动构建，集成 Chrome++",
+    "description": "开源、可复现的 Chromium 系便携版：Google Chrome、Microsoft Edge、Helium，Windows x64 免安装绿色版，集成 Chrome++ 增强，每日自动跟随官方版本，全流程 SHA256 校验并实机验证便携性。",
+    "h1": "Chrome、Edge、Helium 便携版",
+    "lede": "免安装、不写注册表、数据留在自己的文件夹里。由 GitHub Actions 每日跟随官方版本自动构建，构建过程与校验日志全部公开可查。",
+    "stats": [
+      {
+        "value": "5",
+        "label": "构建目标",
+        "detail": "3 个浏览器 · 5 个发布渠道"
+      },
+      {
+        "value": "每日",
+        "label": "自动跟随上游",
+        "detail": "官方一发新版即自动打包"
+      },
+      {
+        "value": "SHA256",
+        "label": "全流程校验",
+        "detail": "核对上游哈希，逐字节校验下载"
+      },
+      {
+        "value": "实机",
+        "label": "启动验证",
+        "detail": "发布前真实启动，确认数据不外泄"
+      }
+    ]
+  },
+  "trust": {
+    "heading": "为什么值得用这一份",
+    "description": "网上的「绿色版」大多来路不明。这个项目的每一步都能被你自己复核。",
+    "items": [
+      {
+        "title": "安装包直接来自官方",
+        "body": "Chrome 走 Google Omaha 更新 API，Edge 走微软 CDP 接口，Helium 取上游 GitHub Release，没有第三方中转下载。"
+      },
+      {
+        "title": "哈希对得上才继续",
+        "body": "上游给出的 SHA256 会先被记录，下载时边下边算，对不上立刻中止构建，绝不会把一个来路可疑的安装包打进压缩包。"
+      },
+      {
+        "title": "注入结果会被验证",
+        "body": "打包完成后会解析 PE 导入表，确认 Chrome++ 的 version.dll 真的以相对路径注入成功，而不是「看起来成功了」。"
+      },
+      {
+        "title": "发布前真的跑一遍",
+        "body": "解压成品压缩包、启动浏览器、确认用户数据目录确实落在解压目录内——便携性是被验证过的，不是声称的。"
+      },
+      {
+        "title": "没有闭源环节",
+        "body": "构建脚本、工作流、每一次构建的完整日志都在 GitHub 上公开，压缩包的 SHA256 写在 Release 正文里，可自行比对。"
+      },
+      {
+        "title": "不夹带任何东西",
+        "body": "只做解包、集成 Chrome++、注入、压缩四件事。不改主页、不装扩展、不加推广，源码可逐行核对。"
+      }
+    ]
+  },
+  "features": {
+    "heading": "开箱即用的增强",
+    "description": "集成 Bush2021/chrome_plus，以下功能默认启用，都可以在 chrome++.ini 里改或关掉。",
+    "items": [
+      "用户数据与缓存存放在程序同级的 Data、Cache 文件夹",
+      "双击关闭标签页，并保留最后一个标签页",
+      "悬停标签栏时用滚轮切换标签页",
+      "地址栏内容与书签在新建前台标签页中打开",
+      "免验证系统登录密码即可查看已保存的密码",
+      "右键关闭标签、老板键、翻译快捷键、按键映射、启动与退出钩子等扩展能力（默认未启用）"
+    ]
+  },
+  "repos": [
+    {
+      "id": "chrome",
+      "name": "Chrome-Portable",
+      "owner": "Piracola",
+      "url": "https://github.com/Piracola/Chrome-Portable",
+      "releasesUrl": "https://github.com/Piracola/Chrome-Portable/releases/latest",
+      "workflowUrl": "https://github.com/Piracola/Chrome-Portable/actions/workflows/build.yml",
+      "icon": "assets/chrome.svg",
+      "accent": "#d8653f",
+      "summary": "Google Chrome 便携版，同一个 Release 下同时维护 Stable 与 Beta 两个渠道。"
+    },
+    {
+      "id": "edge",
+      "name": "Edge_Portable",
+      "owner": "betacola",
+      "url": "https://github.com/betacola/Edge_Portable",
+      "releasesUrl": "https://github.com/betacola/Edge_Portable/releases/latest",
+      "workflowUrl": "https://github.com/betacola/Edge_Portable/actions/workflows/build.yml",
+      "icon": "assets/edge.svg",
+      "accent": "#1d7c84",
+      "summary": "Microsoft Edge 便携版，跟随官方 Stable 渠道，使用微软官方离线安装包。"
+    },
+    {
+      "id": "helium",
+      "name": "Helium_Portable",
+      "owner": "Piracola",
+      "url": "https://github.com/Piracola/Helium_Portable",
+      "releasesUrl": "https://github.com/Piracola/Helium_Portable/releases/latest",
+      "workflowUrl": "https://github.com/Piracola/Helium_Portable/actions/workflows/build.yml",
+      "icon": "assets/helium.svg",
+      "accent": "#5b5bd6",
+      "summary": "Helium 便携版，跟踪上游 Windows x64 构建，正式版与预发行版同 Release 提供。"
+    }
+  ],
+  "builds": [
+    {
+      "id": "chrome-stable",
+      "repoId": "chrome",
+      "pageSlug": "chrome",
+      "family": "Chrome",
+      "title": "Chrome 便携版",
+      "channel": "Stable",
+      "highlight": "日常使用推荐",
+      "summary": "跟随 Google Chrome 正式版渠道，适合作为主力浏览器长期使用。",
+      "target": "chrome_stable",
+      "outputDir": "Chrome",
+      "architecture": "x64",
+      "assetHint": "Chrome++_stable_…7z",
+      "accent": "#d8653f",
+      "icon": "assets/chrome.svg",
+      "assetPattern": "^Chrome\\+\\+_stable_(?P<version>[\\d.]+)_"
+    },
+    {
+      "id": "chrome-beta",
+      "repoId": "chrome",
+      "pageSlug": "chrome",
+      "family": "Chrome",
+      "title": "Chrome 便携版 Beta",
+      "channel": "Beta",
+      "highlight": "抢先体验新特性",
+      "summary": "跟随 Chrome Beta 渠道，提前几周体验新功能，不建议与 Stable 共用同一份数据目录。",
+      "target": "chrome_beta",
+      "outputDir": "Chrome",
+      "architecture": "x64",
+      "assetHint": "Chrome++_beta_…7z",
+      "accent": "#e08a48",
+      "icon": "assets/chrome.svg",
+      "assetPattern": "^Chrome\\+\\+_beta_(?P<version>[\\d.]+)_"
+    },
+    {
+      "id": "edge-stable",
+      "repoId": "edge",
+      "pageSlug": "edge",
+      "family": "Edge",
+      "title": "Edge 便携版",
+      "channel": "Stable",
+      "highlight": "微软生态兼容",
+      "summary": "使用微软官方离线安装包构建，保留 Edge 的垂直标签、集锦等自带能力。",
+      "target": "edge_stable",
+      "outputDir": "Edge",
+      "architecture": "x64",
+      "assetHint": "Edge_Portable_Win64_…7z",
+      "accent": "#1d7c84",
+      "icon": "assets/edge.svg",
+      "assetPattern": "^Edge_Portable_Win64_(?P<version>[\\d.]+)_"
+    },
+    {
+      "id": "helium-stable",
+      "repoId": "helium",
+      "pageSlug": "helium",
+      "family": "Helium",
+      "title": "Helium 便携版",
+      "channel": "Stable",
+      "highlight": "去广告去遥测",
+      "summary": "基于 imputnet/helium 的正式版构建，一个默认去广告、去遥测的 Chromium 分支。",
+      "target": "helium_stable",
+      "outputDir": "Helium",
+      "architecture": "x64",
+      "assetHint": "Helium_…7z",
+      "accent": "#5b5bd6",
+      "icon": "assets/helium.svg",
+      "assetPattern": "^Helium_(?P<version>\\d[\\d.]*)_"
+    },
+    {
+      "id": "helium-preview",
+      "repoId": "helium",
+      "pageSlug": "helium",
+      "family": "Helium",
+      "title": "Helium 便携版 Preview",
+      "channel": "Preview",
+      "highlight": "跟进上游预发行",
+      "summary": "跟踪 Helium 的最新预发行版本，方便提前验证上游改动。",
+      "target": "helium_prerelease",
+      "outputDir": "Helium",
+      "architecture": "x64",
+      "assetHint": "Helium_Preview_…7z",
+      "accent": "#7b6ff0",
+      "icon": "assets/helium.svg",
+      "assetPattern": "^Helium_Preview_(?P<version>[\\d.]+)_"
+    }
+  ],
+  "pages": [
+    {
+      "slug": "chrome",
+      "family": "Chrome",
+      "repoId": "chrome",
+      "navLabel": "Chrome",
+      "title": "Chrome 便携版下载 — 免安装绿色版，集成 Chrome++，每日自动构建",
+      "description": "Google Chrome 便携版（绿色免安装版）下载，Windows x64，Stable 与 Beta 双渠道，集成 Chrome++ 增强，用户数据保存在程序同级目录，每日自动跟随 Chrome 官方版本构建并提供 SHA256 校验。",
+      "h1": "Chrome 便携版",
+      "lede": "Google Chrome 的免安装版本。解压即用，不写注册表，用户数据与缓存都留在程序同级目录，删掉文件夹就等于卸载干净。",
+      "upstream": "Google Chrome",
+      "upstreamNote": "安装包来自 Google Omaha 官方更新接口，版本号与 Chrome 官方 Stable / Beta 分支完全一致。",
+      "sections": [
+        {
+          "heading": "和安装版有什么区别",
+          "paragraphs": [
+            "功能上没有区别，同一个官方安装包解包而来，浏览器内核、扩展生态、账号同步都一样。差别在于它不进行「安装」这个动作："
+          ],
+          "list": [
+            "不写注册表，不注册系统服务，不创建后台自动更新任务",
+            "用户数据、扩展、书签、密码全部保存在 Chrome 文件夹同级的 Data 和 Cache 目录",
+            "整个文件夹可以拷到 U 盘或另一台电脑，换机不用重新登录配置",
+            "卸载就是删除文件夹，系统里不留残留",
+            "可以和系统里已安装的 Chrome 共存，互不干扰"
+          ]
+        },
+        {
+          "heading": "选 Stable 还是 Beta",
+          "paragraphs": [
+            "日常使用选 Stable，也就是文件名里带 stable 的那个压缩包。Beta 渠道比正式版领先大约四周，用来提前体验新功能或验证网站兼容性。",
+            "两个渠道发布在同一个 GitHub Release 下，可以同时下载。但不建议让 Stable 和 Beta 交替读写同一份 Data 目录——Chrome 的用户数据格式在版本回退时可能读不出来，表现为闪退或无法启动。真要两个都用，就解压到两个互不相干的目录。"
+          ]
+        },
+        {
+          "heading": "怎么用",
+          "steps": [
+            "从 Releases 页面下载对应渠道的 7z 压缩包。",
+            "解压到任意位置，比如 D:\\PortableApps\\ 或者 U 盘。",
+            "双击目录里的「开始.bat」创建桌面快捷方式，也可以直接运行 Chrome\\chrome.exe。",
+            "首次启动后会在 Chrome 文件夹同级生成 Data 和 Cache 两个目录，你的所有数据都在里面。"
+          ]
+        },
+        {
+          "heading": "怎么更新",
+          "paragraphs": [
+            "便携版不注册系统更新服务，所以不会自己升级，需要手动换新版。本仓库每天检查官方是否发新版，有就自动打包发布，你按下面的步骤覆盖即可："
+          ],
+          "steps": [
+            "完全关闭浏览器。",
+            "把旧版 Chrome 文件夹里的 Data 目录复制一份到安全位置备份。",
+            "删除旧的 Chrome 文件夹；想留退路就改名为 Chrome old。",
+            "把新版的 Chrome 文件夹解压到同级目录。",
+            "把备份的 Data 放回新的 Chrome 文件夹里。"
+          ]
+        }
+      ],
+      "targetQueries": "Chrome 便携版, Chrome 绿色版, Chrome 免安装, 谷歌浏览器便携版, Chrome++ 便携版"
+    },
+    {
+      "slug": "edge",
+      "family": "Edge",
+      "repoId": "edge",
+      "navLabel": "Edge",
+      "title": "Edge 便携版下载 — 免安装绿色版，集成 Chrome++，每日自动构建",
+      "description": "Microsoft Edge 便携版（绿色免安装版）下载，Windows x64 Stable 渠道，集成 Chrome++ 增强，用户数据保存在程序同级目录，使用微软官方离线安装包每日自动构建并提供 SHA256 校验。",
+      "h1": "Edge 便携版",
+      "lede": "Microsoft Edge 的免安装版本，用微软官方离线安装包构建。适合想要 Edge 的兼容性和自带功能，又不希望它把自己写进系统的人。",
+      "upstream": "Microsoft Edge",
+      "upstreamNote": "安装包来自微软官方 CDP 接口，版本号与 Edge 官方 Stable 分支一致。",
+      "sections": [
+        {
+          "heading": "为什么要一个便携版 Edge",
+          "paragraphs": [
+            "Windows 自带的 Edge 是系统组件，卸载麻烦、更新由系统托管、数据散落在用户目录里。这个便携版把它变成一个普通文件夹："
+          ],
+          "list": [
+            "和系统自带的 Edge 完全隔离，两者可以同时运行、各用各的数据",
+            "用户数据与缓存保存在 Edge 文件夹同级的 Data 和 Cache 目录",
+            "不写注册表、不注册更新服务，删除文件夹即卸载",
+            "适合放在 U 盘里，或者在公司电脑上用一份不受管控策略影响的浏览器配置",
+            "垂直标签页、集锦、Copilot 等 Edge 自带功能保持可用"
+          ]
+        },
+        {
+          "heading": "怎么用",
+          "steps": [
+            "从 Releases 页面下载 Edge_Portable_Win64 开头的 7z 压缩包。",
+            "解压到任意位置。",
+            "双击「开始.bat」创建桌面快捷方式，或直接运行 Edge 目录下的 msedge.exe。",
+            "首次启动后会在同级生成 Data 和 Cache 目录，所有数据都在里面。"
+          ]
+        },
+        {
+          "heading": "怎么更新",
+          "paragraphs": [
+            "便携版不会自动升级。本仓库每天检查微软是否发布新版，有就自动打包，你手动覆盖即可："
+          ],
+          "steps": [
+            "完全关闭浏览器。",
+            "备份旧版 Edge 文件夹里的 Data 目录。",
+            "删除旧的 Edge 文件夹。",
+            "解压新版 Edge 文件夹到同级目录。",
+            "把备份的 Data 放回新的 Edge 文件夹。"
+          ]
+        }
+      ],
+      "targetQueries": "Edge 便携版, Edge 绿色版, Edge 免安装, Microsoft Edge 便携版, Edge Portable"
+    },
+    {
+      "slug": "helium",
+      "family": "Helium",
+      "repoId": "helium",
+      "navLabel": "Helium",
+      "title": "Helium 便携版下载 — 去广告去遥测的 Chromium 分支，免安装绿色版",
+      "description": "Helium 浏览器便携版（绿色免安装版）下载，Windows x64，正式版与预发行版双渠道，集成 Chrome++ 增强，基于 imputnet/helium 上游构建，每日自动跟随并提供 SHA256 校验。",
+      "h1": "Helium 便携版",
+      "lede": "Helium 是一个默认去广告、去遥测的 Chromium 分支。这里提供它的 Windows x64 免安装版本，正式版和预发行版都有。",
+      "upstream": "Helium",
+      "upstreamNote": "跟踪 imputnet/helium-windows 的官方 Release，正式版与预发行版分别跟进。",
+      "sections": [
+        {
+          "heading": "Helium 是什么",
+          "paragraphs": [
+            "Helium 是 imputnet 维护的 Chromium 分支，出发点是把浏览器里那些「不是为用户服务」的部分去掉：默认拦截广告、移除 Google 遥测与后台上报、砍掉推广位和账号绑定引导，同时保留完整的 Chromium 内核与扩展兼容性。",
+            "如果你喜欢 Chrome 的性能和扩展生态，但不想要它绑定的那一整套服务，Helium 是一个合理的落点。本仓库在它之上再叠加 Chrome++ 的便携化能力，让它彻底不碰你的系统。"
+          ]
+        },
+        {
+          "heading": "正式版和预发行版",
+          "paragraphs": [
+            "文件名不带 Preview 的是正式版，日常使用选它。带 Preview 的是上游最新预发行版本，用来提前验证上游改动，稳定性没有保证。",
+            "两个包放在同一个 GitHub Release 下。如果某次只有正式版更新、预发行版没动，构建流程会自动把上一版的预发行压缩包保留在新 Release 里，所以你总能在最新一条 Release 里同时拿到两个包。"
+          ]
+        },
+        {
+          "heading": "怎么用",
+          "steps": [
+            "从 Releases 页面下载需要的压缩包。",
+            "解压到任意位置。",
+            "双击「开始.bat」创建桌面快捷方式，或直接运行 Helium\\chrome.exe。",
+            "用户数据与缓存会生成在 Helium\\Data 和 Helium\\Cache。"
+          ]
+        },
+        {
+          "heading": "怎么更新",
+          "paragraphs": [
+            "关掉浏览器，备份旧版 Helium 文件夹里的 Data 目录，删除旧文件夹，把新版解压到同级目录，再把 Data 放回去。本仓库每天跟进上游，有新版就会自动发布。"
+          ]
+        }
+      ],
+      "targetQueries": "Helium 便携版, Helium 浏览器下载, Helium Portable, 去遥测 Chromium, 轻量浏览器"
+    }
+  ],
+  "faq": {
+    "heading": "常见问题",
+    "shared": [
+      {
+        "q": "便携版和官方安装版有什么区别？",
+        "a": "内核和功能完全一样，都来自官方安装包。区别是便携版不执行安装：不写注册表、不注册后台更新服务，用户数据与缓存保存在程序同级的 Data、Cache 文件夹里。整个目录可以随意搬动或拷进 U 盘，删除文件夹就等于卸载干净。"
+      },
+      {
+        "q": "会自动更新吗？",
+        "a": "不会。便携版不注册系统更新服务，所以不会在后台自己升级。本项目每天用 GitHub Actions 检查官方是否发布新版本，有就自动构建并发布到 Releases，你手动下载覆盖即可，更新时保留 Data 目录就能留住全部数据。"
+      },
+      {
+        "q": "怎么确认下载的文件没被篡改？",
+        "a": "每个 Release 的正文里都有一张校验表，列出每个压缩包的文件名、体积和 SHA256。下载后在 PowerShell 里执行 certutil -hashfile 文件名.7z SHA256，把输出和表里的值比对一致即可。构建全过程的日志也公开在 Actions 里，可以核对压缩包确实由那次构建产出。"
+      },
+      {
+        "q": "用户数据保存在哪里？换电脑怎么迁移？",
+        "a": "保存在浏览器文件夹同级的 Data 目录（缓存在 Cache 目录）。迁移时把整个文件夹拷到新电脑就行，书签、密码、扩展、登录状态都会跟着走，不需要重新配置。"
+      },
+      {
+        "q": "杀毒软件报毒怎么办？",
+        "a": "Chrome++ 的便携化依靠把 version.dll 注入到浏览器进程来实现，这属于 DLL 劫持技术，部分安全软件会因此产生启发式误报。本项目的构建脚本、工作流和每次构建的完整日志都在 GitHub 上公开，压缩包由 GitHub Actions 直接产出并附带 SHA256，你可以自行核对来源；介意的话也可以按仓库说明在本地自行构建。"
+      },
+      {
+        "q": "支持 32 位系统吗？支持 Windows 7 吗？",
+        "a": "只提供 Windows x64 版本，没有 32 位构建。系统要求跟随上游浏览器本身，当前上游各浏览器均已停止支持 Windows 7 / 8.1，建议在 Windows 10 或 Windows 11 上使用。"
+      },
+      {
+        "q": "可以和已经安装的浏览器同时用吗？",
+        "a": "可以。便携版有自己独立的数据目录，和系统里安装的版本互不干扰，两者能同时运行。"
+      },
+      {
+        "q": "这个项目收费或者带广告吗？",
+        "a": "不收费也不带任何推广。构建脚本只做解包、集成 Chrome++、注入、压缩四件事，不改主页、不预装扩展、不夹带任何私货，源码遵循 MIT 许可证并全部公开。"
+      }
+    ]
+  },
+  "footer": {
+    "tagline": "开源的 Chromium 系便携版自动构建项目。浏览器版权归各自厂商所有，构建脚本遵循 MIT 许可证。",
+    "credits": [
+      {
+        "label": "便携化组件",
+        "name": "Bush2021/chrome_plus",
+        "url": "https://github.com/Bush2021/chrome_plus"
+      },
+      {
+        "label": "Helium 上游",
+        "name": "imputnet/helium",
+        "url": "https://github.com/imputnet/helium"
+      },
+      {
+        "label": "构建核心",
+        "name": "Piracola/ChromiumPortable",
+        "url": "https://github.com/Piracola/ChromiumPortable"
+      }
+    ]
+  },
+  "verify": {
+    "heading": "校验下载的文件",
+    "description": "每个 Release 正文里都列出了压缩包的 SHA256。下载后在 PowerShell 里跑一行命令，把结果和 Release 里的值比对，一致就说明文件和构建产出完全一致，中途没有被替换或损坏。",
+    "command": "certutil -hashfile .\\{asset} SHA256",
+    "note": "构建日志也公开在 GitHub Actions 里，可以核对这个压缩包确实由那一次构建产出。"
+  }
+}

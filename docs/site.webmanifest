@@ -1,17 +1,19 @@
 {
-  "name": "Chromium Portable Builder",
-  "short_name": "Chrome Builder",
-  "description": "Chrome、Edge、Helium 便携构建版的统一索引。",
+  "name": "Chrome / Edge / Helium 便携版",
+  "short_name": "便携版构建",
+  "description": "Chromium 系浏览器便携版的自动构建索引：Chrome、Edge、Helium，Windows x64 免安装。",
+  "lang": "zh-CN",
   "start_url": "/ChromiumPortable/",
   "scope": "/ChromiumPortable/",
   "display": "standalone",
-  "background_color": "#f6f7f9",
-  "theme_color": "#f6f7f9",
+  "background_color": "#fbfbfc",
+  "theme_color": "#ffffff",
   "icons": [
     {
       "src": "./assets/favicon.svg",
       "sizes": "any",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ]
 }

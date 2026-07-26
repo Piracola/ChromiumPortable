@@ -2,448 +2,633 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chromium Portable Builder - Chrome / Edge / Helium 便携版构建索引</title>
-    <meta
-      name="description"
-      content="Chromium Portable Builder 汇总 Chrome++、Microsoft Edge、Helium 等 Chromium 系便携版构建，提供项目仓库、最新发布和自动构建流程入口。"
-    />
-    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chrome / Edge / Helium 便携版下载 — 每日自动构建，集成 Chrome++</title>
+    <meta name="description" content="开源、可复现的 Chromium 系便携版：Google Chrome、Microsoft Edge、Helium，Windows x64 免安装绿色版，集成 Chrome++ 增强，每日自动跟随官方版本，全流程 SHA256 校验并实机验证便携性。" />
     <meta name="author" content="Piracola" />
-    <meta
-      name="keywords"
-      content="Chromium Portable, Chrome Portable, Chrome++, Edge Portable, Helium Portable, 便携版浏览器, Chromium 构建"
-    />
-    <meta name="theme-color" content="#f6f7f9" />
-    <meta name="color-scheme" content="light" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0c0d11" media="(prefers-color-scheme: dark)" />
     <link rel="canonical" href="https://piracola.github.io/ChromiumPortable/" />
-    <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
-    <link rel="manifest" href="./site.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="manifest" href="site.webmanifest" />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="zh_CN" />
-    <meta property="og:site_name" content="Chromium Portable Builder" />
-    <meta
-      property="og:title"
-      content="Chromium Portable Builder - Chrome / Edge / Helium 便携版构建索引"
-    />
-    <meta
-      property="og:description"
-      content="集中展示 Chrome++、Microsoft Edge、Helium 等 Chromium 系便携构建版，并提供仓库、发布页和工作流入口。"
-    />
+    <meta property="og:site_name" content="Chromium 便携版构建" />
+    <meta property="og:title" content="Chrome / Edge / Helium 便携版下载 — 每日自动构建，集成 Chrome++" />
+    <meta property="og:description" content="开源、可复现的 Chromium 系便携版：Google Chrome、Microsoft Edge、Helium，Windows x64 免安装绿色版，集成 Chrome++ 增强，每日自动跟随官方版本，全流程 SHA256 校验并实机验证便携性。" />
     <meta property="og:url" content="https://piracola.github.io/ChromiumPortable/" />
-    <meta name="twitter:card" content="summary" />
-    <meta
-      name="twitter:title"
-      content="Chromium Portable Builder - Chrome / Edge / Helium 便携版构建索引"
-    />
-    <meta
-      name="twitter:description"
-      content="集中展示 Chrome++、Microsoft Edge、Helium 等 Chromium 系便携构建版，并提供仓库、发布页和工作流入口。"
-    />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&family=Noto+Sans+SC:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="./styles.css" />
+    <meta property="og:image" content="https://piracola.github.io/ChromiumPortable/assets/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Chrome / Edge / Helium 便携版下载 — 每日自动构建，集成 Chrome++" />
+    <meta name="twitter:description" content="开源、可复现的 Chromium 系便携版：Google Chrome、Microsoft Edge、Helium，Windows x64 免安装绿色版，集成 Chrome++ 增强，每日自动跟随官方版本，全流程 SHA256 校验并实机验证便携性。" />
+    <meta name="twitter:image" content="https://piracola.github.io/ChromiumPortable/assets/og.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("cp-theme");
+          if (stored === "dark" || stored === "light") {
+            document.documentElement.dataset.theme = stored;
+          }
+        } catch (error) {}
+      })();
+    </script>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "CollectionPage",
-        "name": "Chromium Portable Builder",
-        "headline": "Chrome / Edge / Helium 便携版构建索引",
-        "description": "Chromium Portable Builder 汇总 Chrome++、Microsoft Edge、Helium 等 Chromium 系便携版构建，提供项目仓库、最新发布和自动构建流程入口。",
-        "url": "https://piracola.github.io/ChromiumPortable/",
-        "inLanguage": "zh-CN",
-        "isPartOf": {
-          "@type": "WebSite",
-          "name": "Chromium Portable Builder",
-          "url": "https://piracola.github.io/ChromiumPortable/"
-        },
-        "about": [
-          "Chromium Portable",
-          "Chrome Portable",
-          "Edge Portable",
-          "Helium Portable"
-        ],
-        "mainEntity": {
-          "@type": "ItemList",
-          "itemListElement": [
-            {
-              "@type": "ListItem",
-              "position": 1,
-              "item": {
-                "@type": "SoftwareApplication",
-                "name": "Chrome++",
-                "applicationCategory": "BrowserApplication",
-                "operatingSystem": "Windows x64",
-                "url": "https://github.com/Piracola/Chrome-Portable",
-                "downloadUrl": "https://github.com/Piracola/Chrome-Portable/releases/latest"
-              }
-            },
-            {
-              "@type": "ListItem",
-              "position": 2,
-              "item": {
-                "@type": "SoftwareApplication",
-                "name": "Chrome++ Beta",
-                "applicationCategory": "BrowserApplication",
-                "operatingSystem": "Windows x64",
-                "url": "https://github.com/Piracola/Chrome-Portable",
-                "downloadUrl": "https://github.com/Piracola/Chrome-Portable/releases/latest"
-              }
-            },
-            {
-              "@type": "ListItem",
-              "position": 3,
-              "item": {
-                "@type": "SoftwareApplication",
-                "name": "Microsoft Edge Portable",
-                "applicationCategory": "BrowserApplication",
-                "operatingSystem": "Windows x64",
-                "url": "https://github.com/betacola/Edge_Portable",
-                "downloadUrl": "https://github.com/betacola/Edge_Portable/releases/latest"
-              }
-            },
-            {
-              "@type": "ListItem",
-              "position": 4,
-              "item": {
-                "@type": "SoftwareApplication",
-                "name": "Helium Portable",
-                "applicationCategory": "BrowserApplication",
-                "operatingSystem": "Windows x64",
-                "url": "https://github.com/Piracola/Helium_Portable",
-                "downloadUrl": "https://github.com/Piracola/Helium_Portable/releases/latest"
-              }
-            },
-            {
-              "@type": "ListItem",
-              "position": 5,
-              "item": {
-                "@type": "SoftwareApplication",
-                "name": "Helium Portable Preview",
-                "applicationCategory": "BrowserApplication",
-                "operatingSystem": "Windows x64",
-                "url": "https://github.com/Piracola/Helium_Portable",
-                "downloadUrl": "https://github.com/Piracola/Helium_Portable/releases/latest"
-              }
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://piracola.github.io/ChromiumPortable/#website",
+            "name": "Chromium 便携版构建",
+            "url": "https://piracola.github.io/ChromiumPortable/",
+            "inLanguage": "zh-CN",
+            "publisher": {
+              "@type": "Person",
+              "name": "Piracola"
             }
-          ]
-        }
+          },
+          {
+            "@type": "CollectionPage",
+            "@id": "https://piracola.github.io/ChromiumPortable/#webpage",
+            "url": "https://piracola.github.io/ChromiumPortable/",
+            "name": "Chrome / Edge / Helium 便携版下载 — 每日自动构建，集成 Chrome++",
+            "description": "开源、可复现的 Chromium 系便携版：Google Chrome、Microsoft Edge、Helium，Windows x64 免安装绿色版，集成 Chrome++ 增强，每日自动跟随官方版本，全流程 SHA256 校验并实机验证便携性。",
+            "isPartOf": {
+              "@id": "https://piracola.github.io/ChromiumPortable/#website"
+            },
+            "inLanguage": "zh-CN"
+          },
+          {
+            "@type": "ItemList",
+            "name": "可下载的便携版构建",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "item": {
+                  "@type": "SoftwareApplication",
+                  "name": "Chrome 便携版",
+                  "applicationCategory": "BrowserApplication",
+                  "operatingSystem": "Windows 10, Windows 11",
+                  "processorRequirements": "x64",
+                  "url": "https://piracola.github.io/ChromiumPortable/chrome/",
+                  "downloadUrl": "https://github.com/Piracola/Chrome-Portable/releases/download/v150.0.7871.187/Chrome%2B%2B_stable_150.0.7871.187_2026-07-24.7z",
+                  "softwareHelp": "https://piracola.github.io/ChromiumPortable/chrome/",
+                  "isAccessibleForFree": true,
+                  "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "CNY"
+                  },
+                  "author": {
+                    "@type": "Person",
+                    "name": "Piracola"
+                  },
+                  "license": "https://opensource.org/licenses/MIT",
+                  "softwareVersion": "150.0.7871.187",
+                  "datePublished": "2026-07-01",
+                  "fileSize": "142309285"
+                }
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "item": {
+                  "@type": "SoftwareApplication",
+                  "name": "Chrome 便携版 Beta",
+                  "applicationCategory": "BrowserApplication",
+                  "operatingSystem": "Windows 10, Windows 11",
+                  "processorRequirements": "x64",
+                  "url": "https://piracola.github.io/ChromiumPortable/chrome/",
+                  "downloadUrl": "https://github.com/Piracola/Chrome-Portable/releases/download/v150.0.7871.187/Chrome%2B%2B_beta_151.0.7922.47_2026-07-23.7z",
+                  "softwareHelp": "https://piracola.github.io/ChromiumPortable/chrome/",
+                  "isAccessibleForFree": true,
+                  "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "CNY"
+                  },
+                  "author": {
+                    "@type": "Person",
+                    "name": "Piracola"
+                  },
+                  "license": "https://opensource.org/licenses/MIT",
+                  "softwareVersion": "151.0.7922.47",
+                  "datePublished": "2026-07-01",
+                  "fileSize": "149673717"
+                }
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "item": {
+                  "@type": "SoftwareApplication",
+                  "name": "Edge 便携版",
+                  "applicationCategory": "BrowserApplication",
+                  "operatingSystem": "Windows 10, Windows 11",
+                  "processorRequirements": "x64",
+                  "url": "https://piracola.github.io/ChromiumPortable/edge/",
+                  "downloadUrl": "https://github.com/betacola/Edge_Portable/releases/download/v150.0.4078.99/Edge_Portable_Win64_150.0.4078.99_2026-07-26.7z",
+                  "softwareHelp": "https://piracola.github.io/ChromiumPortable/edge/",
+                  "isAccessibleForFree": true,
+                  "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "CNY"
+                  },
+                  "author": {
+                    "@type": "Person",
+                    "name": "betacola"
+                  },
+                  "license": "https://opensource.org/licenses/MIT",
+                  "softwareVersion": "150.0.4078.99",
+                  "datePublished": "2026-07-03",
+                  "fileSize": "192663010"
+                }
+              },
+              {
+                "@type": "ListItem",
+                "position": 4,
+                "item": {
+                  "@type": "SoftwareApplication",
+                  "name": "Helium 便携版",
+                  "applicationCategory": "BrowserApplication",
+                  "operatingSystem": "Windows 10, Windows 11",
+                  "processorRequirements": "x64",
+                  "url": "https://piracola.github.io/ChromiumPortable/helium/",
+                  "downloadUrl": "https://github.com/Piracola/Helium_Portable/releases/download/v0.14.9.1/Helium_0.14.9.1_2026-07-25.7z",
+                  "softwareHelp": "https://piracola.github.io/ChromiumPortable/helium/",
+                  "isAccessibleForFree": true,
+                  "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "CNY"
+                  },
+                  "author": {
+                    "@type": "Person",
+                    "name": "Piracola"
+                  },
+                  "license": "https://opensource.org/licenses/MIT",
+                  "softwareVersion": "0.14.9.1",
+                  "datePublished": "2026-06-06",
+                  "fileSize": "119709410"
+                }
+              },
+              {
+                "@type": "ListItem",
+                "position": 5,
+                "item": {
+                  "@type": "SoftwareApplication",
+                  "name": "Helium 便携版 Preview",
+                  "applicationCategory": "BrowserApplication",
+                  "operatingSystem": "Windows 10, Windows 11",
+                  "processorRequirements": "x64",
+                  "url": "https://piracola.github.io/ChromiumPortable/helium/",
+                  "downloadUrl": "https://github.com/Piracola/Helium_Portable/releases/download/v0.14.9.1/Helium_Preview_0.14.6.1_2026-07-17.7z",
+                  "softwareHelp": "https://piracola.github.io/ChromiumPortable/helium/",
+                  "isAccessibleForFree": true,
+                  "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "CNY"
+                  },
+                  "author": {
+                    "@type": "Person",
+                    "name": "Piracola"
+                  },
+                  "license": "https://opensource.org/licenses/MIT",
+                  "softwareVersion": "0.14.6.1",
+                  "datePublished": "2026-06-06",
+                  "fileSize": "119727522"
+                }
+              }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "@id": "https://piracola.github.io/ChromiumPortable/#faq",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "便携版和官方安装版有什么区别？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "内核和功能完全一样，都来自官方安装包。区别是便携版不执行安装：不写注册表、不注册后台更新服务，用户数据与缓存保存在程序同级的 Data、Cache 文件夹里。整个目录可以随意搬动或拷进 U 盘，删除文件夹就等于卸载干净。"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "会自动更新吗？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "不会。便携版不注册系统更新服务，所以不会在后台自己升级。本项目每天用 GitHub Actions 检查官方是否发布新版本，有就自动构建并发布到 Releases，你手动下载覆盖即可，更新时保留 Data 目录就能留住全部数据。"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "怎么确认下载的文件没被篡改？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "每个 Release 的正文里都有一张校验表，列出每个压缩包的文件名、体积和 SHA256。下载后在 PowerShell 里执行 certutil -hashfile 文件名.7z SHA256，把输出和表里的值比对一致即可。构建全过程的日志也公开在 Actions 里，可以核对压缩包确实由那次构建产出。"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "用户数据保存在哪里？换电脑怎么迁移？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "保存在浏览器文件夹同级的 Data 目录（缓存在 Cache 目录）。迁移时把整个文件夹拷到新电脑就行，书签、密码、扩展、登录状态都会跟着走，不需要重新配置。"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "杀毒软件报毒怎么办？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Chrome++ 的便携化依靠把 version.dll 注入到浏览器进程来实现，这属于 DLL 劫持技术，部分安全软件会因此产生启发式误报。本项目的构建脚本、工作流和每次构建的完整日志都在 GitHub 上公开，压缩包由 GitHub Actions 直接产出并附带 SHA256，你可以自行核对来源；介意的话也可以按仓库说明在本地自行构建。"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "支持 32 位系统吗？支持 Windows 7 吗？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "只提供 Windows x64 版本，没有 32 位构建。系统要求跟随上游浏览器本身，当前上游各浏览器均已停止支持 Windows 7 / 8.1，建议在 Windows 10 或 Windows 11 上使用。"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "可以和已经安装的浏览器同时用吗？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "可以。便携版有自己独立的数据目录，和系统里安装的版本互不干扰，两者能同时运行。"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "这个项目收费或者带广告吗？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "不收费也不带任何推广。构建脚本只做解包、集成 Chrome++、注入、压缩四件事，不改主页、不预装扩展、不夹带任何私货，源码遵循 MIT 许可证并全部公开。"
+                }
+              }
+            ]
+          }
+        ]
       }
     </script>
   </head>
   <body>
-    <div class="page-shell">
-      <header class="hero">
-        <nav class="topbar">
-          <a class="brand" href="#top">
-            <span class="brand-mark">CB</span>
-            <span class="brand-copy">
-              <strong>Chrome Builder</strong>
-              <span>Portable build showcase</span>
-            </span>
-          </a>
-          <div class="topbar-actions">
-            <a class="ghost-link" id="builderRepoLink" href="#" target="_blank" rel="noreferrer">构建核心</a>
-            <a class="primary-link" id="ctaLatest" href="#catalog">查看全部构建</a>
-          </div>
+    <a class="skip-link" href="#main">跳到主要内容</a>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand" href="./" aria-current="page">
+          <img class="brand__mark" src="assets/favicon.svg" alt="" width="30" height="30" />
+          <span class="brand__text">Chromium 便携版</span>
+        </a>
+        <nav class="nav" aria-label="主导航">
+          <a class="nav__link" href="chrome/">Chrome</a>
+          <a class="nav__link" href="edge/">Edge</a>
+          <a class="nav__link" href="helium/">Helium</a>
+          <a class="nav__link nav__link--external" href="https://github.com/Piracola/ChromiumPortable" target="_blank" rel="noopener">GitHub</a>
         </nav>
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="切换深色模式">
+          <svg class="theme-toggle__sun" viewBox="0 0 24 24" aria-hidden="true" width="18" height="18"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.4v2.6M12 19v2.6M4.6 4.6l1.9 1.9M17.5 17.5l1.9 1.9M2.4 12h2.6M19 12h2.6M4.6 19.4l1.9-1.9M17.5 6.5l1.9-1.9"/></svg>
+          <svg class="theme-toggle__moon" viewBox="0 0 24 24" aria-hidden="true" width="18" height="18"><path d="M20 13.4A8.2 8.2 0 0 1 10.6 4a8.4 8.4 0 1 0 9.4 9.4Z"/></svg>
+        </button>
+      </div>
+    </header>
+    <main id="main">
+      <section class="hero">
+        <p class="eyebrow">Windows x64 · 免安装 · 开源自动构建</p>
+        <h1>Chrome、Edge、Helium 便携版</h1>
+        <p class="hero__lede">免安装、不写注册表、数据留在自己的文件夹里。由 GitHub Actions 每日跟随官方版本自动构建，构建过程与校验日志全部公开可查。</p>
+        <div class="hero__actions">
+          <a class="btn btn--primary btn--lg" href="#downloads">查看下载</a>
+          <a class="btn btn--soft btn--lg" href="https://github.com/Piracola/ChromiumPortable" target="_blank" rel="noopener">构建核心源码</a>
+        </div>
+        <div class="stats">
+          <div class="stat">
+            <span class="stat__value">5</span>
+            <span class="stat__label">构建目标</span>
+            <span class="stat__detail">3 个浏览器 · 5 个发布渠道</span>
+          </div>
+          <div class="stat">
+            <span class="stat__value">每日</span>
+            <span class="stat__label">自动跟随上游</span>
+            <span class="stat__detail">官方一发新版即自动打包</span>
+          </div>
+          <div class="stat">
+            <span class="stat__value">SHA256</span>
+            <span class="stat__label">全流程校验</span>
+            <span class="stat__detail">核对上游哈希，逐字节校验下载</span>
+          </div>
+          <div class="stat">
+            <span class="stat__value">实机</span>
+            <span class="stat__label">启动验证</span>
+            <span class="stat__detail">发布前真实启动，确认数据不外泄</span>
+          </div>
+        </div>
+      </section>
 
-        <section class="hero-content" id="top">
-          <div class="hero-copy">
-            <p class="eyebrow">Portable Browser Index</p>
-            <h1 id="heroTitle">Chromium Portable Builder</h1>
-            <p class="hero-description" id="heroDescription">
-              Chrome、Edge、Helium 便携构建版的统一索引。按浏览器系列查看目标、频道、仓库和最新发布。
-            </p>
-            <div class="hero-actions">
-              <a class="primary-link" href="#catalog">浏览构建版</a>
-              <a class="ghost-link" id="allReleasesLink" href="#" target="_blank" rel="noreferrer">查看主仓库</a>
+      <section class="section" id="downloads">
+        <div class="section__head">
+          <h2>下载</h2>
+          <p>选择浏览器与渠道。所有压缩包由 GitHub Actions 自动构建并直接发布到对应仓库的 Releases。</p>
+        </div>
+        <div class="filters" role="group" aria-label="按浏览器筛选">
+          <button class="filter is-active" type="button" data-filter="all" aria-pressed="true">全部</button>
+          <button class="filter" type="button" data-filter="Chrome" aria-pressed="false">Chrome</button>
+          <button class="filter" type="button" data-filter="Edge" aria-pressed="false">Edge</button>
+          <button class="filter" type="button" data-filter="Helium" aria-pressed="false">Helium</button>
+        </div>
+        <div class="build-grid" id="buildGrid">
+          <article class="build-card" data-family="Chrome" style="--accent: #d8653f">
+            <div class="build-card__head">
+              <img class="build-card__icon" src="assets/chrome.svg" alt="" width="40" height="40" loading="lazy" />
+              <div class="build-card__title">
+                <h3>Chrome 便携版</h3>
+                <p>Stable · 日常使用推荐</p>
+              </div>
+              <span class="pill">Stable</span>
             </div>
-          </div>
-        </section>
-      </header>
-
-      <main>
-        <section class="catalog-section" id="catalog">
-          <div class="section-heading">
-            <div>
-              <p class="section-kicker">Build Catalog</p>
-              <h2>全部子构建版</h2>
+            <p class="build-card__summary">跟随 Google Chrome 正式版渠道，适合作为主力浏览器长期使用。</p>
+            <dl class="build-card__meta">
+              <div><dt>版本</dt><dd>150.0.7871.187</dd></div>
+              <div><dt>体积</dt><dd>136 MB</dd></div>
+              <div><dt>更新</dt><dd>2026-07-01</dd></div>
+              <div><dt>平台</dt><dd>Windows x64</dd></div>
+            </dl>
+            <div class="build-card__actions">
+              <a class="btn btn--primary" href="https://github.com/Piracola/Chrome-Portable/releases/download/v150.0.7871.187/Chrome%2B%2B_stable_150.0.7871.187_2026-07-24.7z" target="_blank" rel="noopener">下载 .7z<span class="build-card__version">v150.0.7871.187</span></a>
+              <a class="btn btn--soft" href="chrome/">使用说明</a>
+              <a class="btn btn--quiet" href="https://github.com/Piracola/Chrome-Portable/actions/workflows/build.yml" target="_blank" rel="noopener">构建日志</a>
             </div>
-            <p class="section-description">
-              按浏览器系列筛选构建目标，每张卡片都提供项目仓库、最新发布和自动构建流程入口。
-            </p>
-          </div>
-
-          <div class="filter-bar" id="filterBar" aria-label="构建版筛选"></div>
-          <noscript>
-            <p class="noscript-note">页面已包含完整静态索引；启用 JavaScript 后可以使用浏览器系列筛选。</p>
-          </noscript>
-          <div class="build-grid" id="buildGrid">
-            <article class="build-card reveal" style="--accent:#d8653f; animation-delay:80ms">
-              <div class="build-head">
-                <img class="browser-icon" src="./assets/chrome.svg" alt="Chrome 图标" loading="lazy" />
-                <div class="build-title">
-                  <h3>Chrome++</h3>
-                  <span class="build-subtitle">Chrome / Stable / 主力版本</span>
-                </div>
-                <span class="channel-pill">Stable</span>
+          </article>
+          <article class="build-card" data-family="Chrome" style="--accent: #e08a48">
+            <div class="build-card__head">
+              <img class="build-card__icon" src="assets/chrome.svg" alt="" width="40" height="40" loading="lazy" />
+              <div class="build-card__title">
+                <h3>Chrome 便携版 Beta</h3>
+                <p>Beta · 抢先体验新特性</p>
               </div>
-
-              <p class="build-summary">面向日常使用的稳定构建，集成 Chrome++ 便携化增强组件。</p>
-
-              <dl class="build-meta">
-                <div class="metric">
-                  <dt>Target</dt>
-                  <dd>chrome_stable</dd>
-                </div>
-                <div class="metric">
-                  <dt>Output</dt>
-                  <dd>Chrome</dd>
-                </div>
-                <div class="metric">
-                  <dt>Architecture</dt>
-                  <dd>x64</dd>
-                </div>
-                <div class="metric">
-                  <dt>Project</dt>
-                  <dd>Chrome-Portable</dd>
-                </div>
-              </dl>
-
-              <div class="build-links">
-                <a class="link-chip primary" href="https://github.com/Piracola/Chrome-Portable" target="_blank" rel="noreferrer">进入项目</a>
-                <a class="link-chip" href="https://github.com/Piracola/Chrome-Portable/releases/latest" target="_blank" rel="noreferrer">Latest Release</a>
-                <a class="link-chip" href="https://github.com/Piracola/Chrome-Portable/actions/workflows/build.yml" target="_blank" rel="noreferrer">Workflow</a>
-              </div>
-            </article>
-
-            <article class="build-card reveal" style="--accent:#e08a48; animation-delay:140ms">
-              <div class="build-head">
-                <img class="browser-icon" src="./assets/chrome.svg" alt="Chrome 图标" loading="lazy" />
-                <div class="build-title">
-                  <h3>Chrome++ Beta</h3>
-                  <span class="build-subtitle">Chrome / Beta / 抢先体验</span>
-                </div>
-                <span class="channel-pill">Beta</span>
-              </div>
-
-              <p class="build-summary">用于提前体验 Chrome 新版本能力的测试频道，不建议和 Stable 频繁混用数据目录。</p>
-
-              <dl class="build-meta">
-                <div class="metric">
-                  <dt>Target</dt>
-                  <dd>chrome_beta</dd>
-                </div>
-                <div class="metric">
-                  <dt>Output</dt>
-                  <dd>Chrome</dd>
-                </div>
-                <div class="metric">
-                  <dt>Architecture</dt>
-                  <dd>x64</dd>
-                </div>
-                <div class="metric">
-                  <dt>Project</dt>
-                  <dd>Chrome-Portable</dd>
-                </div>
-              </dl>
-
-              <div class="build-links">
-                <a class="link-chip primary" href="https://github.com/Piracola/Chrome-Portable" target="_blank" rel="noreferrer">进入项目</a>
-                <a class="link-chip" href="https://github.com/Piracola/Chrome-Portable/releases/latest" target="_blank" rel="noreferrer">Latest Release</a>
-                <a class="link-chip" href="https://github.com/Piracola/Chrome-Portable/actions/workflows/build.yml" target="_blank" rel="noreferrer">Workflow</a>
-              </div>
-            </article>
-
-            <article class="build-card reveal" style="--accent:#1d7c84; animation-delay:200ms">
-              <div class="build-head">
-                <img class="browser-icon" src="./assets/edge.svg" alt="Edge 图标" loading="lazy" />
-                <div class="build-title">
-                  <h3>Microsoft Edge</h3>
-                  <span class="build-subtitle">Edge / Stable / 微软生态</span>
-                </div>
-                <span class="channel-pill">Stable</span>
-              </div>
-
-              <p class="build-summary">Microsoft Edge 便携稳定版，适合希望保留 Edge 生态兼容性的用户。</p>
-
-              <dl class="build-meta">
-                <div class="metric">
-                  <dt>Target</dt>
-                  <dd>edge_stable</dd>
-                </div>
-                <div class="metric">
-                  <dt>Output</dt>
-                  <dd>Edge</dd>
-                </div>
-                <div class="metric">
-                  <dt>Architecture</dt>
-                  <dd>x64</dd>
-                </div>
-                <div class="metric">
-                  <dt>Project</dt>
-                  <dd>Edge_Portable</dd>
-                </div>
-              </dl>
-
-              <div class="build-links">
-                <a class="link-chip primary" href="https://github.com/betacola/Edge_Portable" target="_blank" rel="noreferrer">进入项目</a>
-                <a class="link-chip" href="https://github.com/betacola/Edge_Portable/releases/latest" target="_blank" rel="noreferrer">Latest Release</a>
-                <a class="link-chip" href="https://github.com/betacola/Edge_Portable/actions/workflows/build.yml" target="_blank" rel="noreferrer">Workflow</a>
-              </div>
-            </article>
-
-            <article class="build-card reveal" style="--accent:#5b5bd6; animation-delay:260ms">
-              <div class="build-head">
-                <img class="browser-icon" src="./assets/helium.svg" alt="Helium 图标" loading="lazy" />
-                <div class="build-title">
-                  <h3>Helium Portable</h3>
-                  <span class="build-subtitle">Helium / Stable / 轻量分支</span>
-                </div>
-                <span class="channel-pill">Stable</span>
-              </div>
-
-              <p class="build-summary">Helium 正式版便携包，适合偏好轻量化 Chromium 分支体验的用户。</p>
-
-              <dl class="build-meta">
-                <div class="metric">
-                  <dt>Target</dt>
-                  <dd>helium_stable</dd>
-                </div>
-                <div class="metric">
-                  <dt>Output</dt>
-                  <dd>Helium</dd>
-                </div>
-                <div class="metric">
-                  <dt>Architecture</dt>
-                  <dd>x64</dd>
-                </div>
-                <div class="metric">
-                  <dt>Project</dt>
-                  <dd>Helium_Portable</dd>
-                </div>
-              </dl>
-
-              <div class="build-links">
-                <a class="link-chip primary" href="https://github.com/Piracola/Helium_Portable" target="_blank" rel="noreferrer">进入项目</a>
-                <a class="link-chip" href="https://github.com/Piracola/Helium_Portable/releases/latest" target="_blank" rel="noreferrer">Latest Release</a>
-                <a class="link-chip" href="https://github.com/Piracola/Helium_Portable/actions/workflows/build.yml" target="_blank" rel="noreferrer">Workflow</a>
-              </div>
-            </article>
-
-            <article class="build-card reveal" style="--accent:#7b6ff0; animation-delay:320ms">
-              <div class="build-head">
-                <img class="browser-icon" src="./assets/helium.svg" alt="Helium 图标" loading="lazy" />
-                <div class="build-title">
-                  <h3>Helium Portable Preview</h3>
-                  <span class="build-subtitle">Helium / Preview / 预发行</span>
-                </div>
-                <span class="channel-pill">Preview</span>
-              </div>
-
-              <p class="build-summary">Helium 预发行便携包，方便跟进上游新特性与预览更新。</p>
-
-              <dl class="build-meta">
-                <div class="metric">
-                  <dt>Target</dt>
-                  <dd>helium_prerelease</dd>
-                </div>
-                <div class="metric">
-                  <dt>Output</dt>
-                  <dd>Helium</dd>
-                </div>
-                <div class="metric">
-                  <dt>Architecture</dt>
-                  <dd>x64</dd>
-                </div>
-                <div class="metric">
-                  <dt>Project</dt>
-                  <dd>Helium_Portable</dd>
-                </div>
-              </dl>
-
-              <div class="build-links">
-                <a class="link-chip primary" href="https://github.com/Piracola/Helium_Portable" target="_blank" rel="noreferrer">进入项目</a>
-                <a class="link-chip" href="https://github.com/Piracola/Helium_Portable/releases/latest" target="_blank" rel="noreferrer">Latest Release</a>
-                <a class="link-chip" href="https://github.com/Piracola/Helium_Portable/actions/workflows/build.yml" target="_blank" rel="noreferrer">Workflow</a>
-              </div>
-            </article>
-          </div>
-        </section>
-
-        <section class="repo-section">
-          <div class="section-heading">
-            <div>
-              <p class="section-kicker">Project Map</p>
-              <h2>项目矩阵</h2>
+              <span class="pill">Beta</span>
             </div>
-            <p class="section-description">
-              从仓库维度查看维护范围，适合快速跳转到某个子项目。
-            </p>
+            <p class="build-card__summary">跟随 Chrome Beta 渠道，提前几周体验新功能，不建议与 Stable 共用同一份数据目录。</p>
+            <dl class="build-card__meta">
+              <div><dt>版本</dt><dd>151.0.7922.47</dd></div>
+              <div><dt>体积</dt><dd>143 MB</dd></div>
+              <div><dt>更新</dt><dd>2026-07-01</dd></div>
+              <div><dt>平台</dt><dd>Windows x64</dd></div>
+            </dl>
+            <div class="build-card__actions">
+              <a class="btn btn--primary" href="https://github.com/Piracola/Chrome-Portable/releases/download/v150.0.7871.187/Chrome%2B%2B_beta_151.0.7922.47_2026-07-23.7z" target="_blank" rel="noopener">下载 .7z<span class="build-card__version">v151.0.7922.47</span></a>
+              <a class="btn btn--soft" href="chrome/">使用说明</a>
+              <a class="btn btn--quiet" href="https://github.com/Piracola/Chrome-Portable/actions/workflows/build.yml" target="_blank" rel="noopener">构建日志</a>
+            </div>
+          </article>
+          <article class="build-card" data-family="Edge" style="--accent: #1d7c84">
+            <div class="build-card__head">
+              <img class="build-card__icon" src="assets/edge.svg" alt="" width="40" height="40" loading="lazy" />
+              <div class="build-card__title">
+                <h3>Edge 便携版</h3>
+                <p>Stable · 微软生态兼容</p>
+              </div>
+              <span class="pill">Stable</span>
+            </div>
+            <p class="build-card__summary">使用微软官方离线安装包构建，保留 Edge 的垂直标签、集锦等自带能力。</p>
+            <dl class="build-card__meta">
+              <div><dt>版本</dt><dd>150.0.4078.99</dd></div>
+              <div><dt>体积</dt><dd>184 MB</dd></div>
+              <div><dt>更新</dt><dd>2026-07-03</dd></div>
+              <div><dt>平台</dt><dd>Windows x64</dd></div>
+            </dl>
+            <div class="build-card__actions">
+              <a class="btn btn--primary" href="https://github.com/betacola/Edge_Portable/releases/download/v150.0.4078.99/Edge_Portable_Win64_150.0.4078.99_2026-07-26.7z" target="_blank" rel="noopener">下载 .7z<span class="build-card__version">v150.0.4078.99</span></a>
+              <a class="btn btn--soft" href="edge/">使用说明</a>
+              <a class="btn btn--quiet" href="https://github.com/betacola/Edge_Portable/actions/workflows/build.yml" target="_blank" rel="noopener">构建日志</a>
+            </div>
+          </article>
+          <article class="build-card" data-family="Helium" style="--accent: #5b5bd6">
+            <div class="build-card__head">
+              <img class="build-card__icon" src="assets/helium.svg" alt="" width="40" height="40" loading="lazy" />
+              <div class="build-card__title">
+                <h3>Helium 便携版</h3>
+                <p>Stable · 去广告去遥测</p>
+              </div>
+              <span class="pill">Stable</span>
+            </div>
+            <p class="build-card__summary">基于 imputnet/helium 的正式版构建，一个默认去广告、去遥测的 Chromium 分支。</p>
+            <dl class="build-card__meta">
+              <div><dt>版本</dt><dd>0.14.9.1</dd></div>
+              <div><dt>体积</dt><dd>114 MB</dd></div>
+              <div><dt>更新</dt><dd>2026-06-06</dd></div>
+              <div><dt>平台</dt><dd>Windows x64</dd></div>
+            </dl>
+            <div class="build-card__actions">
+              <a class="btn btn--primary" href="https://github.com/Piracola/Helium_Portable/releases/download/v0.14.9.1/Helium_0.14.9.1_2026-07-25.7z" target="_blank" rel="noopener">下载 .7z<span class="build-card__version">v0.14.9.1</span></a>
+              <a class="btn btn--soft" href="helium/">使用说明</a>
+              <a class="btn btn--quiet" href="https://github.com/Piracola/Helium_Portable/actions/workflows/build.yml" target="_blank" rel="noopener">构建日志</a>
+            </div>
+          </article>
+          <article class="build-card" data-family="Helium" style="--accent: #7b6ff0">
+            <div class="build-card__head">
+              <img class="build-card__icon" src="assets/helium.svg" alt="" width="40" height="40" loading="lazy" />
+              <div class="build-card__title">
+                <h3>Helium 便携版 Preview</h3>
+                <p>Preview · 跟进上游预发行</p>
+              </div>
+              <span class="pill">Preview</span>
+            </div>
+            <p class="build-card__summary">跟踪 Helium 的最新预发行版本，方便提前验证上游改动。</p>
+            <dl class="build-card__meta">
+              <div><dt>版本</dt><dd>0.14.6.1</dd></div>
+              <div><dt>体积</dt><dd>114 MB</dd></div>
+              <div><dt>更新</dt><dd>2026-06-06</dd></div>
+              <div><dt>平台</dt><dd>Windows x64</dd></div>
+            </dl>
+            <div class="build-card__actions">
+              <a class="btn btn--primary" href="https://github.com/Piracola/Helium_Portable/releases/download/v0.14.9.1/Helium_Preview_0.14.6.1_2026-07-17.7z" target="_blank" rel="noopener">下载 .7z<span class="build-card__version">v0.14.6.1</span></a>
+              <a class="btn btn--soft" href="helium/">使用说明</a>
+              <a class="btn btn--quiet" href="https://github.com/Piracola/Helium_Portable/actions/workflows/build.yml" target="_blank" rel="noopener">构建日志</a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="why">
+        <div class="section__head">
+          <h2>为什么值得用这一份</h2>
+          <p>网上的「绿色版」大多来路不明。这个项目的每一步都能被你自己复核。</p>
+        </div>
+        <div class="trust-grid">
+          <article class="trust-card">
+            <h3>安装包直接来自官方</h3>
+            <p>Chrome 走 Google Omaha 更新 API，Edge 走微软 CDP 接口，Helium 取上游 GitHub Release，没有第三方中转下载。</p>
+          </article>
+          <article class="trust-card">
+            <h3>哈希对得上才继续</h3>
+            <p>上游给出的 SHA256 会先被记录，下载时边下边算，对不上立刻中止构建，绝不会把一个来路可疑的安装包打进压缩包。</p>
+          </article>
+          <article class="trust-card">
+            <h3>注入结果会被验证</h3>
+            <p>打包完成后会解析 PE 导入表，确认 Chrome++ 的 version.dll 真的以相对路径注入成功，而不是「看起来成功了」。</p>
+          </article>
+          <article class="trust-card">
+            <h3>发布前真的跑一遍</h3>
+            <p>解压成品压缩包、启动浏览器、确认用户数据目录确实落在解压目录内——便携性是被验证过的，不是声称的。</p>
+          </article>
+          <article class="trust-card">
+            <h3>没有闭源环节</h3>
+            <p>构建脚本、工作流、每一次构建的完整日志都在 GitHub 上公开，压缩包的 SHA256 写在 Release 正文里，可自行比对。</p>
+          </article>
+          <article class="trust-card">
+            <h3>不夹带任何东西</h3>
+            <p>只做解包、集成 Chrome++、注入、压缩四件事。不改主页、不装扩展、不加推广，源码可逐行核对。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="features">
+        <div class="section__head">
+          <h2>开箱即用的增强</h2>
+          <p>集成 Bush2021/chrome_plus，以下功能默认启用，都可以在 chrome++.ini 里改或关掉。</p>
+        </div>
+        <ul class="feature-list">
+          <li>用户数据与缓存存放在程序同级的 Data、Cache 文件夹</li>
+          <li>双击关闭标签页，并保留最后一个标签页</li>
+          <li>悬停标签栏时用滚轮切换标签页</li>
+          <li>地址栏内容与书签在新建前台标签页中打开</li>
+          <li>免验证系统登录密码即可查看已保存的密码</li>
+          <li>右键关闭标签、老板键、翻译快捷键、按键映射、启动与退出钩子等扩展能力（默认未启用）</li>
+        </ul>
+      </section>
+
+      <section class="section" id="repos">
+        <div class="section__head">
+          <h2>项目仓库</h2>
+          <p>每个浏览器一个独立仓库，共用同一套构建核心。</p>
+        </div>
+        <div class="repo-grid">
+          <article class="repo-card">
+            <div class="repo-card__head">
+              <img src="assets/chrome.svg" alt="" width="32" height="32" loading="lazy" />
+              <div>
+                <h3>Chrome-Portable</h3>
+                <p>Piracola</p>
+              </div>
+            </div>
+            <p class="repo-card__summary">Google Chrome 便携版，同一个 Release 下同时维护 Stable 与 Beta 两个渠道。</p>
+            <div class="repo-card__links">
+              <a href="https://github.com/Piracola/Chrome-Portable" target="_blank" rel="noopener">仓库</a>
+              <a href="https://github.com/Piracola/Chrome-Portable/releases/latest" target="_blank" rel="noopener">Releases</a>
+              <a href="https://github.com/Piracola/Chrome-Portable/actions/workflows/build.yml" target="_blank" rel="noopener">Actions</a>
+            </div>
+          </article>
+          <article class="repo-card">
+            <div class="repo-card__head">
+              <img src="assets/edge.svg" alt="" width="32" height="32" loading="lazy" />
+              <div>
+                <h3>Edge_Portable</h3>
+                <p>betacola</p>
+              </div>
+            </div>
+            <p class="repo-card__summary">Microsoft Edge 便携版，跟随官方 Stable 渠道，使用微软官方离线安装包。</p>
+            <div class="repo-card__links">
+              <a href="https://github.com/betacola/Edge_Portable" target="_blank" rel="noopener">仓库</a>
+              <a href="https://github.com/betacola/Edge_Portable/releases/latest" target="_blank" rel="noopener">Releases</a>
+              <a href="https://github.com/betacola/Edge_Portable/actions/workflows/build.yml" target="_blank" rel="noopener">Actions</a>
+            </div>
+          </article>
+          <article class="repo-card">
+            <div class="repo-card__head">
+              <img src="assets/helium.svg" alt="" width="32" height="32" loading="lazy" />
+              <div>
+                <h3>Helium_Portable</h3>
+                <p>Piracola</p>
+              </div>
+            </div>
+            <p class="repo-card__summary">Helium 便携版，跟踪上游 Windows x64 构建，正式版与预发行版同 Release 提供。</p>
+            <div class="repo-card__links">
+              <a href="https://github.com/Piracola/Helium_Portable" target="_blank" rel="noopener">仓库</a>
+              <a href="https://github.com/Piracola/Helium_Portable/releases/latest" target="_blank" rel="noopener">Releases</a>
+              <a href="https://github.com/Piracola/Helium_Portable/actions/workflows/build.yml" target="_blank" rel="noopener">Actions</a>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="faq">
+        <div class="section__head">
+          <h2>常见问题</h2>
+        </div>
+        <div class="faq">
+          <details class="faq__item" open>
+            <summary>便携版和官方安装版有什么区别？</summary>
+            <div class="faq__answer"><p>内核和功能完全一样，都来自官方安装包。区别是便携版不执行安装：不写注册表、不注册后台更新服务，用户数据与缓存保存在程序同级的 Data、Cache 文件夹里。整个目录可以随意搬动或拷进 U 盘，删除文件夹就等于卸载干净。</p></div>
+          </details>
+          <details class="faq__item">
+            <summary>会自动更新吗？</summary>
+            <div class="faq__answer"><p>不会。便携版不注册系统更新服务，所以不会在后台自己升级。本项目每天用 GitHub Actions 检查官方是否发布新版本，有就自动构建并发布到 Releases，你手动下载覆盖即可，更新时保留 Data 目录就能留住全部数据。</p></div>
+          </details>
+          <details class="faq__item">
+            <summary>怎么确认下载的文件没被篡改？</summary>
+            <div class="faq__answer"><p>每个 Release 的正文里都有一张校验表，列出每个压缩包的文件名、体积和 SHA256。下载后在 PowerShell 里执行 certutil -hashfile 文件名.7z SHA256，把输出和表里的值比对一致即可。构建全过程的日志也公开在 Actions 里，可以核对压缩包确实由那次构建产出。</p></div>
+          </details>
+          <details class="faq__item">
+            <summary>用户数据保存在哪里？换电脑怎么迁移？</summary>
+            <div class="faq__answer"><p>保存在浏览器文件夹同级的 Data 目录（缓存在 Cache 目录）。迁移时把整个文件夹拷到新电脑就行，书签、密码、扩展、登录状态都会跟着走，不需要重新配置。</p></div>
+          </details>
+          <details class="faq__item">
+            <summary>杀毒软件报毒怎么办？</summary>
+            <div class="faq__answer"><p>Chrome++ 的便携化依靠把 version.dll 注入到浏览器进程来实现，这属于 DLL 劫持技术，部分安全软件会因此产生启发式误报。本项目的构建脚本、工作流和每次构建的完整日志都在 GitHub 上公开，压缩包由 GitHub Actions 直接产出并附带 SHA256，你可以自行核对来源；介意的话也可以按仓库说明在本地自行构建。</p></div>
+          </details>
+          <details class="faq__item">
+            <summary>支持 32 位系统吗？支持 Windows 7 吗？</summary>
+            <div class="faq__answer"><p>只提供 Windows x64 版本，没有 32 位构建。系统要求跟随上游浏览器本身，当前上游各浏览器均已停止支持 Windows 7 / 8.1，建议在 Windows 10 或 Windows 11 上使用。</p></div>
+          </details>
+          <details class="faq__item">
+            <summary>可以和已经安装的浏览器同时用吗？</summary>
+            <div class="faq__answer"><p>可以。便携版有自己独立的数据目录，和系统里安装的版本互不干扰，两者能同时运行。</p></div>
+          </details>
+          <details class="faq__item">
+            <summary>这个项目收费或者带广告吗？</summary>
+            <div class="faq__answer"><p>不收费也不带任何推广。构建脚本只做解包、集成 Chrome++、注入、压缩四件事，不改主页、不预装扩展、不夹带任何私货，源码遵循 MIT 许可证并全部公开。</p></div>
+          </details>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <div class="site-footer__about">
+          <p class="site-footer__tagline">开源的 Chromium 系便携版自动构建项目。浏览器版权归各自厂商所有，构建脚本遵循 MIT 许可证。</p>
+          <p class="footer__stamp">版本信息更新于 2026-07-03</p>
+        </div>
+        <div class="site-footer__cols">
+          <div>
+            <h2>浏览器</h2>
+            <ul>
+              <li><a href="chrome/">Chrome 便携版</a></li>
+              <li><a href="edge/">Edge 便携版</a></li>
+              <li><a href="helium/">Helium 便携版</a></li>
+            </ul>
           </div>
-
-          <div class="repo-grid" id="repoGrid">
-            <article class="repo-card reveal" style="animation-delay:120ms">
-              <div class="repo-head">
-                <img class="repo-icon" src="./assets/chrome.svg" alt="Chrome-Portable 图标" loading="lazy" />
-                <div class="repo-copy">
-                  <h3>Chrome-Portable</h3>
-                  <span class="repo-meta">Piracola · 2 builds</span>
-                </div>
-              </div>
-              <p>自动构建的 Chrome 便携版项目，当前同时维护 Stable 与 Beta 两个频道。</p>
-              <p class="repo-detail"><span>Channels</span> Stable / Beta</p>
-              <div class="repo-links">
-                <a class="link-chip primary" href="https://github.com/Piracola/Chrome-Portable" target="_blank" rel="noreferrer">仓库主页</a>
-                <a class="link-chip" href="https://github.com/Piracola/Chrome-Portable/releases/latest" target="_blank" rel="noreferrer">Releases</a>
-                <a class="link-chip" href="https://github.com/Piracola/Chrome-Portable/actions/workflows/build.yml" target="_blank" rel="noreferrer">Actions</a>
-              </div>
-            </article>
-
-            <article class="repo-card reveal" style="animation-delay:190ms">
-              <div class="repo-head">
-                <img class="repo-icon" src="./assets/edge.svg" alt="Edge_Portable 图标" loading="lazy" />
-                <div class="repo-copy">
-                  <h3>Edge_Portable</h3>
-                  <span class="repo-meta">betacola · 1 builds</span>
-                </div>
-              </div>
-              <p>自动构建的 Microsoft Edge 便携版项目，当前维护 Stable 渠道。</p>
-              <p class="repo-detail"><span>Channels</span> Stable</p>
-              <div class="repo-links">
-                <a class="link-chip primary" href="https://github.com/betacola/Edge_Portable" target="_blank" rel="noreferrer">仓库主页</a>
-                <a class="link-chip" href="https://github.com/betacola/Edge_Portable/releases/latest" target="_blank" rel="noreferrer">Releases</a>
-                <a class="link-chip" href="https://github.com/betacola/Edge_Portable/actions/workflows/build.yml" target="_blank" rel="noreferrer">Actions</a>
-              </div>
-            </article>
-
-            <article class="repo-card reveal" style="animation-delay:260ms">
-              <div class="repo-head">
-                <img class="repo-icon" src="./assets/helium.svg" alt="Helium_Portable 图标" loading="lazy" />
-                <div class="repo-copy">
-                  <h3>Helium_Portable</h3>
-                  <span class="repo-meta">Piracola · 2 builds</span>
-                </div>
-              </div>
-              <p>自动构建的 Helium Windows x64 便携版项目，同时展示 Stable 与 Preview。</p>
-              <p class="repo-detail"><span>Channels</span> Stable / Preview</p>
-              <div class="repo-links">
-                <a class="link-chip primary" href="https://github.com/Piracola/Helium_Portable" target="_blank" rel="noreferrer">仓库主页</a>
-                <a class="link-chip" href="https://github.com/Piracola/Helium_Portable/releases/latest" target="_blank" rel="noreferrer">Releases</a>
-                <a class="link-chip" href="https://github.com/Piracola/Helium_Portable/actions/workflows/build.yml" target="_blank" rel="noreferrer">Actions</a>
-              </div>
-            </article>
+          <div>
+            <h2>上游与致谢</h2>
+            <ul class="site-footer__credits">
+              <li><span>便携化组件</span><a href="https://github.com/Bush2021/chrome_plus" target="_blank" rel="noopener">Bush2021/chrome_plus</a></li>
+              <li><span>Helium 上游</span><a href="https://github.com/imputnet/helium" target="_blank" rel="noopener">imputnet/helium</a></li>
+              <li><span>构建核心</span><a href="https://github.com/Piracola/ChromiumPortable" target="_blank" rel="noopener">Piracola/ChromiumPortable</a></li>
+            </ul>
           </div>
-        </section>
-      </main>
-    </div>
-
-    <script src="./site-data.js"></script>
-    <script src="./app.js"></script>
+        </div>
+      </div>
+    </footer>
+    <script src="app.js" defer></script>
   </body>
 </html>

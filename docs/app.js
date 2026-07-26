@@ -1,131 +1,66 @@
-(function () {
-  const data = window.SITE_DATA;
-  const repoMap = new Map(data.repos.map((repo) => [repo.id, repo]));
-  const buildGrid = document.getElementById("buildGrid");
-  const repoGrid = document.getElementById("repoGrid");
-  const filterBar = document.getElementById("filterBar");
+/* 渐进增强脚本。
+   页面内容全部由 tools/generate.py 预渲染成静态 HTML，这里只负责两件交互：
+   深色模式切换、按浏览器筛选下载卡片。禁用 JavaScript 时页面依然完整可用。*/
 
-  const state = {
-    filter: "all"
+(function () {
+  var root = document.documentElement;
+  var STORAGE_KEY = "cp-theme";
+
+  /* ---- 深色模式 ---- */
+  var toggle = document.querySelector("[data-theme-toggle]");
+  if (toggle) {
+    var prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
+
+    var currentTheme = function () {
+      if (root.dataset.theme === "dark" || root.dataset.theme === "light") {
+        return root.dataset.theme;
+      }
+      return prefersDark.matches ? "dark" : "light";
+    };
+
+    var syncLabel = function () {
+      var next = currentTheme() === "dark" ? "浅色" : "深色";
+      toggle.setAttribute("aria-label", "切换到" + next + "模式");
+    };
+
+    toggle.addEventListener("click", function () {
+      var next = currentTheme() === "dark" ? "light" : "dark";
+      root.dataset.theme = next;
+      try {
+        localStorage.setItem(STORAGE_KEY, next);
+      } catch (error) {
+        /* 隐私模式下 localStorage 可能不可写，忽略即可 */
+      }
+      syncLabel();
+    });
+
+    // 没有显式选择过主题时，跟随系统变化
+    prefersDark.addEventListener("change", syncLabel);
+    syncLabel();
+  }
+
+  /* ---- 下载卡片筛选 ---- */
+  var filters = Array.prototype.slice.call(document.querySelectorAll("[data-filter]"));
+  var cards = Array.prototype.slice.call(document.querySelectorAll(".build-card[data-family]"));
+  if (!filters.length || !cards.length) {
+    return;
+  }
+
+  var apply = function (value) {
+    filters.forEach(function (button) {
+      var active = button.dataset.filter === value;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+    cards.forEach(function (card) {
+      var visible = value === "all" || card.dataset.family === value;
+      card.classList.toggle("is-hidden", !visible);
+    });
   };
 
-  const families = ["all", ...new Set(data.builds.map((build) => build.family))];
-
-  function setMeta() {
-    const description = document.querySelector('meta[name="description"]');
-
-    document.title = data.meta.title;
-    if (description) {
-      description.setAttribute("content", data.meta.description);
-    }
-
-    document.getElementById("heroTitle").textContent = data.meta.heroTitle || data.meta.title;
-    document.getElementById("heroDescription").textContent =
-      data.meta.heroDescription || data.meta.description;
-    document.getElementById("builderRepoLink").href = data.meta.builderRepo;
-    document.getElementById("allReleasesLink").href = data.meta.ctaLink;
-  }
-
-  function renderFilters() {
-    filterBar.innerHTML = families
-      .map((family) => {
-        const active = state.filter === family ? " is-active" : "";
-        const label = family === "all" ? "全部" : family;
-        return `<button class="filter-chip${active}" type="button" data-filter="${family}">${label}</button>`;
-      })
-      .join("");
-
-    filterBar.querySelectorAll("[data-filter]").forEach((button) => {
-      button.addEventListener("click", () => {
-        state.filter = button.dataset.filter;
-        renderFilters();
-        renderBuilds();
-      });
+  filters.forEach(function (button) {
+    button.addEventListener("click", function () {
+      apply(button.dataset.filter);
     });
-  }
-
-  function buildCard(build, index) {
-    const repo = repoMap.get(build.repoId);
-    const visible = state.filter === "all" || state.filter === build.family;
-    const hiddenClass = visible ? "" : " is-hidden";
-    const delay = 80 + index * 60;
-
-    return `
-      <article class="build-card reveal${hiddenClass}" style="--accent:${build.color}; animation-delay:${delay}ms">
-        <div class="build-head">
-          <img class="browser-icon" src="${build.icon}" alt="${build.project} 图标" loading="lazy" />
-          <div class="build-title">
-            <h3>${build.title}</h3>
-            <span class="build-subtitle">${build.project} / ${build.channel} / ${build.highlight}</span>
-          </div>
-          <span class="channel-pill">${build.channel}</span>
-        </div>
-
-        <p class="build-summary">${build.summary}</p>
-
-        <dl class="build-meta">
-          <div class="metric">
-            <dt>Target</dt>
-            <dd>${build.target}</dd>
-          </div>
-          <div class="metric">
-            <dt>Output</dt>
-            <dd>${build.outputDir}</dd>
-          </div>
-          <div class="metric">
-            <dt>Architecture</dt>
-            <dd>${build.architecture}</dd>
-          </div>
-          <div class="metric">
-            <dt>Project</dt>
-            <dd>${repo.name}</dd>
-          </div>
-        </dl>
-
-        <div class="build-links">
-          <a class="link-chip primary" href="${build.links.repo}" target="_blank" rel="noreferrer">进入项目</a>
-          <a class="link-chip" href="${build.links.releases}" target="_blank" rel="noreferrer">Latest Release</a>
-          <a class="link-chip" href="${build.links.workflow}" target="_blank" rel="noreferrer">Workflow</a>
-        </div>
-      </article>
-    `;
-  }
-
-  function renderBuilds() {
-    buildGrid.innerHTML = data.builds.map(buildCard).join("");
-  }
-
-  function repoCard(repo, index) {
-    const repoBuilds = data.builds.filter((build) => build.repoId === repo.id);
-    const channels = [...new Set(repoBuilds.map((build) => build.channel))].join(" / ");
-    const delay = 120 + index * 70;
-
-    return `
-      <article class="repo-card reveal" style="animation-delay:${delay}ms">
-        <div class="repo-head">
-          <img class="repo-icon" src="${repo.icon}" alt="${repo.name} 图标" loading="lazy" />
-          <div class="repo-copy">
-            <h3>${repo.name}</h3>
-            <span class="repo-meta">${repo.owner} · ${repoBuilds.length} builds</span>
-          </div>
-        </div>
-        <p>${repo.summary}</p>
-        <p class="repo-detail"><span>Channels</span> ${channels}</p>
-        <div class="repo-links">
-          <a class="link-chip primary" href="${repo.url}" target="_blank" rel="noreferrer">仓库主页</a>
-          <a class="link-chip" href="${repo.releasesUrl}" target="_blank" rel="noreferrer">Releases</a>
-          <a class="link-chip" href="${repo.workflowUrl}" target="_blank" rel="noreferrer">Actions</a>
-        </div>
-      </article>
-    `;
-  }
-
-  function renderRepos() {
-    repoGrid.innerHTML = data.repos.map(repoCard).join("");
-  }
-
-  setMeta();
-  renderFilters();
-  renderBuilds();
-  renderRepos();
+  });
 })();

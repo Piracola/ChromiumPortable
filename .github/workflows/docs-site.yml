@@ -1,0 +1,70 @@
+name: 站点生成与校验
+
+# docs/ 是 GitHub Pages 的静态站点（Deploy from a branch，目录 /docs），没有服务端构建步骤，
+# 所以产物必须提交进仓库。这个工作流做两件事：
+#   verify  —— 有人改了 docs/ 就检查产物是否与 data/site.json 同步（防止手改 index.html 造成漂移）
+#   refresh —— 每天抓一次各子仓库的最新 Release，把真实版本号烘焙进页面并刷新 sitemap 的 lastmod
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - ".github/workflows/docs-site.yml"
+  pull_request:
+    paths:
+      - "docs/**"
+  schedule:
+    # 每天 03:20 UTC，排在子仓库的构建计划之后，尽量取到当天的新版本
+    - cron: "20 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: docs-site
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 校验静态产物与数据源一致
+        working-directory: docs
+        run: python tools/generate.py --check
+
+  refresh:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 抓取最新 Release 并重新生成站点
+        working-directory: docs
+        env:
+          # 只读取公开 Release，用默认 token 即可，作用是避开未认证的 60 次/小时限额
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python tools/generate.py --fetch-releases
+
+      - name: 有变化就提交
+        run: |
+          if [ -z "$(git status --porcelain docs)" ]; then
+            echo "站点内容无变化，跳过提交。"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs
+          git commit -m "chore(docs): 刷新站点版本信息"
+          git push

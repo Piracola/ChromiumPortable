@@ -8,6 +8,8 @@ Chromium 系浏览器便携版的可复用构建核心
 [![同步状态][badge-sync]][link-sync]
 [![许可证][badge-license]][link-license]
 
+**[📖 下载页与使用说明](https://piracola.github.io/ChromiumPortable/)**
+
 </div>
 
 ChromiumPortable 用来统一处理上游版本检查、安装包下载、解压、`chrome++` 集成、DLL 注入、打包和 GitHub Release 发布。
@@ -15,6 +17,7 @@ ChromiumPortable 用来统一处理上游版本检查、安装包下载、解压
 它本身不发布浏览器成品；成品由各个子仓库根据自己的上游浏览器配置自动构建。
 
 > ⚠️ 本仓库**不发布浏览器成品**，只提供可复用的构建流程。如需下载便携版浏览器，请前往：
+> - **[便携版下载页](https://piracola.github.io/ChromiumPortable/)**（Chrome / Edge / Helium 的统一入口，含安装、更新与校验说明）
 > - [Chrome-Portable](https://github.com/Piracola/Chrome-Portable)（Google Chrome，Stable / Beta）
 > - [Edge_Portable](https://github.com/betacola/Edge_Portable)（Microsoft Edge，Stable）
 > - [Helium_Portable](https://github.com/Piracola/Helium_Portable)（Helium，Stable / Preview）

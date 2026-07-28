@@ -21,15 +21,15 @@
       ]
     },
     "edge": {
-      "tag": "v150.0.4078.99",
+      "tag": "v150.0.4078.105",
       "publishedAt": "2026-07-03T02:27:51Z",
-      "htmlUrl": "https://github.com/betacola/Edge_Portable/releases/tag/v150.0.4078.99",
+      "htmlUrl": "https://github.com/betacola/Edge_Portable/releases/tag/v150.0.4078.105",
       "assets": [
         {
-          "name": "Edge_Portable_Win64_150.0.4078.99_2026-07-26.7z",
-          "size": 192663010,
-          "url": "https://github.com/betacola/Edge_Portable/releases/download/v150.0.4078.99/Edge_Portable_Win64_150.0.4078.99_2026-07-26.7z",
-          "digest": "sha256:7b1d4a2a2a400745bfd32a799ef5b5c3dd94b24571991fa1dacee8e02681f836"
+          "name": "Edge_Portable_Win64_150.0.4078.105_2026-07-28.7z",
+          "size": 192701713,
+          "url": "https://github.com/betacola/Edge_Portable/releases/download/v150.0.4078.105/Edge_Portable_Win64_150.0.4078.105_2026-07-28.7z",
+          "digest": "sha256:7f06b41d7c116f5916e4929acca91f3c9af50542e228558f251494eefb2ed977"
         }
       ]
     },
@@ -71,11 +71,11 @@
       "publishedAt": "2026-07-01T11:33:13Z"
     },
     "edge-stable": {
-      "version": "150.0.4078.99",
-      "assetName": "Edge_Portable_Win64_150.0.4078.99_2026-07-26.7z",
-      "size": 192663010,
-      "url": "https://github.com/betacola/Edge_Portable/releases/download/v150.0.4078.99/Edge_Portable_Win64_150.0.4078.99_2026-07-26.7z",
-      "sha256": "7b1d4a2a2a400745bfd32a799ef5b5c3dd94b24571991fa1dacee8e02681f836",
+      "version": "150.0.4078.105",
+      "assetName": "Edge_Portable_Win64_150.0.4078.105_2026-07-28.7z",
+      "size": 192701713,
+      "url": "https://github.com/betacola/Edge_Portable/releases/download/v150.0.4078.105/Edge_Portable_Win64_150.0.4078.105_2026-07-28.7z",
+      "sha256": "7f06b41d7c116f5916e4929acca91f3c9af50542e228558f251494eefb2ed977",
       "publishedAt": "2026-07-03T02:27:51Z"
     },
     "helium-stable": {

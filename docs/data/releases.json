@@ -2,21 +2,21 @@
   "fetchedAt": "2026-08-01",
   "repos": {
     "chrome": {
-      "tag": "v151.0.7922.72",
+      "tag": "v151.0.7922.76",
       "publishedAt": "2026-07-30T10:34:26Z",
-      "htmlUrl": "https://github.com/Piracola/Chrome-Portable/releases/tag/v151.0.7922.72",
+      "htmlUrl": "https://github.com/Piracola/Chrome-Portable/releases/tag/v151.0.7922.76",
       "assets": [
         {
           "name": "Chrome++_beta_152.0.7977.13_2026-08-04.7z",
           "size": 148819681,
-          "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v151.0.7922.72/Chrome%2B%2B_beta_152.0.7977.13_2026-08-04.7z",
+          "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v151.0.7922.76/Chrome%2B%2B_beta_152.0.7977.13_2026-08-04.7z",
           "digest": "sha256:1d82564b7adc6d4e96e2f4a4a93a404b54611d9d5456440f68075c07d5766d3c"
         },
         {
-          "name": "Chrome++_stable_151.0.7922.72_2026-07-30.7z",
-          "size": 148077894,
-          "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v151.0.7922.72/Chrome%2B%2B_stable_151.0.7922.72_2026-07-30.7z",
-          "digest": "sha256:3054d70746a98e6a7cbec75fc84229d7da6f6ccad9d4610cca6dc3b0ac5c64a0"
+          "name": "Chrome++_stable_151.0.7922.76_2026-08-05.7z",
+          "size": 148099072,
+          "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v151.0.7922.76/Chrome%2B%2B_stable_151.0.7922.76_2026-08-05.7z",
+          "digest": "sha256:5f447b0f34657bf4b9653fd86e60919ec61dbd97b44e6151b1b41f44fa06cc95"
         }
       ]
     },
@@ -55,18 +55,18 @@
   },
   "builds": {
     "chrome-stable": {
-      "version": "151.0.7922.72",
-      "assetName": "Chrome++_stable_151.0.7922.72_2026-07-30.7z",
-      "size": 148077894,
-      "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v151.0.7922.72/Chrome%2B%2B_stable_151.0.7922.72_2026-07-30.7z",
-      "sha256": "3054d70746a98e6a7cbec75fc84229d7da6f6ccad9d4610cca6dc3b0ac5c64a0",
+      "version": "151.0.7922.76",
+      "assetName": "Chrome++_stable_151.0.7922.76_2026-08-05.7z",
+      "size": 148099072,
+      "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v151.0.7922.76/Chrome%2B%2B_stable_151.0.7922.76_2026-08-05.7z",
+      "sha256": "5f447b0f34657bf4b9653fd86e60919ec61dbd97b44e6151b1b41f44fa06cc95",
       "publishedAt": "2026-07-30T10:34:26Z"
     },
     "chrome-beta": {
       "version": "152.0.7977.13",
       "assetName": "Chrome++_beta_152.0.7977.13_2026-08-04.7z",
       "size": 148819681,
-      "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v151.0.7922.72/Chrome%2B%2B_beta_152.0.7977.13_2026-08-04.7z",
+      "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v151.0.7922.76/Chrome%2B%2B_beta_152.0.7977.13_2026-08-04.7z",
       "sha256": "1d82564b7adc6d4e96e2f4a4a93a404b54611d9d5456440f68075c07d5766d3c",
       "publishedAt": "2026-07-30T10:34:26Z"
     },

@@ -10,6 +10,8 @@
   var toggle = document.querySelector("[data-theme-toggle]");
   if (toggle) {
     var prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
+    var labelLight = toggle.getAttribute("data-label-light") || "切换到浅色模式";
+    var labelDark = toggle.getAttribute("data-label-dark") || "切换到深色模式";
 
     var currentTheme = function () {
       if (root.dataset.theme === "dark" || root.dataset.theme === "light") {
@@ -19,8 +21,7 @@
     };
 
     var syncLabel = function () {
-      var next = currentTheme() === "dark" ? "浅色" : "深色";
-      toggle.setAttribute("aria-label", "切换到" + next + "模式");
+      toggle.setAttribute("aria-label", currentTheme() === "dark" ? labelLight : labelDark);
     };
 
     toggle.addEventListener("click", function () {
@@ -34,7 +35,6 @@
       syncLabel();
     });
 
-    // 没有显式选择过主题时，跟随系统变化
     prefersDark.addEventListener("change", syncLabel);
     syncLabel();
   }

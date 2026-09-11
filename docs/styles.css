@@ -39,7 +39,9 @@
   --section-gap: clamp(64px, 9vw, 104px);
 
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI",
-    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
+    "PingFang SC", "PingFang TC", "Hiragino Sans GB", "Hiragino Sans", "Microsoft YaHei UI",
+    "Microsoft YaHei", "Microsoft JhengHei UI", "Microsoft JhengHei", "Yu Gothic UI", "Yu Gothic",
+    "Noto Sans JP", system-ui, sans-serif;
   --font-mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, "Liberation Mono", monospace;
 }
 
@@ -223,6 +225,38 @@ p {
 }
 
 .nav__link[aria-current="page"] {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.lang-switch__link {
+  min-width: 2rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: var(--text-3);
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-align: center;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.lang-switch__link:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.lang-switch__link[aria-current="true"] {
   color: var(--text);
   background: var(--surface-2);
 }

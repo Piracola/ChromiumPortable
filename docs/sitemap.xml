@@ -1,25 +1,177 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://piracola.github.io/ChromiumPortable/</loc>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://piracola.github.io/ChromiumPortable/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://piracola.github.io/ChromiumPortable/zh-TW/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://piracola.github.io/ChromiumPortable/en/" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://piracola.github.io/ChromiumPortable/ja/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://piracola.github.io/ChromiumPortable/" />
     <lastmod>2026-07-03</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://piracola.github.io/ChromiumPortable/chrome/</loc>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://piracola.github.io/ChromiumPortable/chrome/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://piracola.github.io/ChromiumPortable/zh-TW/chrome/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://piracola.github.io/ChromiumPortable/en/chrome/" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://piracola.github.io/ChromiumPortable/ja/chrome/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://piracola.github.io/ChromiumPortable/chrome/" />
     <lastmod>2026-07-03</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://piracola.github.io/ChromiumPortable/edge/</loc>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://piracola.github.io/ChromiumPortable/edge/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://piracola.github.io/ChromiumPortable/zh-TW/edge/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://piracola.github.io/ChromiumPortable/en/edge/" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://piracola.github.io/ChromiumPortable/ja/edge/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://piracola.github.io/ChromiumPortable/edge/" />
     <lastmod>2026-07-03</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://piracola.github.io/ChromiumPortable/helium/</loc>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://piracola.github.io/ChromiumPortable/helium/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://piracola.github.io/ChromiumPortable/zh-TW/helium/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://piracola.github.io/ChromiumPortable/en/helium/" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://piracola.github.io/ChromiumPortable/ja/helium/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://piracola.github.io/ChromiumPortable/helium/" />
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://piracola.github.io/ChromiumPortable/zh-TW/</loc>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://piracola.github.io/ChromiumPortable/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://piracola.github.io/ChromiumPortable/zh-TW/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://piracola.github.io/ChromiumPortable/en/" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://piracola.github.io/ChromiumPortable/ja/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://piracola.github.io/ChromiumPortable/" />
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://piracola.github.io/ChromiumPortable/zh-TW/chrome/</loc>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://piracola.github.io/ChromiumPortable/chrome/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://piracola.github.io/ChromiumPortable/zh-TW/chrome/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://piracola.github.io/ChromiumPortable/en/chrome/" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://piracola.github.io/ChromiumPortable/ja/chrome/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://piracola.github.io/ChromiumPortable/chrome/" />
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://piracola.github.io/ChromiumPortable/zh-TW/edge/</loc>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://piracola.github.io/ChromiumPortable/edge/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://piracola.github.io/ChromiumPortable/zh-TW/edge/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://piracola.github.io/ChromiumPortable/en/edge/" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://piracola.github.io/ChromiumPortable/ja/edge/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://piracola.github.io/ChromiumPortable/edge/" />
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://piracola.github.io/ChromiumPortable/zh-TW/helium/</loc>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://piracola.github.io/ChromiumPortable/helium/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://piracola.github.io/ChromiumPortable/zh-TW/helium/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://piracola.github.io/ChromiumPortable/en/helium/" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://piracola.github.io/ChromiumPortable/ja/helium/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://piracola.github.io/ChromiumPortable/helium/" />
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://piracola.github.io/ChromiumPortable/en/</loc>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://piracola.github.io/ChromiumPortable/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://piracola.github.io/ChromiumPortable/zh-TW/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://piracola.github.io/ChromiumPortable/en/" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://piracola.github.io/ChromiumPortable/ja/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://piracola.github.io/ChromiumPortable/" />
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://piracola.github.io/ChromiumPortable/en/chrome/</loc>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://piracola.github.io/ChromiumPortable/chrome/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://piracola.github.io/ChromiumPortable/zh-TW/chrome/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://piracola.github.io/ChromiumPortable/en/chrome/" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://piracola.github.io/ChromiumPortable/ja/chrome/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://piracola.github.io/ChromiumPortable/chrome/" />
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://piracola.github.io/ChromiumPortable/en/edge/</loc>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://piracola.github.io/ChromiumPortable/edge/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://piracola.github.io/ChromiumPortable/zh-TW/edge/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://piracola.github.io/ChromiumPortable/en/edge/" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://piracola.github.io/ChromiumPortable/ja/edge/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://piracola.github.io/ChromiumPortable/edge/" />
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://piracola.github.io/ChromiumPortable/en/helium/</loc>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://piracola.github.io/ChromiumPortable/helium/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://piracola.github.io/ChromiumPortable/zh-TW/helium/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://piracola.github.io/ChromiumPortable/en/helium/" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://piracola.github.io/ChromiumPortable/ja/helium/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://piracola.github.io/ChromiumPortable/helium/" />
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://piracola.github.io/ChromiumPortable/ja/</loc>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://piracola.github.io/ChromiumPortable/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://piracola.github.io/ChromiumPortable/zh-TW/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://piracola.github.io/ChromiumPortable/en/" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://piracola.github.io/ChromiumPortable/ja/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://piracola.github.io/ChromiumPortable/" />
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://piracola.github.io/ChromiumPortable/ja/chrome/</loc>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://piracola.github.io/ChromiumPortable/chrome/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://piracola.github.io/ChromiumPortable/zh-TW/chrome/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://piracola.github.io/ChromiumPortable/en/chrome/" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://piracola.github.io/ChromiumPortable/ja/chrome/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://piracola.github.io/ChromiumPortable/chrome/" />
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://piracola.github.io/ChromiumPortable/ja/edge/</loc>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://piracola.github.io/ChromiumPortable/edge/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://piracola.github.io/ChromiumPortable/zh-TW/edge/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://piracola.github.io/ChromiumPortable/en/edge/" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://piracola.github.io/ChromiumPortable/ja/edge/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://piracola.github.io/ChromiumPortable/edge/" />
+    <lastmod>2026-07-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://piracola.github.io/ChromiumPortable/ja/helium/</loc>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://piracola.github.io/ChromiumPortable/helium/" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://piracola.github.io/ChromiumPortable/zh-TW/helium/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://piracola.github.io/ChromiumPortable/en/helium/" />
+    <xhtml:link rel="alternate" hreflang="ja" href="https://piracola.github.io/ChromiumPortable/ja/helium/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://piracola.github.io/ChromiumPortable/helium/" />
     <lastmod>2026-07-03</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>

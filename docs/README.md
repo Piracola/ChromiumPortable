@@ -12,16 +12,21 @@
 
 ```
 docs/
-├── data/site.json        # 单一数据源：文案、构建目标、仓库、FAQ
+├── data/site.json        # 单一数据源：技术字段 + i18n 文案（zh-CN / en）
 ├── data/releases.json    # 由脚本抓取的各仓库最新 Release（版本 / 体积 / 日期 / SHA256）
 ├── tools/generate.py     # 渲染器：产出下面所有 HTML 与 sitemap.xml
 ├── tools/make_og.py      # 生成 assets/og.png 社交预览图（本地手动跑）
-├── index.html            # ← 生成产物，不要手改
-├── chrome|edge|helium/   # ← 生成产物，各浏览器的落地页
-├── sitemap.xml           # ← 生成产物
+├── index.html            # ← 生成产物（中文首页），不要手改
+├── chrome|edge|helium/   # ← 生成产物（中文落地页）
+├── en/                   # ← 生成产物（英文整站）
+├── sitemap.xml           # ← 生成产物（含 hreflang 交替）
 ├── styles.css            # 手写
 └── app.js                # 手写，仅深色模式切换与卡片筛选
 ```
+
+中文在站点根路径，英文在 `/en/`，繁中在 `/zh-TW/`，日语在 `/ja/`。语言切换按钮在页头，切换时保持当前页面。
+`hreflang` 在页面 head 与 sitemap 中都有声明。新增语言：在 `meta.locales` 加一项，
+并在 `i18n.<code>` 补全与现有语言同构的文案块，再跑生成器即可。
 
 **`index.html` 和三个落地页都是生成产物。**改内容请改 `data/site.json`，然后重新生成：
 
@@ -59,9 +64,11 @@ python tools/generate.py --fetch-releases
 站点是 `github.io` 项目页，没有外链就不会被抓取。以下几步只做一次：
 
 - [ ] 四个仓库的 About → Website 字段填站点地址（Chrome-Portable / Edge_Portable / Helium_Portable / ChromiumPortable）
-- [ ] [Google Search Console](https://search.google.com/search-console) 添加资源，用 HTML 文件方式验证
-      （把验证文件放进 `docs/`，它会随 Pages 一起发布），提交 `sitemap.xml`
-- [ ] [Bing 站长工具](https://www.bing.com/webmasters) 同样验证并提交 sitemap（DuckDuckGo 与多个 AI 搜索取用 Bing 索引）
+- [x] 站长验证文件已放入 `docs/`（Pages 部署后即可在控制台点验证）：
+  - Google：`google6cf1285c9ac9b8d4.html`
+  - Bing：`BingSiteAuth.xml`
+- [ ] [Google Search Console](https://search.google.com/search-console) 验证通过后，提交 `sitemap.xml`
+- [ ] [Bing 站长工具](https://www.bing.com/webmasters) 验证通过后提交 sitemap（DuckDuckGo 与多个 AI 搜索取用 Bing 索引）
 
 关于百度：`github.io` 长期不被百度有效收录，中文流量基本进不来。要覆盖百度只能绑定自定义域名，
 当前没有这个计划，故不做百度站长验证。

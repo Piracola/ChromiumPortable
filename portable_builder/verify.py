@@ -17,6 +17,7 @@ from .github_env import write_env
 from .multi import env_name
 from .release import archive_name_regex
 from .tools import (
+    assert_no_forbidden_files,
     assert_portable_version_import,
     extract_with_7z,
     find_7z_tool,
@@ -184,6 +185,7 @@ def verify_target(target, workdir, archive=None, smoke=True):
     executable = locate_executable(target, app_root)
     assert_portable_version_import(executable)
     assert_no_setdll_backup(extracted_root, executable)
+    assert_no_forbidden_files(extracted_root, target)
 
     if smoke:
         smoke_test(target, extracted_root, app_root, executable)

@@ -143,7 +143,7 @@ python -m portable_builder --config browser.json --target chrome_stable --workdi
 python -m portable_builder --config browser.json --target chrome_stable --workdir . verify --no-smoke  # 只查导入表，不启动浏览器
 ```
 
-可用 target 配置项微调：`smoke_args`（默认 headless + `--dump-dom about:blank`）、`smoke_data_dir`（默认 `Data`）、`smoke_timeout`、`smoke_data_timeout`（等待配置目录出现的秒数，默认 60）。
+可用 target 配置项微调：`smoke_args`（默认 headless + `--dump-dom about:blank`）、`smoke_data_dir`（默认 `Data`）、`smoke_timeout`、`smoke_data_timeout`（等待配置目录出现的秒数，默认 60）。`forbidden_file_names` 可列出发布包绝不能携带的文件名（忽略大小写）；构建暂存和最终压缩包验证都会检查，适合防止浏览器整体更新器被上游意外带入便携包。
 
 最后一项是必要的：部分浏览器的主 exe 只是启动器（例如 `msedge.exe` 约 0.1 秒就返回 0，真正的浏览器跑在分离的子进程里），所以配置目录要轮询等待，不能启动结束就立刻断言。同理，这类启动器的退出码为 0 并不能证明浏览器真的起来了，真正有分量的判据是配置目录是否出现。
 

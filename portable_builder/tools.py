@@ -354,3 +354,21 @@ def assert_portable_version_import(path, dll_name="version.dll"):
 
     print(f"[INFO] Import table verified (directory in '{import_section}'): {listed}")
     return imports
+
+
+def assert_no_forbidden_files(root, target):
+    """Reject exact file names that a portable target must never ship."""
+    root = Path(root)
+    forbidden = {name.casefold() for name in target.get("forbidden_file_names", [])}
+    if not forbidden:
+        return
+
+    matches = [
+        path.relative_to(root).as_posix()
+        for path in root.rglob("*")
+        if path.is_file() and path.name.casefold() in forbidden
+    ]
+    if matches:
+        raise RuntimeError(
+            "Build contains forbidden file(s): " + ", ".join(sorted(matches))
+        )

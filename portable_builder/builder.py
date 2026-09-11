@@ -8,6 +8,7 @@ from .github_env import build_run_url, write_env
 from .ini_overlay import merge_ini, parse_overrides, read_ini_text, write_ini_text
 from .providers import get_package
 from .tools import (
+    assert_no_forbidden_files,
     assert_portable_version_import,
     download_file,
     extract_with_7z,
@@ -336,6 +337,7 @@ def build_target(target, workdir, builder_dir=None):
     staged = stage_app(target, workdir, prepared)
     copy_chrome_plus(target, workdir, staged, builder_dir=builder_dir)
     inject_dll(target, staged)
+    assert_no_forbidden_files(staged["stage_dir"], target)
     final_app_dir = finalize(target, workdir, staged)
 
     env_values = {

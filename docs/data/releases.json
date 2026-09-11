@@ -1,98 +1,98 @@
 {
-  "fetchedAt": "2026-07-03",
+  "fetchedAt": "2026-09-11",
   "repos": {
     "chrome": {
-      "tag": "v150.0.7871.187",
-      "publishedAt": "2026-07-01T11:33:13Z",
-      "htmlUrl": "https://github.com/Piracola/Chrome-Portable/releases/tag/v150.0.7871.187",
+      "tag": "v153.0.8010.37",
+      "publishedAt": "2026-09-09T12:56:50Z",
+      "htmlUrl": "https://github.com/Piracola/Chrome-Portable/releases/tag/v153.0.8010.37",
       "assets": [
         {
-          "name": "Chrome++_beta_151.0.7922.47_2026-07-23.7z",
-          "size": 149673717,
-          "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v150.0.7871.187/Chrome%2B%2B_beta_151.0.7922.47_2026-07-23.7z",
-          "digest": "sha256:e61b08e1cbcf470ee2de38830aa4ae6e07287b03afbd8a03f817c0b8eb4aa5c3"
+          "name": "Chrome++_beta_154.0.8037.17_2026-09-10.7z",
+          "size": 150738301,
+          "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v153.0.8010.37/Chrome%2B%2B_beta_154.0.8037.17_2026-09-10.7z",
+          "digest": "sha256:72e9a8e92ba75509eac110f28531cdbd9872312d0ecd55acb1a1a864483fca70"
         },
         {
-          "name": "Chrome++_stable_150.0.7871.187_2026-07-24.7z",
-          "size": 142309285,
-          "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v150.0.7871.187/Chrome%2B%2B_stable_150.0.7871.187_2026-07-24.7z",
-          "digest": "sha256:b8e29387c7dad73997d12e4930bf9da3f97cd3d9002c865fd8314a59d5685549"
+          "name": "Chrome++_stable_153.0.8010.37_2026-09-09.7z",
+          "size": 150503515,
+          "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v153.0.8010.37/Chrome%2B%2B_stable_153.0.8010.37_2026-09-09.7z",
+          "digest": "sha256:ba24628b6a4c158452157374227ac11033a010af5adf98da8896756dfeee0b8b"
         }
       ]
     },
     "edge": {
-      "tag": "v150.0.4078.99",
-      "publishedAt": "2026-07-03T02:27:51Z",
-      "htmlUrl": "https://github.com/betacola/Edge_Portable/releases/tag/v150.0.4078.99",
+      "tag": "v153.0.4234.32",
+      "publishedAt": "2026-09-11T02:35:10Z",
+      "htmlUrl": "https://github.com/betacola/Edge_Portable/releases/tag/v153.0.4234.32",
       "assets": [
         {
-          "name": "Edge_Portable_Win64_150.0.4078.99_2026-07-26.7z",
-          "size": 192663010,
-          "url": "https://github.com/betacola/Edge_Portable/releases/download/v150.0.4078.99/Edge_Portable_Win64_150.0.4078.99_2026-07-26.7z",
-          "digest": "sha256:7b1d4a2a2a400745bfd32a799ef5b5c3dd94b24571991fa1dacee8e02681f836"
+          "name": "Edge_Portable_Win64_153.0.4234.32_2026-09-11.7z",
+          "size": 201236509,
+          "url": "https://github.com/betacola/Edge_Portable/releases/download/v153.0.4234.32/Edge_Portable_Win64_153.0.4234.32_2026-09-11.7z",
+          "digest": "sha256:42a0ef9143c8394ac0eea5df10b2c5f45defde40035fcfb6754583d427d22895"
         }
       ]
     },
     "helium": {
-      "tag": "v0.14.9.1",
-      "publishedAt": "2026-06-06T13:40:24Z",
-      "htmlUrl": "https://github.com/Piracola/Helium_Portable/releases/tag/v0.14.9.1",
+      "tag": "v0.16.6.1",
+      "publishedAt": "2026-07-28T11:44:33Z",
+      "htmlUrl": "https://github.com/Piracola/Helium_Portable/releases/tag/v0.16.6.1",
       "assets": [
         {
-          "name": "Helium_0.14.9.1_2026-07-25.7z",
-          "size": 119709410,
-          "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.14.9.1/Helium_0.14.9.1_2026-07-25.7z",
-          "digest": "sha256:d5d49e9b848ff2e332a0c66af6949207670b942b7467d813f620e1666a06ad99"
+          "name": "Helium_0.16.6.1_2026-09-09.7z",
+          "size": 124495864,
+          "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.16.6.1/Helium_0.16.6.1_2026-09-09.7z",
+          "digest": "sha256:ffdc54d564a3c4132df864a6a71140f99bf59fefe5f5df89a4c3111e150bfe6b"
         },
         {
-          "name": "Helium_Preview_0.14.6.1_2026-07-17.7z",
-          "size": 119727522,
-          "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.14.9.1/Helium_Preview_0.14.6.1_2026-07-17.7z",
-          "digest": "sha256:1156aae5a44d541208e1a67799f5ef6f11b19ae506cd92a9a5014d9a64cd4e27"
+          "name": "Helium_Preview_0.16.4.1_2026-09-03.7z",
+          "size": 124585106,
+          "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.16.6.1/Helium_Preview_0.16.4.1_2026-09-03.7z",
+          "digest": "sha256:51de1c1bf666663c96547c7d22a43c3dbdd4c46cc393c124bdd9e78624558299"
         }
       ]
     }
   },
   "builds": {
     "chrome-stable": {
-      "version": "150.0.7871.187",
-      "assetName": "Chrome++_stable_150.0.7871.187_2026-07-24.7z",
-      "size": 142309285,
-      "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v150.0.7871.187/Chrome%2B%2B_stable_150.0.7871.187_2026-07-24.7z",
-      "sha256": "b8e29387c7dad73997d12e4930bf9da3f97cd3d9002c865fd8314a59d5685549",
-      "publishedAt": "2026-07-01T11:33:13Z"
+      "version": "153.0.8010.37",
+      "assetName": "Chrome++_stable_153.0.8010.37_2026-09-09.7z",
+      "size": 150503515,
+      "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v153.0.8010.37/Chrome%2B%2B_stable_153.0.8010.37_2026-09-09.7z",
+      "sha256": "ba24628b6a4c158452157374227ac11033a010af5adf98da8896756dfeee0b8b",
+      "publishedAt": "2026-09-09T12:56:50Z"
     },
     "chrome-beta": {
-      "version": "151.0.7922.47",
-      "assetName": "Chrome++_beta_151.0.7922.47_2026-07-23.7z",
-      "size": 149673717,
-      "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v150.0.7871.187/Chrome%2B%2B_beta_151.0.7922.47_2026-07-23.7z",
-      "sha256": "e61b08e1cbcf470ee2de38830aa4ae6e07287b03afbd8a03f817c0b8eb4aa5c3",
-      "publishedAt": "2026-07-01T11:33:13Z"
+      "version": "154.0.8037.17",
+      "assetName": "Chrome++_beta_154.0.8037.17_2026-09-10.7z",
+      "size": 150738301,
+      "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v153.0.8010.37/Chrome%2B%2B_beta_154.0.8037.17_2026-09-10.7z",
+      "sha256": "72e9a8e92ba75509eac110f28531cdbd9872312d0ecd55acb1a1a864483fca70",
+      "publishedAt": "2026-09-09T12:56:50Z"
     },
     "edge-stable": {
-      "version": "150.0.4078.99",
-      "assetName": "Edge_Portable_Win64_150.0.4078.99_2026-07-26.7z",
-      "size": 192663010,
-      "url": "https://github.com/betacola/Edge_Portable/releases/download/v150.0.4078.99/Edge_Portable_Win64_150.0.4078.99_2026-07-26.7z",
-      "sha256": "7b1d4a2a2a400745bfd32a799ef5b5c3dd94b24571991fa1dacee8e02681f836",
-      "publishedAt": "2026-07-03T02:27:51Z"
+      "version": "153.0.4234.32",
+      "assetName": "Edge_Portable_Win64_153.0.4234.32_2026-09-11.7z",
+      "size": 201236509,
+      "url": "https://github.com/betacola/Edge_Portable/releases/download/v153.0.4234.32/Edge_Portable_Win64_153.0.4234.32_2026-09-11.7z",
+      "sha256": "42a0ef9143c8394ac0eea5df10b2c5f45defde40035fcfb6754583d427d22895",
+      "publishedAt": "2026-09-11T02:35:10Z"
     },
     "helium-stable": {
-      "version": "0.14.9.1",
-      "assetName": "Helium_0.14.9.1_2026-07-25.7z",
-      "size": 119709410,
-      "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.14.9.1/Helium_0.14.9.1_2026-07-25.7z",
-      "sha256": "d5d49e9b848ff2e332a0c66af6949207670b942b7467d813f620e1666a06ad99",
-      "publishedAt": "2026-06-06T13:40:24Z"
+      "version": "0.16.6.1",
+      "assetName": "Helium_0.16.6.1_2026-09-09.7z",
+      "size": 124495864,
+      "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.16.6.1/Helium_0.16.6.1_2026-09-09.7z",
+      "sha256": "ffdc54d564a3c4132df864a6a71140f99bf59fefe5f5df89a4c3111e150bfe6b",
+      "publishedAt": "2026-07-28T11:44:33Z"
     },
     "helium-preview": {
-      "version": "0.14.6.1",
-      "assetName": "Helium_Preview_0.14.6.1_2026-07-17.7z",
-      "size": 119727522,
-      "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.14.9.1/Helium_Preview_0.14.6.1_2026-07-17.7z",
-      "sha256": "1156aae5a44d541208e1a67799f5ef6f11b19ae506cd92a9a5014d9a64cd4e27",
-      "publishedAt": "2026-06-06T13:40:24Z"
+      "version": "0.16.4.1",
+      "assetName": "Helium_Preview_0.16.4.1_2026-09-03.7z",
+      "size": 124585106,
+      "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.16.6.1/Helium_Preview_0.16.4.1_2026-09-03.7z",
+      "sha256": "51de1c1bf666663c96547c7d22a43c3dbdd4c46cc393c124bdd9e78624558299",
+      "publishedAt": "2026-07-28T11:44:33Z"
     }
   }
 }

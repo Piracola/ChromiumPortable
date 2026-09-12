@@ -17,7 +17,7 @@ from .release import (
     target_match_description,
 )
 from .tools import human_size, sha256_file
-from .versions import is_major_update, is_minor_update, is_upgrade
+from .versions import is_upgrade, should_create_new_release
 
 import requests
 
@@ -163,18 +163,26 @@ def check_targets(config, target_names, workdir):
         updates[target_name] = update
         print(f"[INFO] {target_name}: upstream={package['version']} current={current} asset_present={asset_present} update={update}")
 
-    tag_target = config.get("release", {}).get("tag_target", target_names[0])
+    release_config = config.get("release", {})
+    tag_target = release_config.get("tag_target", target_names[0])
+    tag_target_config = get_target(config, tag_target)
+    create_policy = release_config.get("create_new_release_on") or tag_target_config.get("release", {}).get(
+        "create_new_release_on"
+    )
+
     create_new_release = not release_id
     if release_id and updates.get(tag_target):
         current = current_versions.get(tag_target)
         upstream = packages[tag_target]["version"]
-        create_new_release = bool(current and is_major_update(upstream, current))
+        create_new_release = bool(current and should_create_new_release(create_policy, upstream, current))
 
+    # In-place tag/title rewrite only when we deliberately stayed on the same
+    # release; a create_new_release run publishes a fresh tag instead.
     minor_update = False
-    if release_id and updates.get(tag_target):
+    if release_id and updates.get(tag_target) and not create_new_release:
         current = current_versions.get(tag_target)
         upstream = packages[tag_target]["version"]
-        minor_update = bool(current and is_minor_update(upstream, current))
+        minor_update = bool(current and upstream != current and is_upgrade(upstream, current))
 
     values = {
         "UPDATE_NEEDED": str(any(updates.values())).lower(),

@@ -8,7 +8,7 @@ import requests
 
 from .builder import build_context, format_value, get_version_info
 from .github_env import write_env
-from .versions import is_major_update, is_minor_update, is_upgrade
+from .versions import is_upgrade, should_create_new_release
 
 DEFAULT_SAMPLE_VERSION = "123.456.789.0"
 DEFAULT_SAMPLE_DATE = "2099-12-31"
@@ -229,8 +229,20 @@ def check_updates(target, workdir="."):
         update_needed = False
         print("[INFO] No newer upstream version detected.")
 
-    create_new_release = not release_id or (update_needed and current_version and is_major_update(upstream_version, current_version))
-    minor_update = bool(update_needed and current_version and is_minor_update(upstream_version, current_version))
+    create_policy = target.get("release", {}).get("create_new_release_on")
+    create_new_release = not release_id or (
+        update_needed
+        and current_version
+        and should_create_new_release(create_policy, upstream_version, current_version)
+    )
+    # In-place rename only when we stay on the existing release.
+    minor_update = bool(
+        update_needed
+        and current_version
+        and not create_new_release
+        and upstream_version != current_version
+        and is_upgrade(upstream_version, current_version)
+    )
 
     values = {
         "UPDATE_NEEDED": str(update_needed).lower(),

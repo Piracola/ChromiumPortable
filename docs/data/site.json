@@ -130,20 +130,6 @@
       "accent": "#5b5bd6",
       "icon": "assets/helium.svg",
       "assetPattern": "^Helium_(?P<version>\\d[\\d.]*)_"
-    },
-    {
-      "id": "helium-preview",
-      "repoId": "helium",
-      "pageSlug": "helium",
-      "family": "Helium",
-      "channel": "Preview",
-      "target": "helium_prerelease",
-      "outputDir": "Helium",
-      "architecture": "x64",
-      "assetHint": "Helium_Preview_…7z",
-      "accent": "#7b6ff0",
-      "icon": "assets/helium.svg",
-      "assetPattern": "^Helium_Preview_(?P<version>\\d[\\d.]*)_"
     }
   ],
   "pages": [
@@ -205,9 +191,9 @@
         "lede": "免安装、不写注册表、数据留在自己的文件夹里。由 GitHub Actions 每日跟随官方版本自动构建，构建过程与校验日志全部公开可查。",
         "stats": [
           {
-            "value": "5",
+            "value": "4",
             "label": "构建目标",
-            "detail": "3 个浏览器 · 5 个发布渠道"
+            "detail": "3 个浏览器 · 4 个发布渠道"
           },
           {
             "value": "每日",
@@ -280,7 +266,7 @@
           "summary": "Microsoft Edge 便携版，跟随官方 Stable 渠道，使用微软官方离线安装包。"
         },
         "helium": {
-          "summary": "Helium 便携版，跟踪上游 Windows x64 构建，正式版与预发行版同 Release 提供。"
+          "summary": "Helium 便携版，跟踪上游 Windows x64 正式版构建。"
         }
       },
       "reposSection": {
@@ -307,11 +293,6 @@
           "title": "Helium 便携版",
           "highlight": "去广告去遥测",
           "summary": "基于 imputnet/helium 的正式版构建，一个默认去广告、去遥测的 Chromium 分支。"
-        },
-        "helium-preview": {
-          "title": "Helium 便携版 Preview",
-          "highlight": "跟进上游预发行",
-          "summary": "跟踪 Helium 的最新预发行版本，方便提前验证上游改动。"
         }
       },
       "pageChrome": {
@@ -423,11 +404,11 @@
         "helium": {
           "navLabel": "Helium",
           "title": "Helium 便携版下载 — 去广告去遥测的 Chromium 分支，免安装绿色版",
-          "description": "Helium 浏览器便携版（绿色免安装版）下载，Windows x64，正式版与预发行版双渠道，集成 Chrome++，基于 imputnet/helium 上游构建，每日自动跟随并提供 SHA256 校验。",
+          "description": "Helium 浏览器便携版（绿色免安装版）下载，Windows x64，集成 Chrome++，基于 imputnet/helium 上游正式版构建，每日自动跟随并提供 SHA256 校验。",
           "h1": "Helium 便携版",
-          "lede": "Helium 是一个默认去广告、去遥测的 Chromium 分支。这里提供它的 Windows x64 免安装版本，正式版和预发行版都有。",
+          "lede": "Helium 是一个默认去广告、去遥测的 Chromium 分支。这里提供它的 Windows x64 免安装版本。",
           "upstream": "Helium",
-          "upstreamNote": "跟踪 imputnet/helium-windows 的官方 Release，正式版与预发行版分别跟进。",
+          "upstreamNote": "跟踪 imputnet/helium-windows 的官方正式版 Release。",
           "sections": [
             {
               "heading": "Helium 是什么",
@@ -437,10 +418,10 @@
               ]
             },
             {
-              "heading": "正式版和预发行版",
+              "heading": "版本与更新",
               "paragraphs": [
-                "文件名不带 Preview 的是正式版，日常使用选它。带 Preview 的是上游最新预发行版本，用来提前验证上游改动，稳定性没有保证。",
-                "两个包放在同一个 GitHub Release 下。如果某次只有正式版更新、预发行版没动，构建流程会自动把上一版的预发行压缩包保留在新 Release 里，所以你总能在最新一条 Release 里同时拿到两个包。"
+                "上游目前只发布正式版 Release，本仓库每天检查并自动打包最新版本。每个上游版本都会创建一条新的 GitHub Release，历史构建可回溯下载。",
+                "更新时关掉浏览器，备份旧版 Helium 文件夹里的 Data 目录，删除旧文件夹，把新版解压到同级目录，再把 Data 放回去。"
               ]
             },
             {
@@ -579,9 +560,9 @@
         "lede": "Unzip and run. No installer, no registry writes — your profile stays next to the app. Rebuilt daily from official packages via GitHub Actions, with public logs and checksums.",
         "stats": [
           {
-            "value": "5",
+            "value": "4",
             "label": "Build targets",
-            "detail": "3 browsers · 5 release channels"
+            "detail": "3 browsers · 4 release channels"
           },
           {
             "value": "Daily",
@@ -654,7 +635,7 @@
           "summary": "Portable Microsoft Edge on the official Stable channel, built from Microsoft’s offline installer."
         },
         "helium": {
-          "summary": "Portable Helium tracking upstream Windows x64 builds, with stable and prerelease in one Release."
+          "summary": "Portable Helium tracking upstream Windows x64 stable builds."
         }
       },
       "reposSection": {
@@ -681,11 +662,6 @@
           "title": "Helium Portable",
           "highlight": "Ad-blocked, de-Googled",
           "summary": "Stable builds of imputnet/helium — a Chromium fork that blocks ads and strips Google telemetry by default."
-        },
-        "helium-preview": {
-          "title": "Helium Portable Preview",
-          "highlight": "Tracks prereleases",
-          "summary": "Follows Helium’s latest prerelease so you can validate upstream changes early."
         }
       },
       "pageChrome": {
@@ -797,11 +773,11 @@
         "helium": {
           "navLabel": "Helium",
           "title": "Helium Portable Download — Ad-free Chromium, No Install, Daily Builds",
-          "description": "Download Helium browser Portable for Windows x64. Stable and Preview channels, Chrome++ integrated, built from imputnet/helium with daily rebuilds and SHA256 verification.",
+          "description": "Download Helium browser Portable for Windows x64. Chrome++ integrated, built from imputnet/helium stable releases with daily rebuilds and SHA256 verification.",
           "h1": "Helium Portable",
-          "lede": "Helium is a Chromium fork that blocks ads and strips telemetry by default. This is its Windows x64 portable build — stable and preview channels.",
+          "lede": "Helium is a Chromium fork that blocks ads and strips telemetry by default. This is its Windows x64 portable build.",
           "upstream": "Helium",
-          "upstreamNote": "Tracks imputnet/helium-windows official Releases, stable and prerelease separately.",
+          "upstreamNote": "Tracks imputnet/helium-windows official stable Releases.",
           "sections": [
             {
               "heading": "What is Helium?",
@@ -811,10 +787,10 @@
               ]
             },
             {
-              "heading": "Stable vs Preview",
+              "heading": "Versions and updates",
               "paragraphs": [
-                "Archives without Preview in the name are stable — use those daily. Preview tracks the latest upstream prerelease for early validation; stability is not guaranteed.",
-                "Both sit in the same GitHub Release. If only stable moves, the pipeline keeps the previous preview archive in the new Release so you can always grab both from the latest entry."
+                "Upstream currently publishes stable Releases only. This repo checks daily and packages the latest version. Every upstream version gets its own GitHub Release, so older builds stay downloadable.",
+                "To update: quit the browser, back up Data from the old Helium folder, delete the old folder, extract the new one next to it, then restore Data."
               ]
             },
             {
@@ -953,9 +929,9 @@
         "lede": "免安裝、不寫登錄檔、資料留在自己的資料夾裡。由 GitHub Actions 每日跟隨官方版本自動建置，建置過程與校驗日誌全部公開可查。",
         "stats": [
           {
-            "value": "5",
+            "value": "4",
             "label": "建置目標",
-            "detail": "3 個瀏覽器 · 5 個發佈通道"
+            "detail": "3 個瀏覽器 · 4 個發布通道"
           },
           {
             "value": "每日",
@@ -1028,7 +1004,7 @@
           "summary": "Microsoft Edge 可攜版，跟隨官方 Stable 通道，使用微軟官方離線安裝檔。"
         },
         "helium": {
-          "summary": "Helium 可攜版，追蹤上游 Windows x64 建置，正式版與預先發行版同 Release 提供。"
+          "summary": "Helium 可攜版，追蹤上游 Windows x64 正式版建置。"
         }
       },
       "reposSection": {
@@ -1055,11 +1031,6 @@
           "title": "Helium 可攜版",
           "highlight": "去廣告去遙測",
           "summary": "基於 imputnet/helium 的正式版建置，一個預設去廣告、去遙測的 Chromium 分支。"
-        },
-        "helium-preview": {
-          "title": "Helium 可攜版 Preview",
-          "highlight": "跟進上游預先發行",
-          "summary": "追蹤 Helium 的最新預先發行版本，方便提前驗證上游改動。"
         }
       },
       "pageChrome": {
@@ -1171,17 +1142,24 @@
         "helium": {
           "navLabel": "Helium",
           "title": "Helium 可攜版下載 — 去廣告去遙測的 Chromium 分支，免安裝綠色版",
-          "description": "Helium 瀏覽器可攜版（綠色免安裝版）下載，Windows x64，正式版與預先發行版雙通道，整合 Chrome++，基於 imputnet/helium 上游建置，每日自動跟隨並提供 SHA256 校驗。",
+          "description": "Helium 瀏覽器可攜版（綠色免安裝版）下載，Windows x64，整合 Chrome++，基於 imputnet/helium 上游正式版建置，每日自動跟隨並提供 SHA256 校驗。",
           "h1": "Helium 可攜版",
-          "lede": "Helium 是一個預設去廣告、去遙測的 Chromium 分支。這裡提供它的 Windows x64 免安裝版本，正式版和預先發行版都有。",
+          "lede": "Helium 是一個預設去廣告、去遙測的 Chromium 分支。這裡提供它的 Windows x64 免安裝版本。",
           "upstream": "Helium",
-          "upstreamNote": "追蹤 imputnet/helium-windows 的官方 Release，正式版與預先發行版分別跟進。",
+          "upstreamNote": "追蹤 imputnet/helium-windows 的官方正式版 Release。",
           "sections": [
             {
               "heading": "Helium 是什麼",
               "paragraphs": [
                 "Helium 是 imputnet 維護的 Chromium 分支，出發點是把瀏覽器裡那些「不是為使用者服務」的部分去掉：預設攔截廣告、移除 Google 遙測與背景回報、砍掉推廣位與帳號綁定引導，同時保留完整的 Chromium 核心與擴充相容性。",
                 "如果你喜歡 Chrome 的效能和擴充生態，但不想要它綁定的那一整套服務，Helium 是一個合理的落點。本倉庫在它之上再疊加 Chrome++ 的可攜化能力，讓它徹底不碰你的系統。"
+              ]
+            },
+            {
+              "heading": "版本與更新",
+              "paragraphs": [
+                "上游目前只發佈正式版 Release，本倉庫每天檢查並自動打包最新版本。每個上游版本都會建立一條新的 GitHub Release，歷史建置可回溯下載。",
+                "更新時關閉瀏覽器，備份舊版 Helium 資料夾裡的 Data 目錄，刪除舊資料夾，把新版解壓到同級目錄，再把 Data 放回去。"
               ]
             },
             {
@@ -1327,9 +1305,9 @@
         "lede": "展開してすぐ使えます。インストーラーもレジストリ書き込みもなし。プロファイルはアプリの隣に残ります。GitHub Actions が公式版を毎日再パッケージし、ログとチェックサムを公開しています。",
         "stats": [
           {
-            "value": "5",
+            "value": "4",
             "label": "ビルド対象",
-            "detail": "3 ブラウザー · 5 チャンネル"
+            "detail": "3 ブラウザー · 4 チャンネル"
           },
           {
             "value": "毎日",
@@ -1402,7 +1380,7 @@
           "summary": "公式 Stable を追うポータブル版 Microsoft Edge。Microsoft のオフラインインストーラーからビルド。"
         },
         "helium": {
-          "summary": "上游 Windows x64 ビルドを追うポータブル版 Helium。stable と prerelease を同一 Release に同梱。"
+          "summary": "上游 Windows x64 の stable ビルドを追うポータブル版 Helium。"
         }
       },
       "reposSection": {
@@ -1429,11 +1407,6 @@
           "title": "Helium ポータブル",
           "highlight": "広告ブロック・テレメトリ除去",
           "summary": "imputnet/helium の stable ビルド。既定で広告をブロックし Google テレメトリを削った Chromium フォークです。"
-        },
-        "helium-preview": {
-          "title": "Helium ポータブル Preview",
-          "highlight": "プリリリースを追跡",
-          "summary": "Helium の最新プリリリースを追跡し、上游の変更を早期に検証できます。"
         }
       },
       "pageChrome": {
@@ -1545,11 +1518,11 @@
         "helium": {
           "navLabel": "Helium",
           "title": "Helium ポータブル版ダウンロード — 広告なし Chromium・インストール不要・毎日ビルド",
-          "description": "Helium ブラウザーのポータブル版を Windows x64 向けにダウンロード。Stable / Preview、Chrome++ 統合、imputnet/helium から毎日再ビルド、SHA256 検証付き。",
+          "description": "Helium ブラウザーのポータブル版を Windows x64 向けにダウンロード。Chrome++ 統合、imputnet/helium の stable リリースから毎日再ビルド、SHA256 検証付き。",
           "h1": "Helium ポータブル",
-          "lede": "Helium は既定で広告をブロックしテレメトリを削る Chromium フォークです。ここでは Windows x64 のポータブル版を stable と preview 両方提供します。",
+          "lede": "Helium は既定で広告をブロックしテレメトリを削る Chromium フォークです。ここではその Windows x64 ポータブル版を提供します。",
           "upstream": "Helium",
-          "upstreamNote": "imputnet/helium-windows の公式 Release を追跡。stable と prerelease を個別に追います。",
+          "upstreamNote": "imputnet/helium-windows の公式 stable Release を追跡。",
           "sections": [
             {
               "heading": "Helium とは",
@@ -1559,10 +1532,10 @@
               ]
             },
             {
-              "heading": "Stable と Preview",
+              "heading": "バージョンと更新",
               "paragraphs": [
-                "ファイル名に Preview が付かないものが stable で、日常はこちら。Preview は上游の最新プリリリースを追う早期検証用で、安定性は保証されません。",
-                "両方とも同じ GitHub Release にあります。stable だけ更新された場合も、パイプラインが前回の preview アーカイブを新しい Release に残すため、常に最新リリースから両方を取得できます。"
+                "上游は現在 stable Release のみを公開しています。このリポジトリは毎日確認して最新版をパッケージします。各上游バージョンごとに新しい GitHub Release を作るので、過去のビルドも遡って取得できます。",
+                "更新時はブラウザーを終了し、旧 Helium フォルダーの Data を退避してから旧フォルダーを削除し、新版を同じ場所に展開して Data を戻してください。"
               ]
             },
             {

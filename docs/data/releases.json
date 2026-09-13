@@ -34,21 +34,21 @@
       ]
     },
     "helium": {
-      "tag": "v0.16.6.1",
+      "tag": "v0.17.0.1",
       "publishedAt": "2026-07-28T11:44:33Z",
-      "htmlUrl": "https://github.com/Piracola/Helium_Portable/releases/tag/v0.16.6.1",
+      "htmlUrl": "https://github.com/Piracola/Helium_Portable/releases/tag/v0.17.0.1",
       "assets": [
         {
-          "name": "Helium_0.16.6.1_2026-09-09.7z",
-          "size": 124495864,
-          "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.16.6.1/Helium_0.16.6.1_2026-09-09.7z",
-          "digest": "sha256:ffdc54d564a3c4132df864a6a71140f99bf59fefe5f5df89a4c3111e150bfe6b"
+          "name": "Helium_0.17.0.1_2026-09-12.7z",
+          "size": 126230018,
+          "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.17.0.1/Helium_0.17.0.1_2026-09-12.7z",
+          "digest": "sha256:6aef92048a5eee42a2a5e8c383a0ae525e40eb37403e795658a777da5d057449"
         },
         {
-          "name": "Helium_Preview_0.17.0.1_2026-09-11.7z",
-          "size": 126230014,
-          "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.16.6.1/Helium_Preview_0.17.0.1_2026-09-11.7z",
-          "digest": "sha256:5a2be36de9c0655e2e2ef1f1fcaeacae048d1dcbad0999b358fb263a5c22be5d"
+          "name": "Helium_Preview_0.14.6.1_2026-09-12.7z",
+          "size": 118277159,
+          "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.17.0.1/Helium_Preview_0.14.6.1_2026-09-12.7z",
+          "digest": "sha256:d40f75197196072f81d50d8af83e89e05d2dcb8fb7e79c0348d9eb3ff74d6a95"
         }
       ]
     }
@@ -79,19 +79,11 @@
       "publishedAt": "2026-09-11T02:35:10Z"
     },
     "helium-stable": {
-      "version": "0.16.6.1",
-      "assetName": "Helium_0.16.6.1_2026-09-09.7z",
-      "size": 124495864,
-      "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.16.6.1/Helium_0.16.6.1_2026-09-09.7z",
-      "sha256": "ffdc54d564a3c4132df864a6a71140f99bf59fefe5f5df89a4c3111e150bfe6b",
-      "publishedAt": "2026-07-28T11:44:33Z"
-    },
-    "helium-preview": {
       "version": "0.17.0.1",
-      "assetName": "Helium_Preview_0.17.0.1_2026-09-11.7z",
-      "size": 126230014,
-      "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.16.6.1/Helium_Preview_0.17.0.1_2026-09-11.7z",
-      "sha256": "5a2be36de9c0655e2e2ef1f1fcaeacae048d1dcbad0999b358fb263a5c22be5d",
+      "assetName": "Helium_0.17.0.1_2026-09-12.7z",
+      "size": 126230018,
+      "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.17.0.1/Helium_0.17.0.1_2026-09-12.7z",
+      "sha256": "6aef92048a5eee42a2a5e8c383a0ae525e40eb37403e795658a777da5d057449",
       "publishedAt": "2026-07-28T11:44:33Z"
     }
   }

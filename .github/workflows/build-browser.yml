@@ -1,0 +1,158 @@
+name: Build single browser
+
+# On-demand: download one browser's latest (or overridden) installer, inject
+# Chrome++ via auto layout, optionally publish to this repo's Releases.
+# Productized releases for Chrome / Edge / Helium still live in their child
+# repositories; this workflow is the core's generic capability path.
+# Fork-friendly: no secrets required for public upstreams.
+
+on:
+  workflow_dispatch:
+    inputs:
+      browser:
+        description: Catalog target id
+        type: choice
+        required: true
+        options:
+          - chrome_stable
+          - chrome_beta
+          - edge_stable
+          - helium_stable
+          - brave_stable
+          - vivaldi_stable
+          - opera_stable
+          - thorium_stable
+          - cse360_stable
+      package_url:
+        description: Optional installer URL override (direct provider)
+        required: false
+        default: ""
+      package_path:
+        description: Optional installer path inside the workspace
+        required: false
+        default: ""
+      architecture:
+        description: Expected PE architecture
+        type: choice
+        required: false
+        default: x64
+        options:
+          - x64
+          - x86
+          - arm64
+      publish_release:
+        description: Create/update a GitHub Release with the archive
+        type: boolean
+        required: false
+        default: true
+      verify_smoke:
+        description: Launch the built browser during verify (off = static PE checks only)
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install requests
+          if (Test-Path requirements.txt) { python -m pip install -r requirements.txt }
+
+      - name: Prepare single-target config
+        shell: pwsh
+        env:
+          INPUT_BROWSER: ${{ inputs.browser }}
+          INPUT_URL: ${{ inputs.package_url }}
+          INPUT_PATH: ${{ inputs.package_path }}
+          INPUT_ARCH: ${{ inputs.architecture }}
+        run: |
+          $args = @("scripts/prepare_build_target.py", "--browser", $env:INPUT_BROWSER, "--output", "build/selected.browser.json", "--architecture", $env:INPUT_ARCH)
+          if ($env:INPUT_URL) { $args += @("--url", $env:INPUT_URL) }
+          if ($env:INPUT_PATH) { $args += @("--path", $env:INPUT_PATH) }
+          python @args
+
+      - name: Check upstream / release state
+        id: check
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python -m portable_builder --config build/selected.browser.json --target "${{ inputs.browser }}" --workdir . check
+
+      - name: Set build date
+        shell: pwsh
+        run: |
+          $date = Get-Date -Format 'yyyy-MM-dd'
+          "BUILD_DATE=$date" >> $env:GITHUB_ENV
+
+      - name: Restore check results
+        shell: pwsh
+        env:
+          CHECK_ENV: ${{ steps.check.outputs.env_json }}
+        run: |
+          if (-not $env:CHECK_ENV) {
+            # Single-target check may only write GITHUB_ENV; that is fine for dispatch.
+            Write-Host "No env_json payload; continuing with GITHUB_ENV."
+            return
+          }
+          foreach ($property in ($env:CHECK_ENV | ConvertFrom-Json).PSObject.Properties) {
+            "$($property.Name)=$($property.Value)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+            Write-Host "$($property.Name)=$($property.Value)"
+          }
+
+      - name: Build portable browser
+        shell: pwsh
+        run: |
+          python -m portable_builder --config build/selected.browser.json --target "${{ inputs.browser }}" --workdir . build
+
+      - name: Archive
+        shell: pwsh
+        run: |
+          python -m portable_builder --config build/selected.browser.json --target "${{ inputs.browser }}" --workdir . archive
+
+      - name: Verify (static or smoke)
+        shell: pwsh
+        run: |
+          $verifyArgs = @("--config", "build/selected.browser.json", "--target", "${{ inputs.browser }}", "--workdir", ".", "verify")
+          if ("${{ inputs.verify_smoke }}" -ne "true") { $verifyArgs += "--no-smoke" }
+          python -m portable_builder @verifyArgs
+
+      - name: Render release metadata
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python -m portable_builder --config build/selected.browser.json --target "${{ inputs.browser }}" --workdir . render-release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: portable-${{ inputs.browser }}
+          path: build/assets/*.7z
+          retention-days: 15
+
+      - name: Publish release
+        if: ${{ inputs.publish_release }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_TITLE }}
+          body_path: ${{ env.RELEASE_BODY_PATH }}
+          files: build/assets/*.7z
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

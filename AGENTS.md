@@ -25,8 +25,9 @@ Python 3.12+（`requests`）、Windows PE 解析（`portable_builder/pe.py`）�
 - `catalog/browser_catalog.json` — 在线 target；非产品必须 `Unofficial` + Disclaimer
 - `installers/` — 用户投放安装包（已 ignore）；`bin/` — 回归样本（已 ignore，勿提交）
 - `docs/` — GitHub Pages 下载站；HTML 是生成产物，改 `data/site.json` 后重跑生成器
-- README 仅中英双语；徽标用 shields `flat-square`，表内数字只出现在徽标里
+- README 仅中英双语；下载站 `docs/` **保持四语**（zh-CN / zh-TW / en / ja）
+- 徽标用 shields `flat-square`，表内数字只出现在徽标里；发布日期与 `docs/data/releases.json` 对齐
 
 ## 当前状态与下一步
 
-核心 auto 布局 / 向导 / build-browser 已合入 `main`（2026-09-24）。产品面仅 Chrome / Edge / Helium。下载站仍是四语（zh-CN / zh-TW / en / ja），若收成中英需改 `site.json` 并重新生成。新浏览器优先 `layout: auto` + catalog；涉及注入/验证的改动需用三渠道实际配置回归。
+核心 auto 布局 / 向导 / build-browser 已合入 `main`（2026-09-24）。产品面仅 Chrome / Edge / Helium。语言策略：README 双语、下载站四语。新浏览器优先 `layout: auto` + catalog；涉及注入/验证的改动需用三渠道实际配置回归。

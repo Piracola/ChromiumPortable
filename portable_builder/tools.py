@@ -154,7 +154,8 @@ def install_7z_with_chocolatey():
     return None
 
 
-def find_7z_tool(workdir):
+def find_7z_tool(workdir, allow_download=True, allow_system_install=True):
+    """Locate an extractor without changing the machine unless explicitly allowed."""
     for path in SYSTEM_7Z_PATHS:
         if Path(path).exists():
             print(f"[INFO] Using system 7-Zip: {path}")
@@ -169,6 +170,12 @@ def find_7z_tool(workdir):
         print("[INFO] Using 7z from PATH")
         return "7z"
 
+    if not allow_download:
+        raise RuntimeError(
+            "7-Zip was not found. Static package inspection will not download or install it; "
+            "place 7zr.exe in the builder directory or install 7-Zip yourself."
+        )
+
     print("[INFO] 7-Zip not found. Downloading standalone extractor.")
     last_error = None
     for url in SEVEN_ZIP_URLS:
@@ -180,12 +187,13 @@ def find_7z_tool(workdir):
             print(f"[WARN] Failed to download 7-Zip from {url}: {exc}")
             remove_path(local_7zr)
 
-    chocolatey_7z = install_7z_with_chocolatey()
-    if chocolatey_7z:
-        print(f"[INFO] Using Chocolatey-installed 7-Zip: {chocolatey_7z}")
-        return chocolatey_7z
+    if allow_system_install:
+        chocolatey_7z = install_7z_with_chocolatey()
+        if chocolatey_7z:
+            print(f"[INFO] Using Chocolatey-installed 7-Zip: {chocolatey_7z}")
+            return chocolatey_7z
 
-    raise RuntimeError(f"Unable to locate or install 7-Zip. Last download error: {last_error}")
+    raise RuntimeError(f"Unable to locate 7-Zip. Last download error: {last_error}")
 
 
 def extract_with_7z(archive, output_dir, seven_zip_path):

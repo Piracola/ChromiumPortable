@@ -1,9 +1,11 @@
 import os
+import re
 import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
 
+from .discovery import analyze_package
 from .github_env import build_run_url, write_env
 from .ini_overlay import merge_ini, parse_overrides, read_ini_text, write_ini_text
 from .providers import get_package
@@ -61,7 +63,7 @@ def prepare_package(target, workdir, package):
     remove_path(temp_dir)
     temp_dir.mkdir(parents=True, exist_ok=True)
 
-    seven_zip = find_7z_tool(workdir)
+    auto_layout = target.get("layout") == "auto"
     source_path = package.get("path") or package.get("installer_path")
     if source_path:
         source_path = Path(source_path)
@@ -69,10 +71,15 @@ def prepare_package(target, workdir, package):
             source_path = workdir / source_path
         if not source_path.exists():
             raise FileNotFoundError(f"Installer path returned by provider does not exist: {source_path}")
-        installer_path = temp_dir / source_path.name
-        if source_path.resolve() != installer_path.resolve():
-            shutil.copy2(source_path, installer_path)
-        verify_file_digest(installer_path, sha256=package.get("sha256"), size=package.get("size"))
+        if source_path.is_dir():
+            if target.get("layout") != "auto":
+                raise ValueError("A source directory requires layout: 'auto'")
+            installer_path = source_path
+        else:
+            installer_path = temp_dir / source_path.name
+            if source_path.resolve() != installer_path.resolve():
+                shutil.copy2(source_path, installer_path)
+            verify_file_digest(installer_path, sha256=package.get("sha256"), size=package.get("size"))
     else:
         installer_path = temp_dir / package["file_name"]
         download_file(
@@ -82,6 +89,37 @@ def prepare_package(target, workdir, package):
             sha256=package.get("sha256"),
             size=package.get("size"),
         )
+
+    # An already extracted auto-layout package never needs an extractor.
+    if auto_layout and installer_path.is_dir():
+        seven_zip = None
+    else:
+        seven_zip = find_7z_tool(
+            workdir,
+            allow_download=target.get("allow_7z_download", not auto_layout),
+            allow_system_install=target.get("allow_7z_system_install", not auto_layout),
+        )
+    if target.get("layout") == "auto":
+        discovery = analyze_package(
+            installer_path,
+            temp_dir / "auto-extracted",
+            seven_zip,
+            desired_arch=target.get("architecture", "x64"),
+        )
+        detected_version = discovery["version"]
+        if not detected_version or detected_version == "0.0.0.0":
+            detected_version = package.get("version") or "0.0.0.0"
+        print(f"[INFO] Auto-detected browser executable: {discovery['executable']}")
+        return {
+            "temp_dir": temp_dir,
+            "auto": True,
+            "app_source": discovery["app_root"],
+            "executable_relative": discovery["executable_relative"],
+            "version_dir_relative": discovery["version_dir"].relative_to(discovery["app_root"]),
+            "version": detected_version,
+            "discovery": discovery,
+        }
+
     extract_with_7z(installer_path, temp_dir, seven_zip)
 
     inner_archive = target.get("inner_archive")
@@ -118,7 +156,13 @@ def stage_app(target, workdir, prepared):
     app_root = stage_dir / output_dir_name
     layout = target.get("layout", "move_version_root")
 
-    if layout == "move_version_dir":
+    if layout == "auto":
+        shutil.copytree(prepared["app_source"], app_root)
+        version_dir = app_root / prepared["version_dir_relative"]
+        executable = app_root / prepared["executable_relative"]
+        if not executable.is_file():
+            raise FileNotFoundError(f"Auto-detected executable was not staged: {executable}")
+    elif layout == "move_version_dir":
         app_root.mkdir(parents=True, exist_ok=True)
         source = prepared["version_root"] / prepared["version_dir_name"]
         shutil.move(str(source), app_root / prepared["version_dir_name"])
@@ -127,16 +171,21 @@ def stage_app(target, workdir, prepared):
     else:
         shutil.move(str(prepared["version_root"]), app_root)
 
-    version_dir = app_root / prepared["version_dir_name"]
+    if layout != "auto":
+        version_dir = app_root / prepared["version_dir_name"]
     if not version_dir.exists():
         raise FileNotFoundError(f"Staged version directory not found: {version_dir}")
 
-    return {
+    staged = {
         "stage_dir": stage_dir,
         "app_root": app_root,
         "version_dir": version_dir,
         "version": prepared["version"],
     }
+    if layout == "auto":
+        staged["executable"] = executable
+        staged["discovery"] = prepared["discovery"]
+    return staged
 
 
 def resolve_chrome_plus_ini(target, workdir, setdll_src_dir):
@@ -254,17 +303,19 @@ def copy_chrome_plus(target, workdir, staged, builder_dir=None):
 
 
 def inject_dll(target, staged):
-    exe_name = target.get("exe_name")
-    if not exe_name:
-        raise ValueError("Target config requires exe_name")
+    target_exe = staged.get("executable")
+    if target_exe is None:
+        exe_name = target.get("exe_name")
+        if not exe_name:
+            raise ValueError("Target config requires exe_name unless layout is 'auto'")
 
-    target_exe = staged["version_dir"] / exe_name
-    if not target_exe.exists():
-        matches = [path for path in staged["app_root"].rglob(Path(exe_name).name) if path.is_file()]
-        if not matches:
-            raise FileNotFoundError(f"Browser executable not found: {target_exe}")
-        target_exe = min(matches, key=lambda path: len(path.relative_to(staged["app_root"]).parts))
-        print(f"[INFO] Browser executable found at {target_exe}")
+        target_exe = staged["version_dir"] / exe_name
+        if not target_exe.exists():
+            matches = [path for path in staged["app_root"].rglob(Path(exe_name).name) if path.is_file()]
+            if not matches:
+                raise FileNotFoundError(f"Browser executable not found: {target_exe}")
+            target_exe = min(matches, key=lambda path: len(path.relative_to(staged["app_root"]).parts))
+            print(f"[INFO] Browser executable found at {target_exe}")
 
     setdll = staged["setdll"]
     version_dll = staged["version_dll"]
@@ -326,11 +377,7 @@ def finalize(target, workdir, staged):
     return final_app_dir
 
 
-def build_target(target, workdir, builder_dir=None):
-    package = get_version_info(target, workdir)
-    print(f"[INFO] Upstream version: {package['version']}")
-
-    prepared = prepare_package(target, workdir, package)
+def _complete_build(target, workdir, package, prepared, builder_dir=None):
     if prepared["version"] != package["version"]:
         print(f"[WARN] Package version {package['version']} differs from directory version {prepared['version']}; using directory version.")
 
@@ -359,9 +406,71 @@ def build_target(target, workdir, builder_dir=None):
     }
 
 
-def archive_target(target, workdir, version=None, build_date=None, package_version=None):
+def build_target(target, workdir, builder_dir=None):
+    package = get_version_info(target, workdir)
+    print(f"[INFO] Upstream version: {package['version']}")
+    prepared = prepare_package(target, workdir, package)
+    return _complete_build(target, workdir, package, prepared, builder_dir=builder_dir)
+
+
+def _safe_output_name(value, fallback="Browser"):
+    cleaned = re.sub(r'[<>:"/\\|?*]+', "_", str(value or "")).strip(" .")
+    return cleaned or fallback
+
+
+def build_package_file(package_path, workdir, builder_dir=None, architecture="x64", output_dir=None):
+    package_path = Path(package_path).resolve()
+    if not package_path.exists():
+        raise FileNotFoundError(f"Package not found: {package_path}")
+
+    target_id = "auto_" + re.sub(r"[^a-z0-9]+", "_", package_path.stem.casefold()).strip("_")
+    target = {
+        "target": target_id or "auto_package",
+        "name": package_path.stem,
+        "display_name": package_path.stem,
+        "output_dir": output_dir or "Browser",
+        "architecture": architecture,
+        "layout": "auto",
+        "allow_7z_download": False,
+        "allow_7z_system_install": False,
+        "chrome_plus_dir": "chrome++",
+        "ini_location": "app_root",
+        "version_dll_location": "app_root",
+    }
+    package = {
+        "version": "0.0.0.0",
+        "path": str(package_path),
+        "file_name": package_path.name,
+    }
+    temp_dir = Path(workdir) / "build" / "temp" / target["target"]
+    try:
+        prepared = prepare_package(target, workdir, package)
+        package["version"] = prepared["version"]
+        product = prepared["discovery"]["product"]
+        resolved_output = _safe_output_name(output_dir or product)
+        target.update({
+            "name": resolved_output,
+            "display_name": product,
+            "output_dir": resolved_output,
+            "archive_name": f"{resolved_output}_Portable_{{version}}_{{date}}.7z",
+        })
+        result = _complete_build(target, workdir, package, prepared, builder_dir=builder_dir)
+        result["target_config"] = target
+        return result
+    finally:
+        # This command is meant to leave a finished portable browser, not a
+        # second unpacked copy of the installer in build/temp.
+        remove_path(temp_dir)
+
+
+def archive_target(target, workdir, version=None, build_date=None, package_version=None, source_dir=None):
     workdir = Path(workdir)
-    seven_zip = find_7z_tool(workdir)
+    auto_layout = target.get("layout") == "auto"
+    seven_zip = find_7z_tool(
+        workdir,
+        allow_download=target.get("allow_7z_download", not auto_layout),
+        allow_system_install=target.get("allow_7z_system_install", not auto_layout),
+    )
     version = version or os.getenv("BUILT_VERSION") or os.getenv("BROWSER_VERSION")
     package_version = package_version or os.getenv("PACKAGE_VERSION") or os.getenv("UPSTREAM_VERSION") or version
     build_date = build_date or os.getenv("BUILD_DATE") or datetime.now().strftime("%Y-%m-%d")
@@ -374,11 +483,19 @@ def archive_target(target, workdir, version=None, build_date=None, package_versi
     archive_path = assets_dir / archive_name
     remove_path(archive_path)
 
-    release_dir = workdir / "build" / "release"
+    if source_dir is None:
+        release_dir = workdir / "build" / "release"
+        archive_items = ["*"]
+    else:
+        source_dir = Path(source_dir)
+        if not source_dir.is_dir():
+            raise FileNotFoundError(f"Archive source directory not found: {source_dir}")
+        release_dir = source_dir.parent
+        archive_items = [source_dir.name]
     if not release_dir.exists():
         raise FileNotFoundError(f"Release directory not found: {release_dir}")
 
-    cmd = [str(seven_zip), "a", "-t7z", "-mx=9", str(archive_path.resolve()), "*"]
+    cmd = [str(seven_zip), "a", "-t7z", "-mx=9", str(archive_path.resolve()), *archive_items]
     print(f"[INFO] Creating archive: {archive_path}")
     result = subprocess.run(cmd, cwd=release_dir, capture_output=True, text=True)
     if result.stdout:

@@ -13,6 +13,7 @@ import time
 from pathlib import Path
 
 from .config import get_target
+from .discovery import analyze_extracted_app
 from .github_env import write_env
 from .multi import env_name
 from .release import archive_name_regex
@@ -53,6 +54,11 @@ def find_target_archive(target, workdir):
 
 
 def locate_executable(target, app_root):
+    if target.get("layout") == "auto":
+        result = analyze_extracted_app(app_root, desired_arch=target.get("architecture", "x64"))
+        print(f"[INFO] Auto-detected archived browser executable: {result['executable']}")
+        return result["executable"]
+
     version_dir = find_version_dir(app_root)
     if version_dir is None:
         raise FileNotFoundError(f"No version directory found under {app_root}")
@@ -174,7 +180,13 @@ def verify_target(target, workdir, archive=None, smoke=True):
     extracted_root = workdir / "build" / "verify" / target["target"]
     remove_path(extracted_root)
     extracted_root.mkdir(parents=True, exist_ok=True)
-    extract_with_7z(archive, extracted_root, find_7z_tool(workdir))
+    auto_layout = target.get("layout") == "auto"
+    seven_zip = find_7z_tool(
+        workdir,
+        allow_download=target.get("allow_7z_download", not auto_layout),
+        allow_system_install=target.get("allow_7z_system_install", not auto_layout),
+    )
+    extract_with_7z(archive, extracted_root, seven_zip)
 
     output_dir_name = target.get("output_dir", target.get("name", "Browser"))
     app_root = extracted_root / output_dir_name

@@ -3,3 +3,6 @@ __pycache__/
 .venv/
 build/
 7zr.exe
+installers/*
+!installers/README.txt
+bin/

@@ -1,0 +1,199 @@
+{
+  "targets": {
+    "chrome_stable": {
+      "name": "Chrome",
+      "display_name": "Chrome++",
+      "product": true,
+      "output_dir": "Chrome",
+      "exe_name": "chrome.exe",
+      "architecture": "x64",
+      "provider": {
+        "type": "google_omaha",
+        "channel": "win_stable_x64"
+      },
+      "version_root": "Chrome-bin",
+      "layout": "move_version_root",
+      "ini_location": "app_root",
+      "version_dll_location": "app_root",
+      "start_script": "开始.bat",
+      "archive_name": "Chrome++_stable_{version}_{date}.7z",
+      "release": {
+        "tag": "v{version}",
+        "title": "Chrome++ {version}",
+        "asset_match": "stable",
+        "body": "Chrome++ 构建版本\n\n构建时间: {date}\nChrome 版本: {version}\n"
+      }
+    },
+    "chrome_beta": {
+      "name": "Chrome",
+      "display_name": "Chrome++ Beta",
+      "product": true,
+      "output_dir": "Chrome",
+      "exe_name": "chrome.exe",
+      "architecture": "x64",
+      "provider": {
+        "type": "google_omaha",
+        "channel": "win_beta_x64"
+      },
+      "version_root": "Chrome-bin",
+      "layout": "move_version_root",
+      "ini_location": "app_root",
+      "version_dll_location": "app_root",
+      "archive_name": "Chrome++_beta_{version}_{date}.7z",
+      "release": {
+        "tag": "v{version}",
+        "title": "Chrome++ Beta {version}",
+        "asset_match": "beta",
+        "body": "Chrome++ Beta 构建版本\n\n构建时间: {date}\nChrome Beta 版本: {version}\n"
+      }
+    },
+    "edge_stable": {
+      "name": "Edge",
+      "display_name": "Microsoft Edge",
+      "product": true,
+      "output_dir": "Edge",
+      "exe_name": "msedge.exe",
+      "architecture": "x64",
+      "provider": {
+        "type": "microsoft_edge",
+        "app_id": "msedge-stable-win-x64",
+        "verify_ssl": false
+      },
+      "version_root": "Chrome-bin",
+      "inner_archive": "MSEDGE.7Z",
+      "layout": "move_version_dir",
+      "ini_location": "version_dir",
+      "version_dll_location": "version_dir",
+      "start_script": "开始.bat",
+      "archive_name": "Edge_Portable_Win64_{version}_{date}.7z",
+      "release": {
+        "tag": "v{version}",
+        "title": "Edge {version}",
+        "asset_match": "Edge_Portable",
+        "body": "自动构建的 Microsoft Edge 便携版，集成 Chrome++ 便携化增强组件。\n\n## 版本\n- Edge 版本: {version}\n"
+      }
+    },
+    "helium_stable": {
+      "name": "Helium",
+      "display_name": "Helium",
+      "product": true,
+      "output_dir": "Helium",
+      "architecture": "x64",
+      "provider": {
+        "type": "script",
+        "command": ["python", "scripts/upstream/resolve.py", "--browser", "helium"]
+      },
+      "layout": "auto",
+      "ini_location": "app_root",
+      "version_dll_location": "app_root",
+      "start_script": "开始.bat",
+      "archive_name": "Helium_{version}_{date}.7z",
+      "release": {
+        "tag": "v{version}",
+        "title": "Helium {version}",
+        "asset_match": "Helium_",
+        "body": "自动构建的 Helium 便携版。\n\n## 版本\n- Helium 版本: {version}\n"
+      }
+    },
+    "brave_stable": {
+      "name": "Brave",
+      "display_name": "Brave",
+      "product": false,
+      "output_dir": "Brave Browser",
+      "architecture": "x64",
+      "provider": {
+        "type": "script",
+        "command": ["python", "scripts/upstream/resolve.py", "--browser", "brave"]
+      },
+      "layout": "auto",
+      "ini_location": "app_root",
+      "version_dll_location": "app_root",
+      "archive_name": "Brave_Portable_{version}_{date}.7z",
+      "release": {
+        "tag": "unofficial-brave-v{version}",
+        "title": "Unofficial Brave {version}",
+        "body": "Unofficial portable build produced by ChromiumPortable.\n\n- Version: {version}\n- Built: {date}\n- Archive: `{archive}`\n- SHA256: `{sha256}`\n\n## Disclaimer\nThis is **not** an official Brave Software release and is not affiliated with or endorsed by Brave Software International. Redistribution of Brave may be restricted by its license — evaluate before redistributing. For personal/research builds only.\n\n本构建不是 Brave 官方发行版，与 Brave Software 无隶属或背书关系。再分发可能受上游许可限制，请自行评估；仅供学习与自用。\n"
+      }
+    },
+    "vivaldi_stable": {
+      "name": "Vivaldi",
+      "display_name": "Vivaldi",
+      "product": false,
+      "output_dir": "Vivaldi",
+      "architecture": "x64",
+      "provider": {
+        "type": "script",
+        "command": ["python", "scripts/upstream/resolve.py", "--browser", "vivaldi"]
+      },
+      "layout": "auto",
+      "ini_location": "app_root",
+      "version_dll_location": "app_root",
+      "archive_name": "Vivaldi_Portable_{version}_{date}.7z",
+      "release": {
+        "tag": "unofficial-vivaldi-v{version}",
+        "title": "Unofficial Vivaldi {version}",
+        "body": "Unofficial portable build produced by ChromiumPortable.\n\n- Version: {version}\n- Built: {date}\n\n## Disclaimer\nNot an official Vivaldi release; not affiliated with Vivaldi Technologies. Redistribution may be restricted by the Vivaldi EULA. Evaluate before redistributing.\n\n非 Vivaldi 官方发行，与 Vivaldi Technologies 无隶属关系。再分发可能受 EULA 限制。\n"
+      }
+    },
+    "opera_stable": {
+      "name": "Opera",
+      "display_name": "Opera",
+      "product": false,
+      "output_dir": "Opera Internet Browser",
+      "architecture": "x64",
+      "provider": {
+        "type": "script",
+        "command": ["python", "scripts/upstream/resolve.py", "--browser", "opera"]
+      },
+      "layout": "auto",
+      "ini_location": "app_root",
+      "version_dll_location": "app_root",
+      "archive_name": "Opera_Portable_{version}_{date}.7z",
+      "release": {
+        "tag": "unofficial-opera-v{version}",
+        "title": "Unofficial Opera {version}",
+        "body": "Unofficial portable build produced by ChromiumPortable.\n\n- Version: {version}\n- Built: {date}\n\n## Disclaimer\nNot an official Opera release; not affiliated with Opera Norway AS. Redistribution may be restricted by the Opera EULA. Evaluate before redistributing.\n\n非 Opera 官方发行。再分发可能受 EULA 限制。\n"
+      }
+    },
+    "thorium_stable": {
+      "name": "Thorium",
+      "display_name": "Thorium",
+      "product": false,
+      "output_dir": "Thorium",
+      "architecture": "x64",
+      "provider": {
+        "type": "script",
+        "command": ["python", "scripts/upstream/resolve.py", "--browser", "thorium"]
+      },
+      "layout": "auto",
+      "ini_location": "app_root",
+      "version_dll_location": "app_root",
+      "archive_name": "Thorium_Portable_{version}_{date}.7z",
+      "release": {
+        "tag": "unofficial-thorium-v{version}",
+        "title": "Unofficial Thorium {version}",
+        "body": "Unofficial portable build produced by ChromiumPortable.\n\n- Version: {version}\n- Built: {date}\n\n## Disclaimer\nUnofficial build of Thorium. See upstream license (BSD-style) before redistribution.\n\n非官方构建；再分发前请查阅上游许可证。\n"
+      }
+    },
+    "cse360_stable": {
+      "name": "360cse",
+      "display_name": "360极速浏览器X",
+      "product": false,
+      "output_dir": "360极速浏览器X",
+      "architecture": "x64",
+      "provider": {
+        "type": "script",
+        "command": ["python", "scripts/upstream/resolve.py", "--browser", "cse360"]
+      },
+      "layout": "auto",
+      "ini_location": "app_root",
+      "version_dll_location": "app_root",
+      "archive_name": "360csex_Portable_{version}_{date}.7z",
+      "release": {
+        "tag": "unofficial-360csex-v{version}",
+        "title": "Unofficial 360极速浏览器X {version}",
+        "body": "Unofficial portable build produced by ChromiumPortable.\n\n- Version: {version}\n- Built: {date}\n\n## Disclaimer\nNot an official 360 product. Redistribution may be restricted. Build with package_url or a local installer.\n\n非官方构建；请用 package_url 或本地安装包构建。\n"
+      }
+    }
+  }
+}

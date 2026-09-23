@@ -2,207 +2,85 @@
 
 # ChromiumPortable
 
-Chromium 系浏览器便携版的可复用构建核心
+为 Chromium 系浏览器制作便携版的公共构建核心
 
 [![核心版本][badge-version]][link-tags]
-[![同步状态][badge-sync]][link-sync]
+[![chrome++ 同步][badge-sync]][link-sync]
 [![许可证][badge-license]][link-license]
+[![Stars][badge-stars]][link-repo]
+[![最近提交][badge-last-commit]][link-repo]
 
-**[📖 下载页与使用说明](https://piracola.github.io/ChromiumPortable/)**
+**语言 / Language:** **简体中文** · [English](README.en.md)
+
+[下载页面](https://piracola.github.io/ChromiumPortable/) · [使用帮助](https://piracola.github.io/ChromiumPortable/) · [开发文档](./docs/DEVELOPMENT.md)
 
 </div>
 
-ChromiumPortable 用来统一处理上游版本检查、安装包下载、解压、`chrome++` 集成、DLL 注入、打包和 GitHub Release 发布。
+本项目用于自动制作集成 Chrome++ 的便携浏览器。它本身不提供浏览器安装程序，普通用户请从下方项目或统一下载页面获取已经构建好的版本。
 
-它本身不发布浏览器成品；成品由各个子仓库根据自己的上游浏览器配置自动构建。
+## 当前项目
 
-> ⚠️ 本仓库**不发布浏览器成品**，只提供可复用的构建流程。如需下载便携版浏览器，请前往：
-> - **[便携版下载页](https://piracola.github.io/ChromiumPortable/)**（Chrome / Edge / Helium 的统一入口，含安装、更新与校验说明）
-> - [Chrome-Portable](https://github.com/Piracola/Chrome-Portable)（Google Chrome，Stable / Beta）
-> - [Edge_Portable](https://github.com/betacola/Edge_Portable)（Microsoft Edge，Stable）
-> - [Helium_Portable](https://github.com/Piracola/Helium_Portable)（Helium，Stable / Preview）
->
-> 想了解构建系统或新增浏览器支持？继续往下读。
+以下三个渠道有独立发布仓库、持续构建与下载支持。
 
-## 仓库导航
+| 项目 | 仓库 | 最新版本 | 发布 | 累计下载 | Star |
+| --- | --- | --- | --- | --- | --- |
+| **Google Chrome 便携版** | [Chrome-Portable][link-chrome] | [![][badge-chrome-release]][link-chrome] | 2026-09-23 | [![][badge-chrome-downloads]][link-chrome] | [![][badge-chrome-stars]][link-chrome] |
+| **Microsoft Edge 便携版** | [Edge_Portable][link-edge] | [![][badge-edge-release]][link-edge] | 2026-09-11 | [![][badge-edge-downloads]][link-edge] | [![][badge-edge-stars]][link-edge] |
+| **Helium 便携版** | [Helium_Portable][link-helium] | [![][badge-helium-release]][link-helium] | 2026-09-21 | [![][badge-helium-downloads]][link-helium] | [![][badge-helium-stars]][link-helium] |
 
-本仓库为构建核心，以下子仓库各自配置上游浏览器并调用本仓库的 reusable workflow：
+**渠道说明**
 
-| 子仓库 | 浏览器 | 渠道 | 最新版本 | 总下载量 |
-| --- | --- | --- | --- | --- |
-| [Chrome-Portable](https://github.com/Piracola/Chrome-Portable) | Google Chrome | Stable / Beta | [![][badge-chrome-release]][link-chrome] | [![][badge-chrome-downloads]][link-chrome] |
-| [Edge_Portable](https://github.com/betacola/Edge_Portable) | Microsoft Edge | Stable | [![][badge-edge-release]][link-edge] | [![][badge-edge-downloads]][link-edge] |
-| [Helium_Portable](https://github.com/Piracola/Helium_Portable) | Helium | Stable / Preview | [![][badge-helium-release]][link-helium] | [![][badge-helium-downloads]][link-helium] |
+- **Chrome**：`stable` / `beta` 两线；官方 Omaha 取包；产物 `Chrome++_stable_*` / `Chrome++_beta_*`。
+- **Edge**：稳定线；微软 CDP API + 安装器源；产物 `Edge_Portable_Win64_*`。
+- **Helium**：稳定线；auto 结构解析；产物 `Helium_*`。官方产品构建在子仓库；本核心 `build-browser` 若上游未挂公开安装包资产，需提供 `package_url`。
 
-后续新增浏览器时，优先新建子仓库并引用本仓库的 reusable workflow，而不是复制整套构建脚本。
+更多下载、版本信息和文件校验值请访问：[便携版下载页面](https://piracola.github.io/ChromiumPortable/)。
 
-## 本仓库的用途
+## 使用方法
 
-- 复用便携化构建流程。
-- 降低新增浏览器支持时的维护成本。
-- 让每个子仓库只维护 `browser.json`、`chrome++` 配置和项目说明。
-- 统一 GitHub Actions 自动检查、构建、打包和发行流程。
+1. 下载所需浏览器的压缩包。
+2. 解压到任意可写目录。
+3. 运行浏览器主程序，或双击压缩包中提供的 `开始.bat`。
 
-`docs/` 目录是一个 GitHub Pages 静态展示站，汇总各子仓库和构建目标的入口链接（数据手工维护在 `docs/site-data.js`，不展示实时版本号），部署方式见 [docs/README.md](./docs/README.md)。
+浏览数据通常保存在浏览器文件夹旁边的 `Data` 和 `Cache` 目录中。更新时只需替换浏览器程序目录，请勿删除自己的数据目录。
 
-## 快速开始：接入新子仓库
+## 其他 Chromium 系浏览器（自用构建）
 
-子仓库的 `.github/workflows/build.yml` 可以引用本仓库：
+本工具也能为 Brave、Vivaldi、Opera、Thorium、360 极速浏览器 X 等制作便携版。  
+这些**不是**本项目产品：无下载站产品页，构建结果仅供学习与自用；再分发请先阅读上游协议（见 [NOTICE](./NOTICE)）。
 
-```yaml
-jobs:
-  portable:
-    permissions:
-      contents: write
-    uses: Piracola/ChromiumPortable/.github/workflows/portable-browser.yml@v1.1
-    with:
-      builder-repository: Piracola/ChromiumPortable
-      builder-ref: v1.1
-      config: browser.json
-      target: edge_stable
-```
+**本地一键（推荐）**
 
-> `uses` 和 `builder-ref` 里的 `v1.1` 是本仓库的发布 tag。新接入的子仓库建议固定引用某个 tag；core 发新版本时打新 tag（如 `v1.2`）再让子仓库迁移。详见 [版本与发布](#版本与发布)。
-
-reusable workflow 内部分成两个 job：`check` 跑在 `ubuntu-latest`（上游版本查询只是几次 HTTP 请求，不需要 Windows），`build` 跑在 `windows-latest` 且 `needs: check`。定时触发时只有 `check` 判定需要更新才会启动 Windows runner。两个 job 之间通过 `check` 的 `env_json` output 传递全部环境变量（含按 target 动态生成的键），`build` 的第一步把它还原进 `GITHUB_ENV`。
-
-浏览器差异写在子仓库的 `browser.json`。示例见 [examples](./examples)。
-
-## 保留子仓库下载脚本
-
-如果某个浏览器的上游查询逻辑比较特殊，可以把下载地址获取脚本留在子仓库，只让本仓库复用后续的解压、注入、打包和发版逻辑。
-
-`browser.json` 使用 `script` provider：
-
-```json
-{
-  "provider": {
-    "type": "script",
-    "command": ["python", "scripts/chrome_package.py", "--channel", "stable"]
-  }
-}
-```
-
-子仓库脚本向 stdout 输出 JSON：
-
-```json
-{
-  "version": "123.0.0.0",
-  "url": "https://dl.google.com/example/chrome_installer.exe",
-  "file_name": "chrome_installer.exe",
-  "sha256": "ebd1e560964b89aa28e5841d3b380fd09433dfe9e2373dde41cd4a0c3d945965",
-  "size": 489274792,
-  "verify_ssl": true
-}
-```
-
-`sha256` 与 `size` 可选但强烈建议提供：构建器会在下载时逐块计算摘要并比对，不一致就删除文件并中止构建。三个上游都直接提供了摘要（Chrome 的 Omaha 响应带 `hash_sha256`，Edge 的 CDP API 带 `Hashes.Sha256`，GitHub Release 资产带 `digest`），所以现有子仓库脚本都强制要求拿到摘要才输出结果。`sha256` 接受十六进制、`sha256:<hex>` 前缀和 base64 三种写法。
-
-也可以由子仓库脚本自己下载好安装包，然后返回本地路径：
-
-```json
-{
-  "version": "123.0.0.0",
-  "installer_path": "downloads/chrome_installer.exe",
-  "sha256": "..."
-}
-```
-
-这样 Chrome、Edge 或其他浏览器的上游变动只需要改各自子仓库里的脚本，主仓库继续保持通用。
-
-## 维护者指南
-
-通用构建逻辑位于 [portable_builder](./portable_builder)。新增浏览器时，先尝试通过 `direct`、`google_omaha` 或 `microsoft_edge` provider 配置完成；如果上游版本 API 或安装包结构不同，再新增 `portable_builder/providers/*.py`。
-
-本地测试（Windows + Python 3）：
+1. 安装 [Python 3](https://www.python.org/)（安装时勾选 “Add to PATH”）。
+2. 把下载好的浏览器安装包复制到专用目录 **`installers\`**（里面有一份 `README.txt` 说明）。
+3. 双击仓库根目录的 **`开始构建.bat`**，或在终端运行：
 
 ```powershell
-python -m compileall portable_builder
-$env:PYTHONPATH="<path-to-ChromiumPortable>"
-python -m portable_builder --config examples\edge.browser.json --target edge_stable --workdir . check
+python scripts\wizard.py
 ```
 
-Chrome 这类一个仓库同时发布多个渠道的项目，可以直接 checkout 本仓库后调用 `check-targets`、`build-targets`、`verify-targets`、`render-release-targets` 和 `update-release-targets`。
+4. 按菜单选择：构建单个安装包 / 构建整个文件夹 / 在线下载最新版，再选架构与是否打包即可。  
+   完成后在 `build\release\` 查看便携目录；勾选打包时在 `build\assets\` 查看 7z。
 
-多目标共享一个 GitHub Release 时，构建器会优先用每个 target 的 `archive_name` 精确识别和清理对应资产，并在创建新的 shared release 时自动继承未更新 target 的旧资产，避免“发行说明里有版本号但附件缺包”。
+界面语言按系统自动切换（简体中文 / English）；也可用环境变量 `WIZARD_LANG=en` 强制指定。
 
-如果显式配置 `release.asset_match`，请确保不同 target 之间不会交叉匹配。默认推荐让每个 target 使用可区分的 `archive_name`，由构建器自动按归档命名推导资产匹配规则。
+支持的在线浏览器、CI 发布流程与高级命令行，见 [开发文档](./docs/DEVELOPMENT.md)。
 
-构建器会优先使用系统 7-Zip 或 PATH 中的 `7z`；如果都不可用，会尝试下载独立解压器，下载失败后再尝试通过 Chocolatey 安装 7-Zip。
+## 注意事项
 
-### 产物验证
+- 当前发布版本主要面向 Windows x64。
+- 便携化过程会修改浏览器主程序并加载 Chrome++，原始数字签名可能因此失效，部分安全软件可能产生误报。
+- 请只从上方项目的 GitHub Releases 或统一下载页面获取产品渠道文件，并在需要时核对 SHA256。其他浏览器的 `Unofficial` 构建不代表官方立场。
+- 使用前建议备份重要的浏览器数据。
+- 商标、第三方组件与再分发边界见 [NOTICE](./NOTICE)。
 
-构建阶段会在 DLL 注入后解析浏览器可执行文件的 PE 导入表，断言**第一条导入项**就是我们注入的 `version.dll`，并且它是相对路径。
+## 参与开发
 
-这里只检查「存在 `version.dll` 导入」是不够的：Chromium 本身就原生导入系统的 `VERSION.dll`，所以那种检查在完全没注入的情况下也会通过，产出一个没有 Chrome++ 功能的普通浏览器。setdll（Detours）会把注入的 DLL 前置，使加载器优先解析它，因此「第一条导入项」才是真正的判据。绝对路径检查同时保留，避免把构建机的路径写进产物导致换机器后找不到 `version.dll`。
-
-打包后还可以用 `verify` / `verify-targets` 验证最终交付物：解压 `.7z`，重新检查导入表，确认没有 setdll 残留的 `<exe>~` 备份，然后真正启动一次浏览器（`--version` 与 headless），断言 Chrome++ 把配置目录建在了解压目录内而不是用户目录——这是「便携」这一承诺唯一的自动化证据。
-
-```powershell
-python -m portable_builder --config browser.json --target chrome_stable --workdir . verify
-python -m portable_builder --config browser.json --target chrome_stable --workdir . verify --no-smoke  # 只查导入表，不启动浏览器
-```
-
-可用 target 配置项微调：`smoke_args`（默认 headless + `--dump-dom about:blank`）、`smoke_data_dir`（默认 `Data`）、`smoke_timeout`、`smoke_data_timeout`（等待配置目录出现的秒数，默认 60）。`forbidden_file_names` 可列出发布包绝不能携带的文件名（忽略大小写）；构建暂存和最终压缩包验证都会检查，适合防止浏览器整体更新器被上游意外带入便携包。
-
-最后一项是必要的：部分浏览器的主 exe 只是启动器（例如 `msedge.exe` 约 0.1 秒就返回 0，真正的浏览器跑在分离的子进程里），所以配置目录要轮询等待，不能启动结束就立刻断言。同理，这类启动器的退出码为 0 并不能证明浏览器真的起来了，真正有分量的判据是配置目录是否出现。
-
-### 发行说明可用的占位符
-
-单 target（`release.body`）：
-
-| 占位符 | 含义 |
-| --- | --- |
-| `{version}` / `{package_version}` | 浏览器版本 |
-| `{display_name}` / `{name}` / `{output_dir}` / `{arch}` | target 基本信息 |
-| `{archive}` / `{size}` / `{sha256}` | 归档文件名、大小、SHA256 |
-| `{date}` | 构建日期 |
-| `{chrome_plus_version}` | 打包进去的 Chrome++ 版本（来自 `setdll/version.txt`） |
-| `{run_url}` | 本次 GitHub Actions 运行记录链接 |
-
-多 target（顶层 `release.body`）把上面的按 target 名加前缀，例如 `{chrome_stable_version}`、`{chrome_beta_sha256}`，另外仍可用 `{date}`、`{chrome_plus_version}`、`{run_url}`。
-
-某个渠道本次没有重新构建时，它的 `_archive` / `_sha256` / `_size` 会退化为读取 GitHub 上现有资产的摘要；连这个也拿不到时渲染为 `-`。
-
-> ⚠️ **发行说明正文实际上是一份 schema。** `check` 是靠 `version_pattern` 正则从 Release 正文里抠出当前已发布的版本号的。改了文案却没同步改正则，正则就静默匹配不到，`check` 认为「还没发布过」，于是**之后每天都会无条件重新构建**，而且不会报任何错。
->
-> 因此 `render-release` / `render-release-targets` 会在渲染完成后立刻用 `version_pattern` 把版本号**回读一遍**，对不上就直接让构建失败。改正文时请保留 `<渠道> 版本: <版本号>` 这样的锚点行，或者在同一次提交里改正则——两种情况这个自检都会兜住。
-
-## chrome++ 自动更新
-
-主仓库通过 `.github/workflows/update-chrome-plus.yml` 定时检查 [Bush2021/chrome_plus](https://github.com/Bush2021/chrome_plus/releases) 的最新 `setdll.7z`，只把其中的 `version-x64.dll`、`setdll-x64.exe`、`README.md` 和 `chrome++.ini` 更新到本仓库的 `setdll/` 目录，并把上游版本号记进 `setdll/version.txt`（发行说明里的 `{chrome_plus_version}` 就来自这里）。
-
-### chrome++.ini 的三层结构
-
-`chrome++.ini` 有一百多行，其中绝大部分是中英双语注释，真正因浏览器而异的只有几个键。所以它由三层合并而成：
-
-| 层 | 文件 | 谁维护 |
-| --- | --- | --- |
-| 基线 | `setdll/chrome++.ini` | 上游，每次同步整份覆盖，**不要手改** |
-| 通用默认 | `setdll/chrome++.defaults.ini` | 本项目，所有浏览器共用的偏好 |
-| 浏览器差异 | 子仓库 `chrome++/chrome++.override.ini` | 各子仓库，只写自己不一样的键 |
-
-合并是按行进行的，**注释和键的顺序全部保留**，所以上游新增的配置项会自动出现在最终产物里，不需要手工同步到每个子仓库。
-
-`chrome++.defaults.ini` 故意不在同步流程的文件列表里，因此不会被上游覆盖。
-
-覆盖一个基线里不存在的键会**直接让构建失败**：chrome++ 运行时会静默忽略不认识的键，拼错了就永远发现不了，所以这里选择尽早报错。
-
-子仓库如果仍然放一份完整的 `chrome++.ini`，为兼容旧配置它依然生效，但会遮蔽自动同步的基线，构建时会给出警告。
-
-如果 chrome++ 文件发生变化，workflow 会先提交主仓库更新；只有 `version-x64.dll` 或 `setdll-x64.exe` 变化时，才会调度子仓库的 `workflow_dispatch` 构建。调度时会把这次主仓库更新提交作为 `builder_ref` 传给子仓库，保证子仓库构建使用刚更新的 chrome++ 文件。子仓库的手动触发构建会强制重打包；在浏览器版本没有变化时，会更新现有 GitHub Release 并替换对应附件。
-
-跨仓库调度需要在主仓库配置 `CHILD_REPO_TOKEN` secret。这个 token 需要能访问并触发子仓库 Actions workflow，例如细粒度 token 授权目标子仓库的 `Actions: Read and write` 和 `Contents: Read`。
-
-### 版本与发布
-
-发布稳定版本时给本仓库打 tag，例如 `v1.1`。core 发新版本时打新 tag（如 `v1.2`），再让子仓库迁移 `builder-ref`。
-
-现状：本仓库已有 `v1`、`v1.1`、`v1.2` 三个 tag，但 Chrome、Edge、Helium 三个子仓库目前**都固定引用 `main`**，即 core 的任何一次提交都会立即影响三条生产线。若要恢复 tag pin 的隔离效果，需要逐个修改子仓库 `build.yml` 里的 `builder-ref`（Edge 还需同时修改 `uses` 的 ref）。
+本仓库是构建核心，不是浏览器成品仓库。新增浏览器、配置构建流程或维护发布任务，请阅读 [开发与接入文档](./docs/DEVELOPMENT.md)。下载站维护说明见 [docs/README.md](./docs/README.md)。
 
 ## 许可证
 
-本项目源码遵循 MIT 许可证。
+项目源码使用 [MIT License](./LICENSE)。Chrome++、浏览器本体及其他第三方组件遵循各自的许可证；商标归属见 [NOTICE](./NOTICE)。
 
 ---
 
@@ -214,24 +92,29 @@ python -m portable_builder --config browser.json --target chrome_stable --workdi
 
 </div>
 
-<!-- 徽标定义：中文标签需 percent-encode，否则 shields.io 无法解析。 -->
-<!-- 修改标签文字时请一并更新编码，例如 最新版本 -> %E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC -->
+<!-- 徽标：中文标签需 percent-encode，否则 shields.io 无法解析。 -->
 [badge-version]: https://img.shields.io/github/v/tag/Piracola/ChromiumPortable?style=flat-square&color=2f81f7&label=%E6%A0%B8%E5%BF%83%E7%89%88%E6%9C%AC
-[badge-sync]: https://img.shields.io/github/actions/workflow/status/Piracola/ChromiumPortable/update-chrome-plus.yml?branch=main&style=flat-square&label=chrome%2B%2B%20%E5%90%8C%E6%AD%A5
+[badge-sync]: https://img.shields.io/github/actions/workflow/status/Piracola/ChromiumPortable/update-chrome-plus.yml?branch=main&style=flat-square&color=2ea043&label=chrome%2B%2B%20%E5%90%8C%E6%AD%A5
 [badge-license]: https://img.shields.io/github/license/Piracola/ChromiumPortable?style=flat-square&color=6e7681&label=%E8%AE%B8%E5%8F%AF%E8%AF%81
+[badge-stars]: https://img.shields.io/github/stars/Piracola/ChromiumPortable?style=flat-square&color=d8653f&label=Stars
+[badge-last-commit]: https://img.shields.io/github/last-commit/Piracola/ChromiumPortable?style=flat-square&color=555555&label=%E6%9C%80%E8%BF%91%E6%8F%90%E4%BA%A4
 
 [link-tags]: https://github.com/Piracola/ChromiumPortable/tags
 [link-sync]: https://github.com/Piracola/ChromiumPortable/actions/workflows/update-chrome-plus.yml
 [link-license]: https://github.com/Piracola/ChromiumPortable/blob/main/LICENSE
+[link-repo]: https://github.com/Piracola/ChromiumPortable
 
 [badge-chrome-release]: https://img.shields.io/github/v/release/Piracola/Chrome-Portable?display_name=tag&style=flat-square&color=d8653f&label=
 [badge-chrome-downloads]: https://img.shields.io/github/downloads/Piracola/Chrome-Portable/total?style=flat-square&color=2ea043&label=
+[badge-chrome-stars]: https://img.shields.io/github/stars/Piracola/Chrome-Portable?style=flat-square&color=2f81f7&label=
 [link-chrome]: https://github.com/Piracola/Chrome-Portable/releases/latest
 
 [badge-edge-release]: https://img.shields.io/github/v/release/betacola/Edge_Portable?display_name=tag&style=flat-square&color=1d7c84&label=
 [badge-edge-downloads]: https://img.shields.io/github/downloads/betacola/Edge_Portable/total?style=flat-square&color=2ea043&label=
+[badge-edge-stars]: https://img.shields.io/github/stars/betacola/Edge_Portable?style=flat-square&color=2f81f7&label=
 [link-edge]: https://github.com/betacola/Edge_Portable/releases/latest
 
 [badge-helium-release]: https://img.shields.io/github/v/release/Piracola/Helium_Portable?display_name=tag&style=flat-square&color=5b5bd6&label=
 [badge-helium-downloads]: https://img.shields.io/github/downloads/Piracola/Helium_Portable/total?style=flat-square&color=2ea043&label=
+[badge-helium-stars]: https://img.shields.io/github/stars/Piracola/Helium_Portable?style=flat-square&color=2f81f7&label=
 [link-helium]: https://github.com/Piracola/Helium_Portable/releases/latest

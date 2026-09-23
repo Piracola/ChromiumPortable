@@ -1,0 +1,46 @@
+ChromiumPortable — third-party components, trademarks, and redistribution
+=======================================================================
+
+This repository (MIT) contains a portable-build toolchain that patches
+Chromium-family browsers with Chrome++ (version.dll injection). The toolchain
+source is MIT-licensed. Browser binaries, Chrome++, and brand names are not.
+
+1. Productized distribution (Chrome / Edge / Helium)
+---------------------------------------------------
+Release practice and public product pages are limited to these three channels
+and their dedicated child repositories. That status is a project policy choice,
+not a claim that upstream licenses permit redistribution.
+
+2. Other Chromium-family browsers (capability only)
+---------------------------------------------------
+Opera, Vivaldi, Brave, Thorium, 360 极速浏览器 X, and similar browsers
+may be built by this toolchain (auto layout + optional GitHub Actions). Builds
+of those browsers, when published as GitHub Release assets from this core, are:
+
+  - UNOFFICIAL and not affiliated with, sponsored by, or endorsed by the
+    corresponding browser vendors;
+  - not presented as products of ChromiumPortable (no download-site product
+    cards, no brand logos in the product gallery);
+  - subject to each upstream's license / EULA, which may forbid or restrict
+    redistribution of installers or modified binaries.
+
+If you publish such builds, YOU are the redistributor. Evaluate the upstream
+terms first. Prefer local/personal builds (`scripts/build_all_packages.py`,
+`build-packages`) and avoid implying official status.
+
+3. Trademarks
+-------------
+Google Chrome, Microsoft Edge, Helium, Brave, Vivaldi, Opera, Thorium,
+360 and related marks belong to their respective owners. Use of names in this
+repository is for identification and interoperability only (nominative fair
+use). Do not use vendor logos on productized pages without permission.
+
+4. Chrome++ / setdll
+--------------------
+`setdll/` contains binaries and configuration synced from the Chrome++ project.
+Those files follow Chrome++'s own license, not this repository's MIT license.
+
+5. No warranty
+--------------
+Modified browsers may break, lose signature trust, or trip security software.
+See LICENSE (MIT) for the toolchain's warranty disclaimer.

@@ -202,7 +202,7 @@ python scripts\prepare_build_target.py --browser brave_stable --output build\sel
 
 `archive_name` 应在不同 target 之间保持可区分。如果使用 `release.asset_match`，必须避免多个 target 匹配同一个文件。
 
-Release 正文中的版本号会被 `version_pattern` 重新读取，因此正文文案和正则必须一起维护。正文支持版本、日期、压缩包名称、大小、SHA256、Chrome++ 版本和工作流链接等占位符。多目标项目使用带 target 前缀的占位符，例如 `{chrome_stable_version}`。
+Release 正文中的版本号会被 `version_pattern` 重新读取，因此正文文案和正则必须一起维护。正文支持版本、日期、压缩包名称、大小、SHA256、Chrome++ 版本和工作流链接等占位符。多目标项目使用带 target 前缀的占位符，例如 `{chrome_stable_version}`。`release.create_new_release_on` 可配置何时新建 Release（相对「仅更新已有资产」），多 target 共享发行时也可写在 target 的 `release` 上。
 
 ## 版本管理
 

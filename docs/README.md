@@ -12,7 +12,7 @@
 
 ```
 docs/
-├── data/site.json        # 单一数据源：技术字段 + i18n 文案（zh-CN / en）
+├── data/site.json        # 单一数据源：技术字段 + i18n 文案（zh-CN / zh-TW / en / ja）
 ├── data/releases.json    # 由脚本抓取的各仓库最新 Release（版本 / 体积 / 日期 / SHA256）
 ├── tools/generate.py     # 渲染器：产出下面所有 HTML 与 sitemap.xml
 ├── tools/make_og.py      # 生成 assets/og.png 社交预览图（本地手动跑）

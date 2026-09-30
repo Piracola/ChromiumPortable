@@ -7,7 +7,7 @@ import urllib.request
 
 DEFAULT_CHILD_WORKFLOWS = [
     {"repository": "Piracola/Chrome-Portable", "workflow": "build.yml", "ref": "main"},
-    {"repository": "betacola/Edge_Portable", "workflow": "build.yml", "ref": "main"},
+    {"repository": "Piracola/Edge_Portable", "workflow": "build.yml", "ref": "main"},
     {"repository": "Piracola/Helium_Portable", "workflow": "build.yml", "ref": "main"},
 ]
 

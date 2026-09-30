@@ -18,7 +18,7 @@ ChromiumPortable 统一处理上游版本检查、安装包下载、解压、Chr
 当前生产项目：
 
 - [Chrome-Portable](https://github.com/Piracola/Chrome-Portable)
-- [Edge_Portable](https://github.com/betacola/Edge_Portable)
+- [Edge_Portable](https://github.com/Piracola/Edge_Portable)
 - [Helium_Portable](https://github.com/Piracola/Helium_Portable)
 
 ## 接入子仓库

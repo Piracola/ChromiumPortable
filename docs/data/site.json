@@ -56,10 +56,10 @@
     {
       "id": "edge",
       "name": "Edge_Portable",
-      "owner": "betacola",
-      "url": "https://github.com/betacola/Edge_Portable",
-      "releasesUrl": "https://github.com/betacola/Edge_Portable/releases/latest",
-      "workflowUrl": "https://github.com/betacola/Edge_Portable/actions/workflows/build.yml",
+      "owner": "Piracola",
+      "url": "https://github.com/Piracola/Edge_Portable",
+      "releasesUrl": "https://github.com/Piracola/Edge_Portable/releases/latest",
+      "workflowUrl": "https://github.com/Piracola/Edge_Portable/actions/workflows/build.yml",
       "icon": "assets/edge.svg",
       "accent": "#1d7c84"
     },

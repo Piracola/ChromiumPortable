@@ -109,10 +109,10 @@ python scripts\wizard.py
 [badge-chrome-stars]: https://img.shields.io/github/stars/Piracola/Chrome-Portable?style=flat-square&color=2f81f7&label=
 [link-chrome]: https://github.com/Piracola/Chrome-Portable/releases/latest
 
-[badge-edge-release]: https://img.shields.io/github/v/release/betacola/Edge_Portable?display_name=tag&style=flat-square&color=1d7c84&label=
-[badge-edge-downloads]: https://img.shields.io/github/downloads/betacola/Edge_Portable/total?style=flat-square&color=2ea043&label=
-[badge-edge-stars]: https://img.shields.io/github/stars/betacola/Edge_Portable?style=flat-square&color=2f81f7&label=
-[link-edge]: https://github.com/betacola/Edge_Portable/releases/latest
+[badge-edge-release]: https://img.shields.io/github/v/release/Piracola/Edge_Portable?display_name=tag&style=flat-square&color=1d7c84&label=
+[badge-edge-downloads]: https://img.shields.io/github/downloads/Piracola/Edge_Portable/total?style=flat-square&color=2ea043&label=
+[badge-edge-stars]: https://img.shields.io/github/stars/Piracola/Edge_Portable?style=flat-square&color=2f81f7&label=
+[link-edge]: https://github.com/Piracola/Edge_Portable/releases
 
 [badge-helium-release]: https://img.shields.io/github/v/release/Piracola/Helium_Portable?display_name=tag&style=flat-square&color=5b5bd6&label=
 [badge-helium-downloads]: https://img.shields.io/github/downloads/Piracola/Helium_Portable/total?style=flat-square&color=2ea043&label=

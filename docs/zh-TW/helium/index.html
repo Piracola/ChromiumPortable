@@ -179,7 +179,7 @@
       <section class="prose">
         <h2>版本與更新</h2>
         <p>上游目前只發佈正式版 Release，本倉庫每天檢查並自動打包最新版本。每個上游版本都會建立一條新的 GitHub Release，歷史建置可回溯下載。</p>
-        <p>更新時關閉瀏覽器，備份舊版 Helium 資料夾裡的 Data 目錄，刪除舊資料夾，把新版解壓到同級目錄，再把 Data 放回去。</p>
+        <p>更新時關閉瀏覽器，備份與舊版 Helium 資料夾同級（解壓根目錄下）的 Data 目錄，刪除舊資料夾，把新版解壓到同一目錄，再把 Data 放回新版 Helium 資料夾旁邊。</p>
       </section>
 
       <section class="prose">
@@ -194,13 +194,13 @@
           <li>從 Releases 頁面下載需要的壓縮檔。</li>
           <li>解壓縮到任意位置。</li>
           <li>連按兩下「開始.bat」建立桌面捷徑，或直接執行 Helium\chrome.exe。</li>
-          <li>使用者資料與快取會產生在 Helium\Data 與 Helium\Cache。</li>
+          <li>使用者資料與快取會產生在與 Helium 資料夾同級的 Data 與 Cache 目錄（解壓根目錄下）。</li>
         </ol>
       </section>
 
       <section class="prose">
         <h2>怎麼更新</h2>
-        <p>關閉瀏覽器，備份舊版 Helium 資料夾裡的 Data 目錄，刪除舊資料夾，把新版解壓縮到同級目錄，再把 Data 放回去。本倉庫每天跟進上游，有新版就會自動發佈。</p>
+        <p>關閉瀏覽器，備份與舊版 Helium 資料夾同級（解壓根目錄下）的 Data 目錄，刪除舊資料夾，把新版解壓縮到同一目錄，再把 Data 放回新版 Helium 資料夾旁邊。本倉庫每天跟進上游，有新版就會自動發佈。</p>
       </section>
 
       <section class="section" id="verify">
@@ -247,6 +247,10 @@
           <details class="faq__item">
             <summary>使用者資料保存在哪裡？換電腦怎麼遷移？</summary>
             <div class="faq__answer"><p>保存在瀏覽器資料夾同級的 Data 目錄（快取在 Cache 目錄）。遷移時把整個資料夾拷到新電腦就行，書籤、密碼、擴充、登入狀態都會跟著走，不需要重新設定。</p></div>
+          </details>
+          <details class="faq__item">
+            <summary>可以把資料目錄改到別的位置嗎？</summary>
+            <div class="faq__answer"><p>可以。資料目錄的位置由瀏覽器資料夾裡的 chrome++.ini 決定，改 data_dir 和 cache_dir 兩行即可（值可以填絕對路徑，也可以用 %app% 加相對層數，%app% 代表瀏覽器主程式所在目錄）。改完存檔後重新啟動瀏覽器就會生效，目錄會依新位置自動建立。注意兩點：一、這個檔案是 UTF-16 編碼，用記事本另存時請把編碼選成 Unicode，否則瀏覽器讀不到設定、設定會靜默失效；二、預設路徑本來就會跟著程式走，所以只有想把資料放到程式外面（例如放在空間比較大的分割區）時才需要改。</p></div>
           </details>
           <details class="faq__item">
             <summary>防毒軟體回報病毒怎麼辦？</summary>

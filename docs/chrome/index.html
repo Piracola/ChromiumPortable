@@ -249,10 +249,10 @@
         <p>便携版不注册系统更新服务，所以不会自己升级，需要手动换新版。本仓库每天检查官方是否发新版，有就自动打包发布，你按下面的步骤覆盖即可：</p>
         <ol class="prose__steps">
           <li>完全关闭浏览器。</li>
-          <li>把旧版 Chrome 文件夹里的 Data 目录复制一份到安全位置备份。</li>
+          <li>把旧版 Chrome 文件夹同级（解压根目录下）的 Data 目录复制一份到安全位置备份。</li>
           <li>删除旧的 Chrome 文件夹；想留退路就改名为 Chrome old。</li>
           <li>把新版的 Chrome 文件夹解压到同级目录。</li>
-          <li>把备份的 Data 放回新的 Chrome 文件夹里。</li>
+          <li>把备份的 Data 放回新的 Chrome 文件夹旁边。</li>
         </ol>
       </section>
 
@@ -300,6 +300,10 @@
           <details class="faq__item">
             <summary>用户数据保存在哪里？换电脑怎么迁移？</summary>
             <div class="faq__answer"><p>保存在浏览器文件夹同级的 Data 目录（缓存在 Cache 目录）。迁移时把整个文件夹拷到新电脑就行，书签、密码、扩展、登录状态都会跟着走，不需要重新配置。</p></div>
+          </details>
+          <details class="faq__item">
+            <summary>可以把数据目录改到别的位置吗？</summary>
+            <div class="faq__answer"><p>可以。数据目录的位置由浏览器文件夹里的 chrome++.ini 决定，修改 data_dir 和 cache_dir 两行即可（值可以写绝对路径，也可以用 %app% 加相对层数，%app% 代表浏览器主程序所在目录）。改完保存后重启浏览器生效，目录会按新位置自动创建。注意两点：一、这个文件是 UTF-16 编码，用记事本另存为时请把编码选成 Unicode，否则浏览器读不到配置、配置会静默失效；二、数据目录是跟着程序走的相对关系，直接搬动整个文件夹不需要改这里，只有想把数据放到程序外面（比如放在空间更大的分区）时才需要改。</p></div>
           </details>
           <details class="faq__item">
             <summary>杀毒软件报毒怎么办？</summary>

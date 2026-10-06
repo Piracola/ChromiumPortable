@@ -345,10 +345,10 @@
               ],
               "steps": [
                 "完全关闭浏览器。",
-                "把旧版 Chrome 文件夹里的 Data 目录复制一份到安全位置备份。",
+                "把旧版 Chrome 文件夹同级（解压根目录下）的 Data 目录复制一份到安全位置备份。",
                 "删除旧的 Chrome 文件夹；想留退路就改名为 Chrome old。",
                 "把新版的 Chrome 文件夹解压到同级目录。",
-                "把备份的 Data 放回新的 Chrome 文件夹里。"
+                "把备份的 Data 放回新的 Chrome 文件夹旁边。"
               ]
             }
           ],
@@ -392,10 +392,10 @@
               ],
               "steps": [
                 "完全关闭浏览器。",
-                "备份旧版 Edge 文件夹里的 Data 目录。",
+                "备份旧版 Edge 文件夹同级（解压根目录下）的 Data 目录。",
                 "删除旧的 Edge 文件夹。",
                 "解压新版 Edge 文件夹到同级目录。",
-                "把备份的 Data 放回新的 Edge 文件夹。"
+                "把备份的 Data 放回新的 Edge 文件夹旁边。"
               ]
             }
           ],
@@ -421,7 +421,7 @@
               "heading": "版本与更新",
               "paragraphs": [
                 "上游目前只发布正式版 Release，本仓库每天检查并自动打包最新版本。每个上游版本都会创建一条新的 GitHub Release，历史构建可回溯下载。",
-                "更新时关掉浏览器，备份旧版 Helium 文件夹里的 Data 目录，删除旧文件夹，把新版解压到同级目录，再把 Data 放回去。"
+                "更新时关掉浏览器，备份与旧版 Helium 文件夹同级（解压根目录下）的 Data 目录，删除旧文件夹，把新版解压到同一目录，再把 Data 放回新版 Helium 文件夹旁边。"
               ]
             },
             {
@@ -430,13 +430,13 @@
                 "从 Releases 页面下载需要的压缩包。",
                 "解压到任意位置。",
                 "双击「开始.bat」创建桌面快捷方式，或直接运行 Helium\\chrome.exe。",
-                "用户数据与缓存会生成在 Helium\\Data 和 Helium\\Cache。"
+                "用户数据与缓存会生成在与 Helium 文件夹同级的 Data 和 Cache 目录（解压根目录下）。"
               ]
             },
             {
               "heading": "怎么更新",
               "paragraphs": [
-                "关掉浏览器，备份旧版 Helium 文件夹里的 Data 目录，删除旧文件夹，把新版解压到同级目录，再把 Data 放回去。本仓库每天跟进上游，有新版就会自动发布。"
+                "关掉浏览器，备份与旧版 Helium 文件夹同级（解压根目录下）的 Data 目录，删除旧文件夹，把新版解压到同一目录，再把 Data 放回新版 Helium 文件夹旁边。本仓库每天跟进上游，有新版就会自动发布。"
               ]
             }
           ],
@@ -461,6 +461,10 @@
           {
             "q": "用户数据保存在哪里？换电脑怎么迁移？",
             "a": "保存在浏览器文件夹同级的 Data 目录（缓存在 Cache 目录）。迁移时把整个文件夹拷到新电脑就行，书签、密码、扩展、登录状态都会跟着走，不需要重新配置。"
+          },
+          {
+            "q": "可以把数据目录改到别的位置吗？",
+            "a": "可以。数据目录的位置由浏览器文件夹里的 chrome++.ini 决定，修改 data_dir 和 cache_dir 两行即可（值可以写绝对路径，也可以用 %app% 加相对层数，%app% 代表浏览器主程序所在目录）。改完保存后重启浏览器生效，目录会按新位置自动创建。注意两点：一、这个文件是 UTF-16 编码，用记事本另存为时请把编码选成 Unicode，否则浏览器读不到配置、配置会静默失效；二、数据目录是跟着程序走的相对关系，直接搬动整个文件夹不需要改这里，只有想把数据放到程序外面（比如放在空间更大的分区）时才需要改。"
           },
           {
             "q": "杀毒软件报毒怎么办？",
@@ -714,10 +718,10 @@
               ],
               "steps": [
                 "Quit the browser completely.",
-                "Copy the Data folder from the old Chrome directory somewhere safe.",
+                "Copy the Data folder next to the old Chrome folder (in the extraction root) somewhere safe.",
                 "Delete the old Chrome folder (or rename it to Chrome old as a rollback).",
                 "Extract the new Chrome folder next to it.",
-                "Put the backed-up Data folder back into the new Chrome directory."
+                "Put the backed-up Data folder back next to the new Chrome folder."
               ]
             }
           ],
@@ -761,10 +765,10 @@
               ],
               "steps": [
                 "Quit the browser completely.",
-                "Back up the Data folder from the old Edge directory.",
+                "Back up the Data folder next to the old Edge folder (in the extraction root).",
                 "Delete the old Edge folder.",
                 "Extract the new Edge folder next to it.",
-                "Restore the Data folder into the new directory."
+                "Restore the Data folder next to the new folder."
               ]
             }
           ],
@@ -790,7 +794,7 @@
               "heading": "Versions and updates",
               "paragraphs": [
                 "Upstream currently publishes stable Releases only. This repo checks daily and packages the latest version. Every upstream version gets its own GitHub Release, so older builds stay downloadable.",
-                "To update: quit the browser, back up Data from the old Helium folder, delete the old folder, extract the new one next to it, then restore Data."
+                "To update: quit the browser, back up the Data folder next to the old Helium folder, delete the old folder, extract the new one to the same place, then restore Data next to it."
               ]
             },
             {
@@ -799,13 +803,13 @@
                 "Download the archive you need from Releases.",
                 "Extract anywhere.",
                 "Double-click 开始.bat for a shortcut, or run Helium\\chrome.exe.",
-                "Profile and cache appear as Helium\\Data and Helium\\Cache."
+                "Profile and cache appear in Data and Cache next to the Helium folder (in the extraction root)."
               ]
             },
             {
               "heading": "How to update",
               "paragraphs": [
-                "Quit the browser, back up Data from the old Helium folder, delete the old folder, extract the new one next to it, then restore Data. This repo tracks upstream daily and auto-publishes new builds."
+                "Quit the browser, back up the Data folder next to the old Helium folder, delete the old folder, extract the new one to the same place, then restore Data next to it. This repo tracks upstream daily and auto-publishes new builds."
               ]
             }
           ],
@@ -830,6 +834,10 @@
           {
             "q": "Where is my data, and how do I migrate PCs?",
             "a": "In the Data folder next to the browser (cache in Cache). Copy the whole folder to the new machine — bookmarks, passwords, extensions, and logins come along."
+          },
+          {
+            "q": "Can I move the data folder somewhere else?",
+            "a": "Yes. The location is set by chrome++.ini inside the browser folder — edit the data_dir and cache_dir lines. Both an absolute path and %app% with relative levels work, where %app% is the folder holding the browser executable. Save and restart the browser; the folders are created at the new location. Two caveats: the file is UTF-16 encoded, so if you re-save it from Notepad pick Unicode or the config is silently ignored; and the default path already follows the program around, so you only need to change this to put data outside the program folder (on a larger partition, for example)."
           },
           {
             "q": "Antivirus flags the file. What now?",
@@ -1083,10 +1091,10 @@
               ],
               "steps": [
                 "完全關閉瀏覽器。",
-                "把舊版 Chrome 資料夾裡的 Data 目錄複製一份到安全位置備份。",
+                "把舊版 Chrome 資料夾同級（解壓根目錄下）的 Data 目錄複製一份到安全位置備份。",
                 "刪除舊的 Chrome 資料夾；想留退路就改名為 Chrome old。",
                 "把新版的 Chrome 資料夾解壓縮到同級目錄。",
-                "把備份的 Data 放回新的 Chrome 資料夾裡。"
+                "把備份的 Data 放回新的 Chrome 資料夾旁邊。"
               ]
             }
           ],
@@ -1130,10 +1138,10 @@
               ],
               "steps": [
                 "完全關閉瀏覽器。",
-                "備份舊版 Edge 資料夾裡的 Data 目錄。",
+                "備份舊版 Edge 資料夾同級（解壓根目錄下）的 Data 目錄。",
                 "刪除舊的 Edge 資料夾。",
                 "解壓縮新版 Edge 資料夾到同級目錄。",
-                "把備份的 Data 放回新的 Edge 資料夾。"
+                "把備份的 Data 放回新的 Edge 資料夾旁邊。"
               ]
             }
           ],
@@ -1159,7 +1167,7 @@
               "heading": "版本與更新",
               "paragraphs": [
                 "上游目前只發佈正式版 Release，本倉庫每天檢查並自動打包最新版本。每個上游版本都會建立一條新的 GitHub Release，歷史建置可回溯下載。",
-                "更新時關閉瀏覽器，備份舊版 Helium 資料夾裡的 Data 目錄，刪除舊資料夾，把新版解壓到同級目錄，再把 Data 放回去。"
+                "更新時關閉瀏覽器，備份與舊版 Helium 資料夾同級（解壓根目錄下）的 Data 目錄，刪除舊資料夾，把新版解壓到同一目錄，再把 Data 放回新版 Helium 資料夾旁邊。"
               ]
             },
             {
@@ -1175,13 +1183,13 @@
                 "從 Releases 頁面下載需要的壓縮檔。",
                 "解壓縮到任意位置。",
                 "連按兩下「開始.bat」建立桌面捷徑，或直接執行 Helium\\chrome.exe。",
-                "使用者資料與快取會產生在 Helium\\Data 與 Helium\\Cache。"
+                "使用者資料與快取會產生在與 Helium 資料夾同級的 Data 與 Cache 目錄（解壓根目錄下）。"
               ]
             },
             {
               "heading": "怎麼更新",
               "paragraphs": [
-                "關閉瀏覽器，備份舊版 Helium 資料夾裡的 Data 目錄，刪除舊資料夾，把新版解壓縮到同級目錄，再把 Data 放回去。本倉庫每天跟進上游，有新版就會自動發佈。"
+                "關閉瀏覽器，備份與舊版 Helium 資料夾同級（解壓根目錄下）的 Data 目錄，刪除舊資料夾，把新版解壓縮到同一目錄，再把 Data 放回新版 Helium 資料夾旁邊。本倉庫每天跟進上游，有新版就會自動發佈。"
               ]
             }
           ],
@@ -1206,6 +1214,10 @@
           {
             "q": "使用者資料保存在哪裡？換電腦怎麼遷移？",
             "a": "保存在瀏覽器資料夾同級的 Data 目錄（快取在 Cache 目錄）。遷移時把整個資料夾拷到新電腦就行，書籤、密碼、擴充、登入狀態都會跟著走，不需要重新設定。"
+          },
+          {
+            "q": "可以把資料目錄改到別的位置嗎？",
+            "a": "可以。資料目錄的位置由瀏覽器資料夾裡的 chrome++.ini 決定，改 data_dir 和 cache_dir 兩行即可（值可以填絕對路徑，也可以用 %app% 加相對層數，%app% 代表瀏覽器主程式所在目錄）。改完存檔後重新啟動瀏覽器就會生效，目錄會依新位置自動建立。注意兩點：一、這個檔案是 UTF-16 編碼，用記事本另存時請把編碼選成 Unicode，否則瀏覽器讀不到設定、設定會靜默失效；二、預設路徑本來就會跟著程式走，所以只有想把資料放到程式外面（例如放在空間比較大的分割區）時才需要改。"
           },
           {
             "q": "防毒軟體回報病毒怎麼辦？",
@@ -1459,10 +1471,10 @@
               ],
               "steps": [
                 "ブラウザーを完全に終了。",
-                "旧 Chrome フォルダーの Data を安全な場所へコピー。",
+                "展開ルートで旧 Chrome フォルダーの隣にある Data を安全な場所へコピー。",
                 "旧 Chrome フォルダーを削除（戻せるように Chrome old にリネームでも可）。",
                 "新しい Chrome フォルダーを同じ場所に展開。",
-                "バックアップした Data を新しい Chrome に戻す。"
+                "バックアップした Data を新しい Chrome フォルダーの隣に戻す。"
               ]
             }
           ],
@@ -1506,10 +1518,10 @@
               ],
               "steps": [
                 "ブラウザーを完全に終了。",
-                "旧 Edge フォルダーの Data をバックアップ。",
+                "展開ルートで旧 Edge フォルダーの隣にある Data をバックアップ。",
                 "旧 Edge フォルダーを削除。",
                 "新しい Edge フォルダーを展開。",
-                "Data を新しいフォルダーに戻す。"
+                "Data を新しいフォルダーの隣に戻す。"
               ]
             }
           ],
@@ -1535,7 +1547,7 @@
               "heading": "バージョンと更新",
               "paragraphs": [
                 "上游は現在 stable Release のみを公開しています。このリポジトリは毎日確認して最新版をパッケージします。各上游バージョンごとに新しい GitHub Release を作るので、過去のビルドも遡って取得できます。",
-                "更新時はブラウザーを終了し、旧 Helium フォルダーの Data を退避してから旧フォルダーを削除し、新版を同じ場所に展開して Data を戻してください。"
+                "更新時はブラウザーを終了し、展開ルートで旧 Helium フォルダーの隣にある Data を退避してから旧フォルダーを削除し、新版を同じ場所に展開して Data を戻してください。"
               ]
             },
             {
@@ -1544,13 +1556,13 @@
                 "必要なアーカイブを Releases からダウンロード。",
                 "任意の場所に展開。",
                 "開始.bat をダブルクリック、または Helium\\chrome.exe を実行。",
-                "プロファイルとキャッシュは Helium\\Data と Helium\\Cache に作られます。"
+                "プロファイルとキャッシュは展開ルートで Helium フォルダーの隣にある Data と Cache に作られます。"
               ]
             },
             {
               "heading": "更新方法",
               "paragraphs": [
-                "ブラウザーを終了し、旧 Helium の Data をバックアップしてから旧フォルダーを削除、新版を展開し Data を戻してください。本リポジトリは上游を毎日追跡し、新版を自動公開します。"
+                "ブラウザーを終了し、展開ルートで旧 Helium フォルダーの隣にある Data をバックアップしてから旧フォルダーを削除、新版を展開し Data を戻してください。本リポジトリは上游を毎日追跡し、新版を自動公開します。"
               ]
             }
           ],
@@ -1575,6 +1587,10 @@
           {
             "q": "データはどこにありますか？別 PC へ移すには？",
             "a": "ブラウザーの隣の Data フォルダー（キャッシュは Cache）です。フォルダー全体をコピーすれば、ブックマーク・パスワード・拡張・ログイン状態もそのまま移ります。"
+          },
+          {
+            "q": "データの保存先を変更できますか？",
+            "a": "できます。保存先はブラウザーフォルダー内の chrome++.ini が決めており、data_dir と cache_dir の 2 行を編集します（絶対パスでも %app% に相対階層を付けた指定でも可。%app% はブラウザー実行ファイルのあるフォルダーを指します）。保存してブラウザーを再起動すれば、新しい場所にフォルダーが自動的に作られます。注意点が 2 つあります。1 つ、このファイルは UTF-16 エンコードです。メモ帳などで保存し直すときは「Unicode」を選んでください。誤ったエンコードだと設定が読み込まれず、静かに無効になります。2 つ、既定のパスはもともとプログラムと一緒に移動するので、プログラムの外（たとえば空き容量の大きいドライブ）にデータを置きたいときだけ変更すれば十分です。"
           },
           {
             "q": "ウイルス対策が検出しました。安全ですか？",

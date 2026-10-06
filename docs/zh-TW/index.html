@@ -224,6 +224,14 @@
               },
               {
                 "@type": "Question",
+                "name": "可以把資料目錄改到別的位置嗎？",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "可以。資料目錄的位置由瀏覽器資料夾裡的 chrome++.ini 決定，改 data_dir 和 cache_dir 兩行即可（值可以填絕對路徑，也可以用 %app% 加相對層數，%app% 代表瀏覽器主程式所在目錄）。改完存檔後重新啟動瀏覽器就會生效，目錄會依新位置自動建立。注意兩點：一、這個檔案是 UTF-16 編碼，用記事本另存時請把編碼選成 Unicode，否則瀏覽器讀不到設定、設定會靜默失效；二、預設路徑本來就會跟著程式走，所以只有想把資料放到程式外面（例如放在空間比較大的分割區）時才需要改。"
+                }
+              },
+              {
+                "@type": "Question",
                 "name": "防毒軟體回報病毒怎麼辦？",
                 "acceptedAnswer": {
                   "@type": "Answer",
@@ -565,6 +573,10 @@
           <details class="faq__item">
             <summary>使用者資料保存在哪裡？換電腦怎麼遷移？</summary>
             <div class="faq__answer"><p>保存在瀏覽器資料夾同級的 Data 目錄（快取在 Cache 目錄）。遷移時把整個資料夾拷到新電腦就行，書籤、密碼、擴充、登入狀態都會跟著走，不需要重新設定。</p></div>
+          </details>
+          <details class="faq__item">
+            <summary>可以把資料目錄改到別的位置嗎？</summary>
+            <div class="faq__answer"><p>可以。資料目錄的位置由瀏覽器資料夾裡的 chrome++.ini 決定，改 data_dir 和 cache_dir 兩行即可（值可以填絕對路徑，也可以用 %app% 加相對層數，%app% 代表瀏覽器主程式所在目錄）。改完存檔後重新啟動瀏覽器就會生效，目錄會依新位置自動建立。注意兩點：一、這個檔案是 UTF-16 編碼，用記事本另存時請把編碼選成 Unicode，否則瀏覽器讀不到設定、設定會靜默失效；二、預設路徑本來就會跟著程式走，所以只有想把資料放到程式外面（例如放在空間比較大的分割區）時才需要改。</p></div>
           </details>
           <details class="faq__item">
             <summary>防毒軟體回報病毒怎麼辦？</summary>

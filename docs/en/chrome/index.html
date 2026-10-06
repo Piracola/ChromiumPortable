@@ -249,10 +249,10 @@
         <p>Portable builds don’t register an updater, so they won’t self-upgrade. This repo repacks official releases daily — overwrite like this:</p>
         <ol class="prose__steps">
           <li>Quit the browser completely.</li>
-          <li>Copy the Data folder from the old Chrome directory somewhere safe.</li>
+          <li>Copy the Data folder next to the old Chrome folder (in the extraction root) somewhere safe.</li>
           <li>Delete the old Chrome folder (or rename it to Chrome old as a rollback).</li>
           <li>Extract the new Chrome folder next to it.</li>
-          <li>Put the backed-up Data folder back into the new Chrome directory.</li>
+          <li>Put the backed-up Data folder back next to the new Chrome folder.</li>
         </ol>
       </section>
 
@@ -300,6 +300,10 @@
           <details class="faq__item">
             <summary>Where is my data, and how do I migrate PCs?</summary>
             <div class="faq__answer"><p>In the Data folder next to the browser (cache in Cache). Copy the whole folder to the new machine — bookmarks, passwords, extensions, and logins come along.</p></div>
+          </details>
+          <details class="faq__item">
+            <summary>Can I move the data folder somewhere else?</summary>
+            <div class="faq__answer"><p>Yes. The location is set by chrome++.ini inside the browser folder — edit the data_dir and cache_dir lines. Both an absolute path and %app% with relative levels work, where %app% is the folder holding the browser executable. Save and restart the browser; the folders are created at the new location. Two caveats: the file is UTF-16 encoded, so if you re-save it from Notepad pick Unicode or the config is silently ignored; and the default path already follows the program around, so you only need to change this to put data outside the program folder (on a larger partition, for example).</p></div>
           </details>
           <details class="faq__item">
             <summary>Antivirus flags the file. What now?</summary>

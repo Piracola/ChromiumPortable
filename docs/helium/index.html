@@ -179,7 +179,7 @@
       <section class="prose">
         <h2>版本与更新</h2>
         <p>上游目前只发布正式版 Release，本仓库每天检查并自动打包最新版本。每个上游版本都会创建一条新的 GitHub Release，历史构建可回溯下载。</p>
-        <p>更新时关掉浏览器，备份旧版 Helium 文件夹里的 Data 目录，删除旧文件夹，把新版解压到同级目录，再把 Data 放回去。</p>
+        <p>更新时关掉浏览器，备份与旧版 Helium 文件夹同级（解压根目录下）的 Data 目录，删除旧文件夹，把新版解压到同一目录，再把 Data 放回新版 Helium 文件夹旁边。</p>
       </section>
 
       <section class="prose">
@@ -188,13 +188,13 @@
           <li>从 Releases 页面下载需要的压缩包。</li>
           <li>解压到任意位置。</li>
           <li>双击「开始.bat」创建桌面快捷方式，或直接运行 Helium\chrome.exe。</li>
-          <li>用户数据与缓存会生成在 Helium\Data 和 Helium\Cache。</li>
+          <li>用户数据与缓存会生成在与 Helium 文件夹同级的 Data 和 Cache 目录（解压根目录下）。</li>
         </ol>
       </section>
 
       <section class="prose">
         <h2>怎么更新</h2>
-        <p>关掉浏览器，备份旧版 Helium 文件夹里的 Data 目录，删除旧文件夹，把新版解压到同级目录，再把 Data 放回去。本仓库每天跟进上游，有新版就会自动发布。</p>
+        <p>关掉浏览器，备份与旧版 Helium 文件夹同级（解压根目录下）的 Data 目录，删除旧文件夹，把新版解压到同一目录，再把 Data 放回新版 Helium 文件夹旁边。本仓库每天跟进上游，有新版就会自动发布。</p>
       </section>
 
       <section class="section" id="verify">
@@ -241,6 +241,10 @@
           <details class="faq__item">
             <summary>用户数据保存在哪里？换电脑怎么迁移？</summary>
             <div class="faq__answer"><p>保存在浏览器文件夹同级的 Data 目录（缓存在 Cache 目录）。迁移时把整个文件夹拷到新电脑就行，书签、密码、扩展、登录状态都会跟着走，不需要重新配置。</p></div>
+          </details>
+          <details class="faq__item">
+            <summary>可以把数据目录改到别的位置吗？</summary>
+            <div class="faq__answer"><p>可以。数据目录的位置由浏览器文件夹里的 chrome++.ini 决定，修改 data_dir 和 cache_dir 两行即可（值可以写绝对路径，也可以用 %app% 加相对层数，%app% 代表浏览器主程序所在目录）。改完保存后重启浏览器生效，目录会按新位置自动创建。注意两点：一、这个文件是 UTF-16 编码，用记事本另存为时请把编码选成 Unicode，否则浏览器读不到配置、配置会静默失效；二、数据目录是跟着程序走的相对关系，直接搬动整个文件夹不需要改这里，只有想把数据放到程序外面（比如放在空间更大的分区）时才需要改。</p></div>
           </details>
           <details class="faq__item">
             <summary>杀毒软件报毒怎么办？</summary>

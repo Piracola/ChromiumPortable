@@ -179,7 +179,7 @@
       <section class="prose">
         <h2>Versions and updates</h2>
         <p>Upstream currently publishes stable Releases only. This repo checks daily and packages the latest version. Every upstream version gets its own GitHub Release, so older builds stay downloadable.</p>
-        <p>To update: quit the browser, back up Data from the old Helium folder, delete the old folder, extract the new one next to it, then restore Data.</p>
+        <p>To update: quit the browser, back up the Data folder next to the old Helium folder, delete the old folder, extract the new one to the same place, then restore Data next to it.</p>
       </section>
 
       <section class="prose">
@@ -188,13 +188,13 @@
           <li>Download the archive you need from Releases.</li>
           <li>Extract anywhere.</li>
           <li>Double-click 开始.bat for a shortcut, or run Helium\chrome.exe.</li>
-          <li>Profile and cache appear as Helium\Data and Helium\Cache.</li>
+          <li>Profile and cache appear in Data and Cache next to the Helium folder (in the extraction root).</li>
         </ol>
       </section>
 
       <section class="prose">
         <h2>How to update</h2>
-        <p>Quit the browser, back up Data from the old Helium folder, delete the old folder, extract the new one next to it, then restore Data. This repo tracks upstream daily and auto-publishes new builds.</p>
+        <p>Quit the browser, back up the Data folder next to the old Helium folder, delete the old folder, extract the new one to the same place, then restore Data next to it. This repo tracks upstream daily and auto-publishes new builds.</p>
       </section>
 
       <section class="section" id="verify">
@@ -241,6 +241,10 @@
           <details class="faq__item">
             <summary>Where is my data, and how do I migrate PCs?</summary>
             <div class="faq__answer"><p>In the Data folder next to the browser (cache in Cache). Copy the whole folder to the new machine — bookmarks, passwords, extensions, and logins come along.</p></div>
+          </details>
+          <details class="faq__item">
+            <summary>Can I move the data folder somewhere else?</summary>
+            <div class="faq__answer"><p>Yes. The location is set by chrome++.ini inside the browser folder — edit the data_dir and cache_dir lines. Both an absolute path and %app% with relative levels work, where %app% is the folder holding the browser executable. Save and restart the browser; the folders are created at the new location. Two caveats: the file is UTF-16 encoded, so if you re-save it from Notepad pick Unicode or the config is silently ignored; and the default path already follows the program around, so you only need to change this to put data outside the program folder (on a larger partition, for example).</p></div>
           </details>
           <details class="faq__item">
             <summary>Antivirus flags the file. What now?</summary>

@@ -249,10 +249,10 @@
         <p>可攜版不註冊系統更新服務，所以不會自己升級，需要手動換新版。本倉庫每天檢查官方是否發新版，有就自動打包發佈，你依下面步驟覆蓋即可：</p>
         <ol class="prose__steps">
           <li>完全關閉瀏覽器。</li>
-          <li>把舊版 Chrome 資料夾裡的 Data 目錄複製一份到安全位置備份。</li>
+          <li>把舊版 Chrome 資料夾同級（解壓根目錄下）的 Data 目錄複製一份到安全位置備份。</li>
           <li>刪除舊的 Chrome 資料夾；想留退路就改名為 Chrome old。</li>
           <li>把新版的 Chrome 資料夾解壓縮到同級目錄。</li>
-          <li>把備份的 Data 放回新的 Chrome 資料夾裡。</li>
+          <li>把備份的 Data 放回新的 Chrome 資料夾旁邊。</li>
         </ol>
       </section>
 
@@ -300,6 +300,10 @@
           <details class="faq__item">
             <summary>使用者資料保存在哪裡？換電腦怎麼遷移？</summary>
             <div class="faq__answer"><p>保存在瀏覽器資料夾同級的 Data 目錄（快取在 Cache 目錄）。遷移時把整個資料夾拷到新電腦就行，書籤、密碼、擴充、登入狀態都會跟著走，不需要重新設定。</p></div>
+          </details>
+          <details class="faq__item">
+            <summary>可以把資料目錄改到別的位置嗎？</summary>
+            <div class="faq__answer"><p>可以。資料目錄的位置由瀏覽器資料夾裡的 chrome++.ini 決定，改 data_dir 和 cache_dir 兩行即可（值可以填絕對路徑，也可以用 %app% 加相對層數，%app% 代表瀏覽器主程式所在目錄）。改完存檔後重新啟動瀏覽器就會生效，目錄會依新位置自動建立。注意兩點：一、這個檔案是 UTF-16 編碼，用記事本另存時請把編碼選成 Unicode，否則瀏覽器讀不到設定、設定會靜默失效；二、預設路徑本來就會跟著程式走，所以只有想把資料放到程式外面（例如放在空間比較大的分割區）時才需要改。</p></div>
           </details>
           <details class="faq__item">
             <summary>防毒軟體回報病毒怎麼辦？</summary>

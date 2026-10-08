@@ -37,7 +37,10 @@ jobs:
           New-Item -ItemType Directory -Force -Path "$stage/scripts/locales" | Out-Null
           Copy-Item scripts/locales/wizard.json "$stage/scripts/locales/"
           Copy-Item setdll $stage/setdll -Recurse
-          Copy-Item 7zr.exe $stage/
+          # 7zr.exe 不入库（运行期产物）：从 7-Zip 官方直链取，取不到就让引擎首跑时自己下载
+          try {
+            Invoke-WebRequest -Uri 'https://www.7-zip.org/a/7zr.exe' -OutFile "$stage/7zr.exe" -UseBasicParsing
+          } catch { Write-Host "7zr.exe download skipped: $($_.Exception.Message)" }
           Compress-Archive -Path "$stage/*" -DestinationPath dist/portable-builder-windows-x64.zip -Force
 
       - name: Stage GUI directory build
@@ -52,7 +55,9 @@ jobs:
           New-Item -ItemType Directory -Force -Path "$stage/scripts/locales" | Out-Null
           Copy-Item scripts/locales/wizard.json "$stage/scripts/locales/"
           Copy-Item setdll $stage/setdll -Recurse
-          Copy-Item 7zr.exe $stage/
+          try {
+            Invoke-WebRequest -Uri 'https://www.7-zip.org/a/7zr.exe' -OutFile "$stage/7zr.exe" -UseBasicParsing
+          } catch { Write-Host "7zr.exe download skipped: $($_.Exception.Message)" }
           Compress-Archive -Path "$stage/*" -DestinationPath dist/ChromiumPortableBuilder-windows-x64.zip -Force
 
       - name: Write checksums

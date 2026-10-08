@@ -463,4 +463,59 @@ mod tests {
         std::fs::remove_file(&env_path).ok();
         std::fs::remove_file(&out_path).ok();
     }
+
+    #[test]
+    fn envjson_ci_golden_file_replay() {
+        // Byte-level replay of the Python write_env output captured in
+        // _migration/pe-golden/envjson_ci_golden.json (round 23).
+        let golden_path = std::path::Path::new("_migration/pe-golden/envjson_ci_golden.json");
+        if !golden_path.exists() {
+            eprintln!("golden not present in this checkout; skipping");
+            return;
+        }
+        let golden: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(golden_path).expect("read golden"))
+                .unwrap();
+        let expected_env = golden["github_env_bytes"].as_str().unwrap();
+        let expected_out = golden["github_output_bytes"].as_str().unwrap();
+
+        let values: Vec<(String, String)> = vec![
+            ("UPDATE_NEEDED".to_string(), "true".to_string()),
+            ("UPSTREAM_VERSION".to_string(), "153.1.95.102".to_string()),
+            ("CREATE_NEW_RELEASE".to_string(), "false".to_string()),
+            ("MINOR_UPDATE".to_string(), "false".to_string()),
+            ("RELEASE_ID".to_string(), "123456".to_string()),
+            ("RELEASE_TAG".to_string(), "Chrome-v153.1.95.102".to_string()),
+            ("CHROME_PLUS_VERSION".to_string(), "1.18.2".to_string()),
+        ];
+
+        let dir = std::env::temp_dir()
+            .join(format!("pe-envjson-replay-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let env_file = dir.join("github_env.txt");
+        let out_file = dir.join("github_output.txt");
+        std::fs::write(&env_file, "").unwrap();
+        std::fs::write(&out_file, "").unwrap();
+
+        std::env::set_var("GITHUB_ENV", &env_file);
+        std::env::set_var("GITHUB_OUTPUT", &out_file);
+        let result = std::panic::catch_unwind(|| write_env(&values).expect("write_env"));
+        std::env::remove_var("GITHUB_ENV");
+        std::env::remove_var("GITHUB_OUTPUT");
+        result.expect("write_env failed");
+
+        let got_env = std::fs::read_to_string(&env_file).unwrap();
+        let got_out = std::fs::read_to_string(&out_file).unwrap();
+        let _ = std::fs::remove_dir_all(&dir);
+
+        assert_eq!(
+            got_env, expected_env,
+            "GITHUB_ENV bytes differ from Python golden"
+        );
+        assert_eq!(
+            got_out, expected_out,
+            "GITHUB_OUTPUT bytes (incl. env_json blob) differ from Python golden"
+        );
+    }
+
 }

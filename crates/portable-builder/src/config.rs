@@ -370,7 +370,13 @@ mod tests {
     }
 
     fn temp_file(name: &str, content: &str) -> (TempGuard, std::path::PathBuf) {
-        let dir = std::env::temp_dir().join(format!("pe-config-tests-{}", std::process::id()));
+        // 目录名带递增计数：并行测试各自独立目录，一个测试的 Drop 不会删掉
+        // 另一个正在写的目录（CI 快机上真发生过：unknown_target_error_text_is_exact
+        // 的 expect("write temp test file") 因共享目录被并发 Drop 删除而 panic）。
+        static SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+        let seq = SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let dir =
+            std::env::temp_dir().join(format!("pe-config-tests-{}-{seq}", std::process::id()));
         std::fs::create_dir_all(&dir).expect("create temp test dir");
         let guard = TempGuard { dir };
         let path = guard.file(name, content);

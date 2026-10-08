@@ -31,3 +31,24 @@ write_env 写 RELEASE_TAG/RELEASE_TITLE/RELEASE_BODY_PATH。
 latest_release / delete_release_asset / delete_target_assets /
 find_latest_target_asset / download_release_asset（分页语义以 release.py 为准，
 分页参数与 per_page 逐条对照——移植时读 L31-44 与 L325-415）。
+
+
+---
+
+## 补遗（L297-415 实测）：GitHub API 资产管理语义
+
+1. delete_release_asset：DELETE /repos/{repo}/releases/assets/{id}，**204 才算成功**
+   （其他码 = RuntimeError 带 status+text）；repo 取 GITHUB_REPOSITORY，无缺省。
+2. get_release_assets：GET /releases/{id}，raise_for_status，取 .assets 数组。
+3. find_latest_target_asset 排序键链：updated_at > updatedAt > created_at > createdAt
+   > ""（字符串倒序取首——GitHub 双命名兼容的防御，移植保留）。
+4. download_release_asset：browser_download_url 优先；只有 API url 时加
+   Accept: application/octet-stream 头（重要——两个 URL 的认证行为不同）；
+   流式 1MiB 写盘；缺 URL ⇒ RuntimeError 带资产名。
+5. delete_assets_by_pattern：**子串大小写不敏感**匹配（pattern.lower() in name.lower()）
+   ——archive_name_regex 之外的粗粒度清扫路径。
+6. delete_target_assets：matcher 命中的逐个删 + 打印；0 删除时打印 matcher 描述
+   （target_match_description，"(no matcher)" 兜底）——诊断信息是契约的一部分。
+7. update-release：无 RELEASE_ID ⇒ 仅打印并返回（发布交给 softprops 步骤）；
+   PATCH body 默认只带 body 文本；**MINOR_UPDATE=true 时才带 name+tag_name**
+   （原地换标题=版本原地前进的可见信号）。

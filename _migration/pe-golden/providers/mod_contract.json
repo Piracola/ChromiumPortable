@@ -1,0 +1,10 @@
+{
+ "provider_names": [
+  "direct",
+  "google_omaha",
+  "microsoft_edge",
+  "script"
+ ],
+ "script_get_package_source_tail": "       data[\"path\"] = data[\"installer_path\"]\n\n    data.setdefault(\"verify_ssl\", config.get(\"verify_ssl\", True))\n    if data.get(\"url\"):\n        data.setdefault(\"file_name\", data[\"url\"].rstrip(\"/\").split(\"/\")[-1] or \"browser-installer.exe\")\n\n    # Fail fast on an unusable digest instead of at download time.\n    if data.get(\"sha256\"):\n        normalize_sha256(data[\"sha256\"])\n    else:\n        print(\"[WARN] Script provider returned no 'sha256'; the download will not be verified.\")\n\n    return data\n",
+ "unknown_type_error": "KeyError(\"Unknown provider 'nope'. Available providers: direct, google_omaha, microsoft_edge, script\")"
+}

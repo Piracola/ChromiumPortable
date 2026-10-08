@@ -14,6 +14,7 @@ pub mod builder;
 pub mod config;
 pub mod discovery;
 pub mod github_env;
+pub mod gui;
 pub mod i18n;
 pub mod ini_overlay;
 pub mod log_fmt;

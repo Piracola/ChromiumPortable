@@ -11,3 +11,10 @@
    gui.py:918 _emit 层会富化 result+state——Wave4 的 emit 层照抄富化。
 5. （review-E Finding 5）log tag：None 而非 ""——Wave4 JS 侧 falsy 判断两者等价，但
    移植时对齐 None 语义。
+
+6. （review-W2C Finding 3）行尾归一：Python write_text 在 Windows 产 CRLF、Rust fs::write 产 LF
+   （selected.browser.json 849 vs 820 字节，SHA256 不同、解析后等价）。M3 的字节对比门禁
+   在 Windows 上哈希前必须 CRLF→LF 归一化，或改用解析后 JSON 比较。
+7. （review-W2C Finding 1 澄清）prepare_build_target.py:31 确实注入 target["target"]；
+   prepare_target_reference.json 的 chrome_stable_full 是注入前的 catalog 快照——
+   M3 对照时须先剥 "target" 键或直接与脚本实跑输出比。

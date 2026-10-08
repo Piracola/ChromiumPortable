@@ -1,0 +1,107 @@
+# 引擎与 GUI 的发布产物（M5）。tag v2* 触发；子仓库的 portable-browser.yml@v2
+# 从这里下载自包含 zip（引擎 exe + catalog + locales + setdll + 7zr.exe），
+# 产品线构建因此不再需要 checkout 构建器仓库、setup-python、pip install。
+name: release-engine
+
+on:
+  push:
+    tags: ["v2*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Test before release
+        run: cargo test --workspace --release
+
+      - name: Build engine and GUI
+        run: |
+          cargo build --release -p portable-builder
+          cargo build --release -p builder-app
+
+      - name: Stage self-contained engine bundle
+        shell: pwsh
+        run: |
+          $stage = "dist/portable-builder-windows-x64"
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          Copy-Item target/release/portable-builder.exe $stage/
+          Copy-Item catalog $stage/catalog -Recurse
+          New-Item -ItemType Directory -Force -Path "$stage/scripts/locales" | Out-Null
+          Copy-Item scripts/locales/wizard.json "$stage/scripts/locales/"
+          Copy-Item setdll $stage/setdll -Recurse
+          Copy-Item 7zr.exe $stage/
+          Compress-Archive -Path "$stage/*" -DestinationPath dist/portable-builder-windows-x64.zip -Force
+
+      - name: Stage GUI directory build
+        shell: pwsh
+        run: |
+          # 目录版而非单文件：GUI 要派发引擎子进程，目录版更稳（沿用旧的 onedir 决定）
+          $stage = "dist/ChromiumPortableBuilder-windows-x64"
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          Copy-Item target/release/builder-app.exe $stage/
+          Copy-Item target/release/portable-builder.exe $stage/
+          Copy-Item catalog $stage/catalog -Recurse
+          New-Item -ItemType Directory -Force -Path "$stage/scripts/locales" | Out-Null
+          Copy-Item scripts/locales/wizard.json "$stage/scripts/locales/"
+          Copy-Item setdll $stage/setdll -Recurse
+          Copy-Item 7zr.exe $stage/
+          Compress-Archive -Path "$stage/*" -DestinationPath dist/ChromiumPortableBuilder-windows-x64.zip -Force
+
+      - name: Write checksums
+        shell: pwsh
+        run: |
+          Get-ChildItem dist/*.zip | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower()
+            "$hash  $($_.Name)" | Out-File -FilePath "$($_.FullName).sha256" -Encoding ascii
+          }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: engine-windows
+          path: dist/*windows-x64.zip*
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build engine
+        run: cargo build --release -p portable-builder
+
+      - name: Stage engine bundle
+        run: |
+          stage=dist/portable-builder-linux-x64
+          mkdir -p "$stage/scripts/locales" "$stage"
+          cp target/release/portable-builder "$stage/"
+          cp -r catalog "$stage/catalog"
+          cp scripts/locales/wizard.json "$stage/scripts/locales/"
+          (cd dist && zip -qr portable-builder-linux-x64.zip portable-builder-linux-x64)
+          (cd dist && sha256sum portable-builder-linux-x64.zip > portable-builder-linux-x64.zip.sha256)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: engine-linux
+          path: dist/*linux-x64.zip*
+
+  release:
+    needs: [windows, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip*
+          fail_on_unmatched_files: true

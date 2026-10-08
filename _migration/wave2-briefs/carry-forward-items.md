@@ -18,3 +18,18 @@
 7. （review-W2C Finding 1 澄清）prepare_build_target.py:31 确实注入 target["target"]；
    prepare_target_reference.json 的 chrome_stable_full 是注入前的 catalog 快照——
    M3 对照时须先剥 "target" 键或直接与脚本实跑输出比。
+
+8. （review-Wave2 Finding 1 MEDIUM）download_file 的 reqwest blocking Client::timeout(120s)
+   是**总时限**（Python requests timeout=120 是每 socket 操作）——慢链路下载 149MB 安装包
+   会中途中止。M3 前修复：去掉总时限或改用大 idle/read timeout（契约="无总限，120s/读"）。
+9. （review-Wave2 Finding 2 LOW-MED）digest 为 "sha256:"（前缀后空）时 normalize 返回
+   Ok(None)，download_file 两处 .expect("non-empty digest normalizes to Some") 会 PANIC
+   ——Python 是 RuntimeError。M3 前改为显式错误。
+10. （review-Wave2 Finding 7/8 Note）pelite imports() 对损坏导入表整体失败（Python 跳过
+   坏 RVA 继续走）；资源树 >3 层损坏时 Rust 产出 ['0','0','0']（Python 给真实前三标识）。
+   有效 PE 不受影响（7/7 黄金）。损坏样本场景在 M3 对照时知晓即可。
+11. （review-Wave2 Finding 11）providers/mod.rs 的 get_package 分发还是 M0 桩（未知类型
+   KeyError 文案未移植）——Wave3 接 config→provider 分发时必须补上，commit 信息
+   "mod dispatch already wired" 不准确。
+12. （review-Wave2 hygiene）pe.rs assert 测试每次运行在 %TEMP% 泄漏 pe_assert_{pid} 目录
+   （已积累 37 个）——加清理。

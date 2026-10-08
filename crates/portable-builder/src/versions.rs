@@ -308,4 +308,53 @@ mod tests {
             "unexpected message: {err}"
         );
     }
+
+    #[test]
+    fn versions_reference_matrix_replay() {
+        // Golden replay of the live-Python decision table captured in
+        // _migration/pe-golden/versions_reference.json (round 36).
+        let golden_path = std::path::Path::new("_migration/pe-golden/versions_reference.json");
+        if !golden_path.exists() {
+            eprintln!("golden not present in this checkout; skipping");
+            return;
+        }
+        let golden: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(golden_path).expect("read golden"))
+                .unwrap();
+
+        for row in golden["compare"].as_array().unwrap() {
+            let (a, b) = (row["a"].as_str().unwrap(), row["b"].as_str().unwrap());
+            let expected_cmp = row["cmp"].as_i64().unwrap() as i32;
+            let got = compare_versions(a, b);
+            assert_eq!(
+                got, expected_cmp,
+                "compare_versions({a}, {b}) = {got}, Python = {expected_cmp}"
+            );
+            let expected_upgrade = row["is_upgrade"].as_bool().unwrap();
+            assert_eq!(
+                is_upgrade(a, b),
+                expected_upgrade,
+                "is_upgrade({a}, {b}) diverges from Python"
+            );
+        }
+
+        for row in golden["policy"].as_array().unwrap() {
+            let policy = row["policy"].as_str();
+            let up = row["up"].as_str().unwrap();
+            let cur = row["cur"].as_str().unwrap();
+            if let Some(expected) = row.get("result").and_then(|v| v.as_bool()) {
+                let got = should_create_new_release(policy, up, cur)
+                    .unwrap_or_else(|e| panic!("policy {policy:?} ({up} vs {cur}) errored: {e}"));
+                assert_eq!(
+                    got, expected,
+                    "should_create_new_release({policy:?}, {up}, {cur}) diverges from Python"
+                );
+            } else if row.get("error").is_some() {
+                assert!(
+                    should_create_new_release(policy, up, cur).is_err(),
+                    "policy {policy:?} ({up} vs {cur}) should error like Python"
+                );
+            }
+        }
+    }
 }

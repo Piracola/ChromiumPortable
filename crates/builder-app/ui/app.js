@@ -147,7 +147,7 @@
       tool_arch: "x64",
       tool_json: false,
       autoscroll: true,
-      workdir: "C:\Users\you\ChromiumPortable"
+      workdir: "C:\\Users\\you\\ChromiumPortable"
     },
 
     /* --- Controller.state() 的派生字段（gui.py:271）--- */
@@ -219,7 +219,7 @@
   /* 渲染模式：本文件确立的移植模式（Wave4 照此展开）                     */
   /* ------------------------------------------------------------------ */
   /* 规则（每一条都来自对 web_ui.py 渲染函数的平移）：
-   *   1. 挂载点 <div id="X" data-mount="X"></div> 只在 index.html 里出现一次；
+   *   1. 挂载点 fixed-id container (e.g. <div id="banner">) chosen by <!-- @render:X --> marker</div> 只在 index.html 里出现一次；
    *   2. 渲染函数 render*(host, snapshot, strings) 只写 host 内部
    *      （textContent / createElement，必要时 innerHTML + e()），
    *      不碰挂载点以外的 DOM；
@@ -311,12 +311,12 @@
 
   /* TODO(Wave4): port remaining Python HTML builders from web_ui.py, in this
    * order (they map 1:1 onto the mount points in index.html):
-   *   renderTopbar(s)          <- _topbar(s)        -> [data-mount=topbar]
-   *   renderBuildPage(s, args) <- _build_page()    -> [data-mount=page-build]
+   *   renderTopbar(s)          <- _topbar(s)        -> <!-- @render:topbar --> + #topbar
+   *   renderBuildPage(s, args) <- _build_page()    -> <!-- @render:page-build --> + #page-build
    *     renderSegmented(...)   <- _segmented() / _field() / _row() / _text() / _select()
    *     renderModeBlock(...)   <- _mode_block()
-   *   renderToolsPage(s, args) <- _tools_page()    -> [data-mount=page-tools]
-   *   renderDeck(s)            <- _deck()          -> [data-mount=deck]
+   *   renderToolsPage(s, args) <- _tools_page()    -> <!-- @render:page-tools --> + #page-tools
+   *   renderDeck(s)            <- _deck()          -> <!-- @render:deck --> + #deck
    *   renderInstallers(items)  <- JS renderInstallers() in web_ui.py
    *   renderRail(steps)        <- window.setRail() in web_ui.py
    * Render helpers must keep TOOL_GLYPHS / TOOL_ORDER verbatim and route all

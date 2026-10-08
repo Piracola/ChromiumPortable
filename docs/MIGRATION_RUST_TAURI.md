@@ -577,3 +577,9 @@ git diff --no-index old_rel.txt new_rel.txt
    Windows 与 Linux 各一个（check job 在 ubuntu 上跑，需要原生二进制）。
 7. **前端仍在补齐**（M4 收尾）：`app.js` 的渲染函数由 `web_ui.py` 的
    `_topbar/_build_page/_tools_page/_deck` 平移而来，工具箱五件套。
+8. **移交项存档**（原 `_migration/wave2-briefs/carry-forward-items.md`，目录已清）：
+   已修复：#1/#2（formatter+黄金再生纪律，生效中）、#8（总时限下载，Wave2 修复）、
+   #9（digest panic 路径）、#11（provider 分发，Wave3 接线）、#12（测试临时目录清理）。
+   已知可接受：#3（versions 全角数字 unreachable）、#6（CRLF 归一，对照门禁规则）、
+   #7（prepare-target 的 target 键注入，黄金已再生）、#10（pelite 对损坏 PE 的行为差异，
+   有效 PE 7/7 黄金恒等）。#4/#5（done 事件富化、log tag 语义）已在 M4 落地。

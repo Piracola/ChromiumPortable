@@ -24,7 +24,9 @@ type Shared = Arc<Mutex<Controller>>;
 const PUMP_INTERVAL: Duration = Duration::from_millis(80);
 
 fn lock<'a>(state: &'a State<'_, Shared>) -> MutexGuard<'a, Controller> {
-    state.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+    state
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
 /// 所有命令的统一返回形状：{snapshot, strings}（前端拿它整页重渲染或就地更新）。
@@ -282,8 +284,22 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            snapshot, strings, set_lang, set_input, refresh, start, run_tool, cancel, pick, open_path,
-            log_toggle, log_autoscroll, log_clear, log_text, log_save, log_copy
+            snapshot,
+            strings,
+            set_lang,
+            set_input,
+            refresh,
+            start,
+            run_tool,
+            cancel,
+            pick,
+            open_path,
+            log_toggle,
+            log_autoscroll,
+            log_clear,
+            log_text,
+            log_save,
+            log_copy
         ])
         .run(tauri::generate_context!())
         .expect("error while running ChromiumPortableBuilder");

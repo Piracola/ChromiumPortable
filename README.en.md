@@ -49,20 +49,47 @@ Browsing data is usually stored next to the browser folder in `Data` and `Cache`
 This toolchain can also produce portable builds of Brave, Vivaldi, Opera, Thorium, 360 Extreme Browser X, and similar.  
 These are **not** products of this project: no download-site product cards, builds are for learning and personal use only. Read upstream terms before redistributing (see [NOTICE](./NOTICE)).
 
-**Local one-shot (recommended)**
+**Graphical builder (recommended)**
 
-1. Install [Python 3](https://www.python.org/) (enable “Add to PATH”).
-2. Copy installer packages into the dedicated folder **`installers\`** (see `README.txt` inside).
-3. Double-click **`开始构建.bat`** at the repo root, or run:
+1. Grab `ChromiumPortableBuilder-windows-x64.zip` from [Releases](../../releases) (engine and GUI included; the target machine does **not** need Python).
+2. Extract anywhere and copy installer packages into **`installers\`** (see `README.txt` inside).
+3. Run `builder-app.exe`:
+
+- Left-side navigation separates **Build** and **Toolbox**; the workspace sits on the right, the streaming log opens on demand at the bottom.
+- The **Pipeline** panel lays out the steps your current selection will run (prepare → build → 7z → verify for online + archive) before you press anything, and tracks them while it runs.
+- Source is one of three modes (single installer / a folder / an online target); the installer list reads `installers\`; architecture and the 7z toggle share one row.
+- **Toolbox**: static installer inspection, batch research, single-target config, upstream URL resolution, artifact verification — each runnable on its own.
+- While a task runs, Start becomes Cancel; the log expands/collapses, auto-scrolls, clears, copies, and saves. `7zr.exe` is provisioned into the working directory automatically.
+- The **working directory** holds `installers\`, `build\release\`, and `build\assets\`; it defaults to the current workspace (or the exe folder) and can be changed at any time.
+
+The UI language follows your system (Simplified Chinese / English).
+
+**Command line**
 
 ```powershell
-python scripts\wizard.py
+portable-builder.exe --workdir . build-package <installer> --archive
+portable-builder.exe --workdir . inspect-package <installer> --json
+portable-builder.exe --selftest --out selftest.txt    # GUI-side self check
 ```
 
-4. Pick a mode (single package / whole folder / online download), architecture, and whether to archive.  
-   Portable output lands in `build\release\`; archives in `build\assets\`.
+Building from source: install [Rust](https://rustup.rs/) and run `cargo build --release -p portable-builder -p builder-app`.
 
-The wizard UI language follows your system (Simplified Chinese / English). Force one with `WIZARD_LANG=en`.
+- Left-side navigation separates **Build** and **Toolbox**; the workspace sits on the right, the streaming log opens on demand at the bottom.
+- The **Pipeline** panel lays out the steps your current selection will run (prepare → build → 7z → verify for online + archive) before you press anything, and tracks them while it runs.
+- Source is one of three modes (single installer / a folder / an online target); the installer list reads `installers\`; architecture and the 7z toggle share one row.
+- **Toolbox**: static installer inspection, batch research, single-target config, upstream URL resolution, Chrome++ resource sync, artifact verification — each runnable on its own.
+- While a task runs, Start becomes Cancel; the log expands/collapses, auto-scrolls, clears, copies, and saves. `7zr.exe` is provisioned into the working directory automatically.
+- The **working directory** holds `installers\`, `build\release\`, and `build\assets\`; it defaults to the current workspace (or the exe folder) and can be changed at any time.
+
+The GUI language matches the wizard (system locale, overridable with `WIZARD_LANG`).
+
+The same exe also works as a CLI:
+
+```powershell
+ChromiumPortableBuilder.exe --run-cli --help
+ChromiumPortableBuilder.exe --run-script prepare_build_target.py --browser chrome_stable --output build\selected.browser.json
+ChromiumPortableBuilder.exe --selftest --out selftest.txt    # check the bundled resources
+```
 
 Supported online browsers, CI release flow, and advanced CLI: [development docs](./docs/DEVELOPMENT.md).
 

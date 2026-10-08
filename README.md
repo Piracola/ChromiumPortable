@@ -49,20 +49,47 @@
 本工具也能为 Brave、Vivaldi、Opera、Thorium、360 极速浏览器 X 等制作便携版。  
 这些**不是**本项目产品：无下载站产品页，构建结果仅供学习与自用；再分发请先阅读上游协议（见 [NOTICE](./NOTICE)）。
 
-**本地一键（推荐）**
+**图形构建器（推荐）**
 
-1. 安装 [Python 3](https://www.python.org/)（安装时勾选 “Add to PATH”）。
-2. 把下载好的浏览器安装包复制到专用目录 **`installers\`**（里面有一份 `README.txt` 说明）。
-3. 双击仓库根目录的 **`开始构建.bat`**，或在终端运行：
+1. 从 [Releases](../../releases) 下载 `ChromiumPortableBuilder-windows-x64.zip`（自带引擎与界面，目标机**不需要** Python）。
+2. 解压到任意目录，把下载好的浏览器安装包复制进 **`installers\`**（里面有一份 `README.txt` 说明）。
+3. 双击 `builder-app.exe`：
+
+- 左侧导航分 **构建** 与 **工具箱**，右边是工作区，底部是随用随开的运行日志。
+- **构建**页上「构建流程」会先把你当前选择要跑的步骤摊开（在线 + 打包时是 准备 → 构建 → 打包 7z → 校验），跑起来后能一眼看到走到哪一步。
+- 来源三选一（单个安装包 / 整个文件夹 / 在线目标），安装包列表直接读 `installers\`；架构与「同时打包 7z」在下面一行。
+- **工具箱**页：静态识别安装包、批量静态巡检、生成单目标配置、解析上游下载地址、校验产物压缩包，每条都能单独跑。
+- 运行中「开始构建」会换成「取消」；日志可展开/收起、自动滚动、清空、复制、保存。`7zr.exe` 会自动补齐到工作目录。
+- **工作目录**决定 `installers\`、`build\release\`、`build\assets\` 的落点，默认取当前工作区或 exe 所在目录，随时可改。
+
+界面语言按系统自动切换（简体中文 / English）。
+
+**命令行**
 
 ```powershell
-python scripts\wizard.py
+portable-builder.exe --workdir . build-package <安装包> --archive
+portable-builder.exe --workdir . inspect-package <安装包> --json
+portable-builder.exe --selftest --out selftest.txt    # GUI 侧自检
 ```
 
-4. 按菜单选择：构建单个安装包 / 构建整个文件夹 / 在线下载最新版，再选架构与是否打包即可。  
-   完成后在 `build\release\` 查看便携目录；勾选打包时在 `build\assets\` 查看 7z。
+从源码构建：装 [Rust](https://rustup.rs/) 后 `cargo build --release -p portable-builder -p builder-app`。
 
-界面语言按系统自动切换（简体中文 / English）；也可用环境变量 `WIZARD_LANG=en` 强制指定。
+- 左侧导航分 **构建** 与 **工具箱**，右边是工作区，底部是随用随开的运行日志。
+- **构建**页上「构建流程」会先把你当前选择要跑的步骤摊开（在线 + 打包时是 准备 → 构建 → 打包 7z → 校验），跑起来后能一眼看到走到哪一步。
+- 来源三选一（单个安装包 / 整个文件夹 / 在线目标），安装包列表直接读 `installers\`；架构与「同时打包 7z」在下面一行。
+- **工具箱**页：静态识别安装包、批量静态巡检、生成单目标配置、解析上游下载地址、更新 Chrome++ 注入资源、校验产物压缩包，每条都能单独跑。
+- 运行中「开始构建」会换成「取消」；日志可展开/收起、自动滚动、清空、复制、保存。`7zr.exe` 会自动补齐到工作目录。
+- **工作目录**决定 `installers\`、`build\release\`、`build\assets\` 的落点，默认取当前工作区或 exe 所在目录，随时可改。
+
+界面语言与向导一致（跟随系统，`WIZARD_LANG` 可覆盖）。
+
+同一个 exe 也能当命令行用：
+
+```powershell
+ChromiumPortableBuilder.exe --run-cli --help
+ChromiumPortableBuilder.exe --run-script prepare_build_target.py --browser chrome_stable --output build\selected.browser.json
+ChromiumPortableBuilder.exe --selftest --out selftest.txt    # 检查内置资源是否齐全
+```
 
 支持的在线浏览器、CI 发布流程与高级命令行，见 [开发文档](./docs/DEVELOPMENT.md)。
 

@@ -6,3 +6,4 @@ build/
 installers/*
 !installers/README.txt
 bin/
+dist/

@@ -127,11 +127,11 @@ fork 用户无需额外 secret 即可对公开上游使用；请自行评估再�
 | `cse360_stable` | 360 极速浏览器 X | `browser.360.cn/browser_download_link.js`（仅 csex） |
 | `helium_stable` | Helium | 可能需 `package_url` |
 
-本地向导：`python scripts\wizard.py` 或双击 `开始构建.bat`（交互选安装包/在线下载/架构/是否打包）。
-安装包请放入专用目录 `installers\`（向导默认识别该目录；`bin\` 仍是开发用回归样本，不是用户投放目录）。
+图形构建器：`builder-app.exe`（Release 下载或 `cargo run -p builder-app`，交互选安装包/在线下载/架构/是否打包）。
+安装包请放入专用目录 `installers\`（GUI 默认识别该目录；`bin\` 仍是开发用回归样本，不是用户投放目录）。
 GitHub 系解析（Thorium / Helium）建议设置 `GITHUB_TOKEN`，避免未认证 API 限流；Helium 常无公开 Windows 资产，请自备安装包。
-批量：`python scripts\build_all_packages.py <目录> [--archive]`。
-单包：`python -m portable_builder --workdir . build-package <安装包> [--archive]`。
+批量：`portable-builder.exe --workdir . build-packages <目录> [--archive]`。
+单包：`portable-builder.exe --workdir . build-package <安装包> [--archive]`。
 
 ### 资产命名规范
 
@@ -144,13 +144,11 @@ tag 对非产品使用 `unofficial-{key}-v{version}`，避免与产品 tag 混�
 
 ## 本地运行
 
-需要 Windows 和 Python 3。分析安装包、构建自安装包或打包成品时，还需要已有的 7-Zip：
+需要 Windows。分析安装包、构建自安装包或打包成品时，还需要已有的 7-Zip：
 
 ```powershell
-python -m pip install -r requirements.txt
-python -m compileall portable_builder
-$env:PYTHONPATH="<ChromiumPortable 路径>"
-python -m portable_builder --config examples\edge.browser.json --target edge_stable --workdir . check
+cargo build --release -p portable-builder
+target\release\portable-builder.exe --config examples\edge.browser.json --target edge_stable --workdir . check
 ```
 
 主要命令包括 `check`、`build`、`archive`、`verify`、`render-release` 和 `update-release`。多目标项目可以使用对应的 `*-targets` 命令。
@@ -159,21 +157,19 @@ python -m portable_builder --config examples\edge.browser.json --target edge_sta
 
 ```powershell
 # 只分析一个安装包或已解压目录，不注入、不启动任何程序
-python -m portable_builder --workdir . inspect-package bin\BrowserSetup.exe
+portable-builder.exe --workdir . inspect-package bin\BrowserSetup.exe
 
 # 批量分析样本目录，不需要逐个指定浏览器
-python -m portable_builder --workdir . research-packages bin
+portable-builder.exe --workdir . research-packages bin
 
 # 自动解包、定位主程序、注入 Chrome++；加 --archive 会打包并进行静态验包
-python -m portable_builder --workdir . build-package bin\BrowserSetup.exe --archive
+portable-builder.exe --workdir . build-package bin\BrowserSetup.exe --archive
 
-# 一套脚本处理目录下全部安装包（同一 auto 流程适配不同结构）
-python -m portable_builder --workdir . build-packages bin
-# 或
-python scripts\build_all_packages.py bin
+# 一个命令处理目录下全部安装包（同一 auto 流程适配不同结构）
+portable-builder.exe --workdir . build-packages bin
 
 # 从 catalog 生成单 target 配置（CI / 按需构建同一路径）
-python scripts\prepare_build_target.py --browser brave_stable --output build\selected.browser.json
+portable-builder.exe prepare-target --browser brave_stable --output build\selected.browser.json
 ```
 
 `inspect-package` 和 `research-packages` 只读取、解包和检查文件，不运行安装包或浏览器。安装包分析只使用已有的 7-Zip/`7zr.exe`，找不到时会停止，不会下载工具或安装系统组件；直接传入已经解压的目录则不需要 7-Zip。`build-package` 只会调用项目自带的 Chrome++ 注入工具修改工作目录中的副本；同样不会运行安装包或浏览器。

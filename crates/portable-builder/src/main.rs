@@ -181,6 +181,115 @@ fn run(cli: &Cli) -> Result<()> {
             architecture.as_deref(),
             Path::new(output),
         ),
+        // Wave3-B arms: release/multi CI contract commands. Kept in a
+        // separate match arm block so Wave3-A's build/archive/verify wiring
+        // can add its own arms without touching this block.
+        Cmd::Build => {
+            let config = load_config(&cli.config).map_err(|err| anyhow::anyhow!("{err}"))?;
+            let target =
+                portable_builder::config::get_target(&config, cli.target.as_deref().unwrap_or(""))
+                    .map_err(|err| anyhow::anyhow!("{err}"))?;
+            let workdir = PathBuf::from(&cli.workdir);
+            portable_builder::builder::build_target(&target, &workdir, cli.builder_dir.as_deref())?;
+            Ok(())
+        }
+        Cmd::Archive => {
+            let config = load_config(&cli.config).map_err(|err| anyhow::anyhow!("{err}"))?;
+            let target =
+                portable_builder::config::get_target(&config, cli.target.as_deref().unwrap_or(""))
+                    .map_err(|err| anyhow::anyhow!("{err}"))?;
+            let workdir = PathBuf::from(&cli.workdir);
+            portable_builder::builder::archive_target(&target, &workdir, None, None, None, None)?;
+            Ok(())
+        }
+        Cmd::Verify { archive, no_smoke } => {
+            let config = load_config(&cli.config).map_err(|err| anyhow::anyhow!("{err}"))?;
+            let target =
+                portable_builder::config::get_target(&config, cli.target.as_deref().unwrap_or(""))
+                    .map_err(|err| anyhow::anyhow!("{err}"))?;
+            let workdir = PathBuf::from(&cli.workdir);
+            let archive_path = archive.as_ref().map(PathBuf::from);
+            portable_builder::verify::verify_target(
+                &target,
+                &workdir,
+                archive_path.as_deref(),
+                !no_smoke,
+            )?;
+            Ok(())
+        }
+        Cmd::VerifyTargets { no_smoke } => {
+            let config = load_config(&cli.config).map_err(|err| anyhow::anyhow!("{err}"))?;
+            let workdir = PathBuf::from(&cli.workdir);
+            let targets =
+                portable_builder::multi::split_targets(cli.target.as_deref().unwrap_or(""));
+            portable_builder::verify::verify_targets(&config, &targets, &workdir, !no_smoke)?;
+            Ok(())
+        }
+        Cmd::InspectPackage {
+            package,
+            architecture,
+            json,
+            keep_extracted,
+        } => {
+            let workdir = std::env::current_dir()?.join(&cli.workdir);
+            inspect_package(package, architecture, *json, *keep_extracted, &workdir)?;
+            Ok(())
+        }
+        Cmd::BuildPackage {
+            package,
+            architecture,
+            output_dir,
+            archive,
+        } => {
+            let workdir = std::env::current_dir()?.join(&cli.workdir);
+            build_package(
+                package,
+                architecture,
+                output_dir.as_deref(),
+                *archive,
+                &workdir,
+                cli.builder_dir.as_deref(),
+            )?;
+            Ok(())
+        }
+        Cmd::BuildPackages {
+            directory,
+            architecture,
+            archive,
+        } => {
+            let workdir = std::env::current_dir()?.join(&cli.workdir);
+            build_packages(
+                directory.as_deref().unwrap_or("bin"),
+                architecture,
+                *archive,
+                &workdir,
+                cli.builder_dir.as_deref(),
+            )?;
+            Ok(())
+        }
+        Cmd::ResearchPackages {
+            directory,
+            architecture,
+            json,
+            keep_extracted,
+        } => {
+            let workdir = std::env::current_dir()?.join(&cli.workdir);
+            research_packages(
+                directory.as_deref().unwrap_or("bin"),
+                architecture,
+                *json,
+                *keep_extracted,
+                &workdir,
+            )?;
+            Ok(())
+        }
+        Cmd::Check
+        | Cmd::RenderRelease
+        | Cmd::UpdateRelease
+        | Cmd::CheckTargets { .. }
+        | Cmd::BuildTargets { .. }
+        | Cmd::RenderReleaseTargets { .. }
+        | Cmd::UpdateReleaseTargets { .. } => run_release_command(cli),
         // Every remaining subcommand stays a loud fail until its wave lands.
         _ => bail!(
             "subcommand '{}' is not implemented yet (migration in progress; \
@@ -188,6 +297,439 @@ fn run(cli: &Cli) -> Result<()> {
             cli.command.name()
         ),
     }
+}
+
+/// Wave3-B dispatch: check / render-release / update-release and their
+/// -targets variants. Single-target commands resolve the target via
+/// config::get_target (injected "target" key included); targets-suffixed
+/// commands pass target=None and split the comma list (cli.py:250 semantics).
+fn run_release_command(cli: &Cli) -> Result<()> {
+    use portable_builder::multi::{
+        check_targets, render_multi_release, split_targets, update_multi_release,
+    };
+    use portable_builder::release::{check_updates, render_release, update_release};
+
+    let workdir = PathBuf::from(&cli.workdir);
+    let config = portable_builder::config::load_config(&cli.config)
+        .map_err(|err| anyhow::anyhow!("{err}"))?;
+
+    // Split the comma list for the targets-suffixed commands.
+    let targets: Vec<String> = match &cli.command {
+        Cmd::CheckTargets { targets }
+        | Cmd::BuildTargets { targets }
+        | Cmd::RenderReleaseTargets { targets }
+        | Cmd::UpdateReleaseTargets { targets } => split_targets(targets),
+        _ => Vec::new(),
+    };
+
+    match &cli.command {
+        Cmd::Check => {
+            let target =
+                portable_builder::config::get_target(&config, cli.target.as_deref().unwrap_or(""))
+                    .map_err(|err| anyhow::anyhow!("{err}"))?;
+            check_updates(&target, &workdir)?;
+        }
+        Cmd::RenderRelease => {
+            let target =
+                portable_builder::config::get_target(&config, cli.target.as_deref().unwrap_or(""))
+                    .map_err(|err| anyhow::anyhow!("{err}"))?;
+            render_release(&target, &workdir, None, None)?;
+        }
+        Cmd::UpdateRelease => {
+            let target =
+                portable_builder::config::get_target(&config, cli.target.as_deref().unwrap_or(""))
+                    .map_err(|err| anyhow::anyhow!("{err}"))?;
+            update_release(&target, &workdir)?;
+        }
+        Cmd::CheckTargets { .. } => {
+            check_targets(&config, &targets, &workdir)?;
+        }
+        Cmd::BuildTargets { .. } => {
+            portable_builder::multi::build_selected_targets(
+                &config,
+                &targets,
+                &workdir,
+                cli.builder_dir.as_deref(),
+            )?;
+        }
+        Cmd::RenderReleaseTargets { .. } => {
+            render_multi_release(&config, &targets, &workdir)?;
+        }
+        Cmd::UpdateReleaseTargets { .. } => {
+            update_multi_release(&config, &targets, &workdir)?;
+        }
+        _ => unreachable!("run_release_command called with a non-release command"),
+    }
+    Ok(())
+}
+
+/// cli.py inspect-package dispatch (L142-165). The extracted tree lives
+/// under build/inspect-package/<stem> and is removed unless --keep-extracted.
+fn inspect_package(
+    package: &str,
+    architecture: &str,
+    as_json: bool,
+    keep_extracted: bool,
+    workdir: &Path,
+) -> Result<()> {
+    use portable_builder::discovery::{analyze_package, print_report};
+    use portable_builder::tools::{find_7z_tool, remove_path};
+
+    let package_path = PathBuf::from(package);
+    let package_path = if package_path.is_absolute() {
+        package_path
+    } else {
+        workdir.join(package_path)
+    };
+    if !package_path.exists() {
+        bail!("Package not found: {}", package_path.display());
+    }
+    let stem = package_path
+        .file_stem()
+        .map(|s| s.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    let inspect_root = workdir.join("build").join("inspect-package").join(&stem);
+    let result = (|| -> Result<()> {
+        let seven_zip = if package_path.is_dir() {
+            None
+        } else {
+            Some(find_7z_tool(workdir, false, false)?)
+        };
+        let analysis = analyze_package(
+            &package_path,
+            &inspect_root,
+            seven_zip.as_deref(),
+            architecture,
+        )?;
+        print_report(&analysis, as_json);
+        Ok(())
+    })();
+    if !keep_extracted {
+        remove_path(&inspect_root);
+    }
+    result
+}
+
+/// cli.py build-package dispatch (L167-190): build, then optionally archive
+/// + static verify (never launches a browser or installer locally).
+fn build_package(
+    package: &str,
+    architecture: &str,
+    output_dir: Option<&str>,
+    archive: bool,
+    workdir: &Path,
+    builder_dir: Option<&str>,
+) -> Result<()> {
+    use portable_builder::builder::{archive_target, build_package_file};
+
+    let package_path = PathBuf::from(package);
+    let package_path = if package_path.is_absolute() {
+        package_path
+    } else {
+        workdir.join(package_path)
+    };
+    let builder_dir_resolved = resolve_builder_dir(builder_dir)?;
+    let result = build_package_file(
+        &package_path,
+        workdir,
+        builder_dir_resolved.as_deref(),
+        architecture,
+        output_dir,
+    )?;
+    if archive {
+        let target_config = result
+            .get("target_config")
+            .cloned()
+            .ok_or_else(|| anyhow::anyhow!("build result missing target_config"))?;
+        let version = result.get("version").and_then(Value::as_str).unwrap_or("");
+        let package_version = result
+            .get("package_version")
+            .and_then(Value::as_str)
+            .unwrap_or("");
+        let output = result
+            .get("output_dir")
+            .and_then(Value::as_str)
+            .unwrap_or("");
+        let archive_info = archive_target(
+            &target_config,
+            workdir,
+            Some(version),
+            None,
+            Some(package_version),
+            Some(Path::new(output)),
+        )?;
+        // Static archive verification deliberately avoids launching a
+        // browser or installer on the local machine.
+        let archive_path = archive_info
+            .get("path")
+            .and_then(Value::as_str)
+            .ok_or_else(|| anyhow::anyhow!("archive result missing path"))?;
+        portable_builder::verify::verify_target(
+            &target_config,
+            workdir,
+            Some(Path::new(archive_path)),
+            false,
+        )?;
+    }
+    Ok(())
+}
+
+/// cli.py build-packages dispatch (L192-241): every installer in the
+/// directory, one auto-layout build each, [i/total] progress + summary.
+fn build_packages(
+    directory: &str,
+    architecture: &str,
+    archive: bool,
+    workdir: &Path,
+    builder_dir: Option<&str>,
+) -> Result<()> {
+    use portable_builder::builder::{archive_target, build_package_file};
+
+    let sample_dir = PathBuf::from(directory);
+    let sample_dir = if sample_dir.is_absolute() {
+        sample_dir
+    } else {
+        workdir.join(sample_dir)
+    };
+    if !sample_dir.is_dir() {
+        bail!("Package directory not found: {}", sample_dir.display());
+    }
+    let suffixes = [".exe", ".msi", ".7z", ".zip", ".rar", ".cab"];
+    let mut packages: Vec<PathBuf> = std::fs::read_dir(&sample_dir)?
+        .filter_map(|entry| entry.ok())
+        .map(|entry| entry.path())
+        .filter(|path| {
+            path.is_file()
+                && path
+                    .extension()
+                    .map(|ext| {
+                        let dotted = format!(".{}", ext.to_string_lossy().to_lowercase());
+                        suffixes.contains(&dotted.as_str())
+                    })
+                    .unwrap_or(false)
+        })
+        .collect();
+    packages.sort_by_key(|path| {
+        path.file_name()
+            .map(|n| n.to_string_lossy().to_lowercase())
+            .unwrap_or_default()
+    });
+    if packages.is_empty() {
+        bail!("No installer packages found in: {}", sample_dir.display());
+    }
+    let builder_dir_resolved = resolve_builder_dir(builder_dir)?;
+
+    let mut built: Vec<(String, String, String)> = Vec::new();
+    let mut failures: Vec<(String, String)> = Vec::new();
+    let total = packages.len();
+    for (index, package) in packages.iter().enumerate() {
+        let name = package
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        println!("\n[{}/{}] {name}", index + 1, total);
+        match build_package_file(
+            package,
+            workdir,
+            builder_dir_resolved.as_deref(),
+            architecture,
+            None,
+        ) {
+            Ok(result) => {
+                let product = result
+                    .get("target_config")
+                    .and_then(|t| t.get("display_name").and_then(Value::as_str))
+                    .unwrap_or("");
+                let version = result.get("version").and_then(Value::as_str).unwrap_or("");
+                let output = result
+                    .get("output_dir")
+                    .and_then(Value::as_str)
+                    .unwrap_or("");
+                if archive {
+                    let target_config = result
+                        .get("target_config")
+                        .cloned()
+                        .ok_or_else(|| anyhow::anyhow!("build result missing target_config"))?;
+                    let archive_info = archive_target(
+                        &target_config,
+                        workdir,
+                        Some(version),
+                        None,
+                        Some(version),
+                        Some(Path::new(output)),
+                    )?;
+                    let archive_path = archive_info
+                        .get("path")
+                        .and_then(Value::as_str)
+                        .ok_or_else(|| anyhow::anyhow!("archive result missing path"))?;
+                    portable_builder::verify::verify_target(
+                        &target_config,
+                        workdir,
+                        Some(Path::new(archive_path)),
+                        false,
+                    )?;
+                }
+                println!("[OK] {name} -> {product} {version}");
+                built.push((name, product.to_string(), version.to_string()));
+            }
+            Err(exc) => {
+                println!("[FAIL] {name}: {exc}");
+                failures.push((name, format!("{exc:#}")));
+            }
+        }
+    }
+    println!("\n[DONE] built={} failed={}", built.len(), failures.len());
+    for (name, product, version) in &built {
+        println!("  OK  {name}: {product} {version}");
+    }
+    for (name, error) in &failures {
+        println!("  ERR {name}: {error}");
+    }
+    if !failures.is_empty() {
+        bail!("{} package(s) failed to build", failures.len());
+    }
+    Ok(())
+}
+
+/// cli.py research-packages dispatch (L243-263+): static inspect of every
+/// sample, combined JSON or per-package human report.
+fn research_packages(
+    directory: &str,
+    architecture: &str,
+    as_json: bool,
+    keep_extracted: bool,
+    workdir: &Path,
+) -> Result<()> {
+    use portable_builder::discovery::{analyze_package, print_report, public_report};
+    use portable_builder::tools::{find_7z_tool, remove_path};
+
+    let sample_dir = PathBuf::from(directory);
+    let sample_dir = if sample_dir.is_absolute() {
+        sample_dir
+    } else {
+        workdir.join(sample_dir)
+    };
+    if !sample_dir.is_dir() {
+        bail!("Sample directory not found: {}", sample_dir.display());
+    }
+    let suffixes = [".exe", ".msi", ".7z", ".zip", ".rar", ".cab"];
+    let mut packages: Vec<PathBuf> = std::fs::read_dir(&sample_dir)?
+        .filter_map(|entry| entry.ok())
+        .map(|entry| entry.path())
+        .filter(|path| {
+            path.is_file()
+                && path
+                    .extension()
+                    .map(|ext| {
+                        let dotted = format!(".{}", ext.to_string_lossy().to_lowercase());
+                        suffixes.contains(&dotted.as_str())
+                    })
+                    .unwrap_or(false)
+        })
+        .collect();
+    packages.sort_by_key(|path| {
+        path.file_name()
+            .map(|n| n.to_string_lossy().to_lowercase())
+            .unwrap_or_default()
+    });
+    if packages.is_empty() {
+        bail!("No installer samples found in: {}", sample_dir.display());
+    }
+    let seven_zip = find_7z_tool(workdir, false, false)?;
+
+    let mut reports: Vec<Value> = Vec::new();
+    let mut failures: Vec<Value> = Vec::new();
+    let total = packages.len();
+    for (index, package) in packages.iter().enumerate() {
+        let name = package
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let stem = package
+            .file_stem()
+            .map(|s| s.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let inspect_root = workdir
+            .join("build")
+            .join("research-packages")
+            .join(format!("{:02}-{}", index + 1, stem));
+        let outcome = (|| -> Result<Value> {
+            let analysis = analyze_package(package, &inspect_root, Some(&seven_zip), architecture)?;
+            let report = public_report(&analysis);
+            if !as_json {
+                println!("\n[{}/{}] {name}", index + 1, total);
+                print_report(&analysis, false);
+            }
+            Ok(report)
+        })();
+        match outcome {
+            Ok(report) => reports.push(report),
+            Err(exc) => {
+                failures.push(serde_json::json!({
+                    "package": package.to_string_lossy(),
+                    "error": format!("{exc:#}"),
+                }));
+                if !as_json {
+                    println!("\n[FAIL] {name}: {exc}");
+                }
+            }
+        }
+        if !keep_extracted {
+            remove_path(&inspect_root);
+        }
+    }
+    let combined = serde_json::json!({ "recognized": reports, "failed": failures });
+    if as_json {
+        // Python: json.dumps(combined, ensure_ascii=False, indent=2).
+        println!("{}", serde_json::to_string_pretty(&combined)?);
+    }
+    if !failures.is_empty() {
+        bail!("{} package(s) could not be identified", failures.len());
+    }
+    Ok(())
+}
+
+/// cli.py resolve_builder_dir - --builder-dir flag > PYTHONPATH entries >
+/// _portable_builder > the package's own checkout (setdll marker).
+fn resolve_builder_dir(builder_dir: Option<&str>) -> Result<Option<PathBuf>> {
+    if let Some(dir) = builder_dir {
+        let path = PathBuf::from(dir);
+        if !path.exists() {
+            bail!("Builder directory not found: {}", path.display());
+        }
+        return Ok(Some(path));
+    }
+    if let Ok(pythonpath) = std::env::var("PYTHONPATH") {
+        for entry in std::env::split_paths(&pythonpath) {
+            if entry.exists() && entry.join("setdll").exists() {
+                println!(
+                    "[INFO] Auto-detected builder directory from PYTHONPATH: {}",
+                    entry.display()
+                );
+                return Ok(Some(entry));
+            }
+        }
+    }
+    let default_path = PathBuf::from("_portable_builder");
+    if default_path.exists() && default_path.join("setdll").exists() {
+        println!(
+            "[INFO] Using default builder directory: {}",
+            default_path.display()
+        );
+        return Ok(Some(default_path));
+    }
+    let package_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .canonicalize()
+        .unwrap_or_else(|_| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."));
+    if package_root.join("setdll").exists() {
+        println!(
+            "[INFO] Using builder files beside the Python package: {}",
+            package_root.display()
+        );
+        return Ok(Some(package_root));
+    }
+    Ok(None)
 }
 
 /// Resolve the builder repository directory (migration doc §6.5). Level 1 is the

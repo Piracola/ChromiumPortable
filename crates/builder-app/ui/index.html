@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<!--
+  ChromiumPortableBuilder GUI — index.html（静态页骨架）
+  提取自 portable_builder/web_ui.py 的 render()（Wave1-E，Python→Rust 迁移）。
+
+  架构：docs/MIGRATION_RUST_TAURI.md §2.2 决策 B —— 页面骨架与 CSS 原样平移，
+  动态内容改为 JS 拿状态快照后填充。设计规范（不可违背）：
+  docs/ui-architecture.md —— 唯一主角、三级表面、四级字号、五种状态。
+
+  挂载点约定（两种写法并存，语义相同）：
+    1. 空容器 + 固定 id：  app.js 按 id 填充（与 web_ui.py JS 的 getElementById
+       一致，如 #banner / #loghead / #logbox）；
+    2. {{name}} 标记：     容器由 app.js 的 render* 函数整体生成，
+       标记本身会被移除（get Mount：parent.replaceChildren / innerHTML）。
+
+  {{name}} 语义总表（app.js TODO(Wave4) 的移植映射，源自 web_ui.py）：
+    {{topbar}}      <- _topbar(s)          顶栏：标记、标题、Tab、状态胶囊、语言按钮
+    {{page-build}}  <- _build_page(s,args) 构建页：来源卡（主角）/目标输出/更多选项折叠
+    {{page-tools}}  <- _tools_page(s,args) 工具箱页：输入卡 + 六件套命令卡
+    {{deck}}        <- _deck(s)            执行卡：步骤轨/开始/取消/日志折叠
+    {{banner}}      <- render() banner 分支 校验横幅（就地显示，IA §5 不弹窗）
+
+  无 CDN、无任何外部 URL、仅系统字体栈——目标机可能完全离线。
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ChromiumPortable 便携构建器</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div id="app">
+    <!-- @render:topbar —— app.js renderTopbar()（Wave4）填充；
+             标题/副标题/Tab/状态胶囊/中EN按钮都来自 snapshot.strings -->
+    <!-- {{topbar}} -->
+
+    <div id="body">
+      <div id="main">
+        <div id="content">
+          <!-- @render:banner —— renderBanner()（已移植）填充：
+                   plan.error_key 非空时显示 class="banner warn" 横幅 -->
+          <div id="banner" class="banner warn" hidden></div>
+
+          <!-- @render:page-build —— renderBuildPage()（Wave4）填充。
+                   页面骨架照 _build_page()：唯一编号卡（来源，主角）、
+                   目标与输出设置条、默认收起的「更多选项」折叠（IA R1/R3）。
+                   卡内的输入控件带 data-bind，执行卡按钮带 data-action。 -->
+          <!-- {{page-build}} -->
+
+          <!-- @render:page-tools —— renderToolsPage()（Wave4）填充。
+                   页面骨架照 _tools_page()：输入卡 + 六件套命令卡
+                   （TOOL_GLYPHS/TOOL_ORDER 字形与顺序原样平移）。 -->
+          <!-- {{page-tools}} -->
+        </div>
+
+        <div id="below">
+          <!-- @render:deck —— renderDeck()（Wave4）填充。
+                   页面骨架照 _deck()：执行卡 = 步骤轨 + 开始/取消 + 日志折叠，
+                   随内容流（空闲时不再常驻占屏，IA §5）。 -->
+          <section id="deck" hidden>
+            <div class="head">
+              <span class="t"></span>
+              <span class="n" id="railcap"></span>
+            </div>
+            <div id="rail"></div>
+            <div class="result" id="result"></div>
+            <div class="acts">
+              <button type="button" class="btn primary" id="start" data-action="start_build" hidden></button>
+              <button type="button" class="btn ghost" id="cancel" data-action="cancel" hidden></button>
+              <span class="grow"></span>
+              <span class="elapsed" id="elapsed"></span>
+            </div>
+            <div id="logwrap">
+              <!-- @render:loghead —— renderLogHead()（已移植）填充：
+                       展开/收起按钮、行数计数（data-tpl 含 {count} 占位）、
+                       自动滚动/保存/复制/清空 -->
+              <div id="loghead"></div>
+              <div id="logbox" hidden></div>
+            </div>
+          </section>
+          <!-- {{deck}} -->
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

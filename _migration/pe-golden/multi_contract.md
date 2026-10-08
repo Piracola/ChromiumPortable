@@ -40,3 +40,20 @@
    - 末尾 ensure_shared_release_assets（CREATE_NEW_RELEASE=true 时把 assets 挂到新 release）。
 3. Rust 移植要点：{prefix}_UPDATE 经 GITHUB_ENV 在两个命令间传递——check 与 build 是
    分开的 CI 步骤，Rust 端必须真的读写该环境变量而非进程内状态。
+
+
+---
+
+## 补遗 2（L243-350 实测）：ensure_shared_release_assets / render_multi / update_multi
+
+1. ensure_shared_release_assets：只对**本次未重建**（{prefix}_UPDATE != true）的 target
+   生效；从既有 release 拉回最新资产（download_release_asset）到 build/assets（重用已存在
+   文件），再写 {prefix}_ARCHIVE/_SHA256/_SIZE——release 说明里未重建渠道也有校验和行。
+2. render_multi_release：config 顶层 release 块**缺失** ⇒ 退化为单 target render_release；
+   版本回退链 {prefix}_PACKAGE_VERSION > {prefix}_VERSION > UPSTREAM_{prefix}；
+   tag/title/body 缺省 "v{date}"/"{date}"/""（与单目标不同！）；assert_body_versions
+   覆盖全部 targets。
+3. update_multi_release：只为**本次重建**的 target 删旧资产（UPDATE=true 才 delete）；
+   PATCH body 语义与单目标一致（MINOR_UPDATE 才带 name+tag_name）。
+   注：资产上传本身不在 Python 引擎里——由 workflow 的 softprops/action-gh-release
+   从 build/assets/*.7z 上传。Rust 引擎保持同样边界（M3 不实现 upload）。

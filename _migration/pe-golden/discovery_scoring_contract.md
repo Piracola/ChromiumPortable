@@ -31,3 +31,19 @@ Rust 移植注意：
 - Windows 大小写不敏感文件系统上的遍历顺序 Python 依 rglob 序，Rust walkdir 需排
   序后处理或证明与排序键无关（排序键已含 name.casefold 终判，但同分同名时 parts
   长度前必须稳定——用 BTreeMap 收集或显式 sort）。
+
+
+---
+
+## 补遗（L310-409 实测）：analyze 组装与 public_report 输出形状
+
+1. analyze_package：逐层扫描候选 → 全局排序（同 score 表）→ select → app_root=选中 exe 的
+   父目录；version 缺失回落 "0.0.0.0"；version_dir 由 _infer_version_dir 推断。
+2. analyze_extracted_app（verify 侧复用）：同一候选评分器，无层概念。
+3. public_report 字段（--json 契约，M2 深度对照的对象）：
+   package(可 None) / product / version / architecture / executable（相对 layer_root 或
+   app_root 的 posix 路径）/ score / reasons(中文) / layers[{depth,kind,source 仅文件名}] /
+   alternatives[1:6]（path 全路径 + score + product）。
+4. print_report 人读模式四行：[OK] 浏览器/版本/主程序/可信分（中文标签逐字节——
+   普通模式对照验收含它）。
+5. alternatives 只取第 2-6 名（1:6 切片）——固定五条上限。

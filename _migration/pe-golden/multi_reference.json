@@ -1,0 +1,33 @@
+{
+ "env_name_cases": {
+  "": "",
+  "360 browser": "360_BROWSER",
+  "___": "",
+  "chrome-beta": "CHROME_BETA",
+  "chrome_stable": "CHROME_STABLE",
+  "cse360 stable": "CSE360_STABLE"
+ },
+ "flat_context": {
+  "chrome_plus_version": "1.18.2",
+  "chrome_stable_archive": "-",
+  "chrome_stable_sha256": "-",
+  "chrome_stable_size": "-",
+  "chrome_stable_version": "153.1.95.102",
+  "date": "2026-07-01",
+  "edge_stable_archive": "-",
+  "edge_stable_sha256": "-",
+  "edge_stable_size": "-",
+  "edge_stable_version": "138.0.3351.121",
+  "run_url": ""
+ },
+ "split_targets": {
+  "basic": [
+   "chrome_stable",
+   "edge_stable",
+   "helium_stable"
+  ],
+  "single": [
+   "chrome_stable"
+  ]
+ }
+}

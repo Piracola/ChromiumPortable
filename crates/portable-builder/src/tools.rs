@@ -201,8 +201,15 @@ pub fn verify_file_digest(path: &Path, sha256: Option<&str>, size: Option<u64>) 
     }
 
     if let Some(sha256) = sha256 {
-        let expected =
-            normalize_sha256(Some(sha256))?.expect("non-empty digest normalizes to Some");
+        // "sha256:" (empty after prefix) normalizes to None; Python raises
+        // RuntimeError("SHA256 mismatch for {name}: expected None, got <digest>")
+        // instead of panicking (review-Wave2 finding 2).
+        let expected = normalize_sha256(Some(sha256))?.ok_or_else(|| {
+            anyhow!(
+                "SHA256 mismatch for {}: expected None, got <not verified yet>",
+                path.file_name().map(|n| n.to_string_lossy()).unwrap_or_default()
+            )
+        })?;
         let actual = sha256_file(path)?;
         if actual != expected {
             bail!(
@@ -262,9 +269,14 @@ pub fn download_file(
     }
     info(format!("Downloading {url}"));
 
+    // Python requests timeout=120 is PER-SOCKET-OP, not a total deadline. A total
+    // timeout aborts slow multi-hundred-MB downloads mid-body (review-Wave2 finding 1).
+    // Match the contract: no total limit; 120s connect timeout + TCP keepalive keep
+    // dead-connection detection while allowing slow links to finish.
     let client = reqwest::blocking::Client::builder()
         .danger_accept_invalid_certs(!verify_ssl)
-        .timeout(std::time::Duration::from_secs(120))
+        .connect_timeout(std::time::Duration::from_secs(120))
+        .tcp_keepalive(std::time::Duration::from_secs(30))
         .build()?;
     let mut response = client.get(url).send()?.error_for_status()?;
 
@@ -295,8 +307,12 @@ pub fn download_file(
     }
 
     if let Some(sha256) = sha256 {
-        let expected =
-            normalize_sha256(Some(sha256))?.expect("non-empty digest normalizes to Some");
+        let expected = normalize_sha256(Some(sha256))?.ok_or_else(|| {
+            // "sha256:" (empty after prefix) normalizes to None; Python raises
+            // RuntimeError here instead of panicking (review-Wave2 finding 2).
+            remove_path(path);
+            anyhow!("SHA256 mismatch for {name}: expected None, got <digest of downloaded bytes>")
+        })?;
         let actual = hex::encode(digest.finalize());
         if actual != expected {
             remove_path(path);

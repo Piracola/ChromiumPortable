@@ -1,0 +1,18 @@
+{
+ "languages": [
+  "en",
+  "zh-CN"
+ ],
+ "parity": {
+  "en": {
+   "count": 168,
+   "missing": []
+  },
+  "zh-CN": {
+   "count": 168,
+   "missing": []
+  }
+ },
+ "placeholder_drift": [],
+ "union_count": 168
+}

@@ -1,0 +1,18 @@
+[
+ {
+  "FileId": "MicrosoftEdgeEnterpriseX64.msi",
+  "Url": "https://msedge.sf.dl.delivery.mp.microsoft.com/filestream/aaa/msi",
+  "SizeInBytes": 150000000,
+  "Hashes": {
+   "Sha256": "AAAA"
+  }
+ },
+ {
+  "FileId": "MicrosoftEdgeEnterpriseX64",
+  "Url": "https://msedge.sf.dl.delivery.mp.microsoft.com/filestream/bbb/exe",
+  "SizeInBytes": 180000000,
+  "Hashes": {
+   "Sha256": "QkFUQ0g="
+  }
+ }
+]

@@ -258,8 +258,15 @@ BCJ2 容器头（5×u32）+ x86 分支转换 + LZMA 解压。这是全项目唯�
   与样本日期 `2099-12-31`、`assert_body_versions` 全部原样——这是防止 release
   标题/正文渲染回归的既有防线。
 - 版本升级判断（`is_upgrade` / `should_create_new_release` / `create_new_release_on`
-  策略）语义原样，配版本串比较单测（含不等长段、非数字段）。
+  策略）语义原样，配版本串比较单测（含不等长段、非数字段）。已知偏差（review-A 确认可
+  接受）：Rust 侧全角数字（如 `１`）与溢出段按 i64 解析失败处理为非数字段（比较得 0），
+  Python 的 `int()` 会接受全角数字——真实上游版本号全 ASCII 且段长 ≤3 位，不可达。
 - `env_name`：`[^A-Za-z0-9] → _`、去首尾、大写——GITHUB_ENV 变量名清洗。
+- `write_env` 的 `env_json` blob 是**保序紧凑 JSON**（`ensure_ascii=False` +
+  `separators=(",",":")`）——serde_json 默认 Map 按 key 排序，必须启用
+  `preserve_order` feature 或用有序 Vec 手工拼接，否则与 Python 字节序不一致。
+- `append_lines` 在 Rust 侧恒写 LF（Python 文本模式在 Windows 写 CRLF）；S1 只冻结
+  变量名与分隔符，Actions 消费端两种行尾都接受（review-A 判定接受）。
 - heredoc 分隔符 `PORTABLE_BUILDER_EOF` 只用于含换行值，行为一致。
 - GitHub API 调用（latest release、删旧资产、传新资产）用 reqwest 手写，路径与
   分页语义对齐 release.py；不引 octocrab（依赖面不值）。

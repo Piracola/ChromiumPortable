@@ -103,18 +103,18 @@ ChromiumPortable/
 │   │       ├── ini_overlay.rs  #   ← ini_overlay.py（语义 1:1，见 §4.4）
 │   │       ├── brave_bundle.rs #   ← brave_bundle.py（BCJ2，唯一算法风险，见 §4.5）
 │   │       ├── i18n.rs         #   ← i18n.py（wizard.json 单一来源不变）
+│   │       ├── gui/            #   ← gui_core.py / gui_plan.py / gui_runner.py / gui.py Controller
+│   │       │   ├── mod.rs      #      环境探测、engine 定位、catalog、语言包、--selftest 检查
+│   │       │   ├── plan.rs     #      BuildRequest → 子进程步骤（纯函数）
+│   │       │   ├── runner.rs   #      子进程执行 + 日志增量回流
+│   │       │   └── controller.rs #    全部状态与逻辑（不含渲染、不含框架）
 │   │       └── providers/      #   ← providers/（mod/direct/google_omaha/microsoft_edge/script）
-│   └── builder-app/            # Tauri 2 图形构建器
+│   └── builder-app/            # Tauri 2 外壳：只有命令转发与窗口
 │       ├── Cargo.toml
 │       ├── tauri.conf.json
+│       ├── build.rs
 │       ├── icons/icon.ico      # 由现 icon.py 一次性生成后提交，不再运行时生成
-│       ├── src/
-│       │   ├── main.rs         # 含 --selftest 分支（见 §6.6）
-│       │   ├── controller.rs   #   ← gui.py Controller：全部状态，不含渲染
-│       │   ├── plan.rs         #   ← gui_plan.py：BuildRequest → 子进程步骤（纯函数）
-│       │   ├── runner.rs       #   ← gui_runner.py：子进程执行 + 日志增量回流
-│       │   ├── core.rs         #   ← gui_core.py：环境探测、engine 定位、语言加载
-│       │   └── commands.rs     #   ← Bridge 暴露面（§6.2 映射表）
+│       ├── src/main.rs         # #[tauri::command] 命令面 + 80ms 事件泵 + --selftest 分支
 │       └── ui/                 # ← web_ui.py 抽出；无构建步骤、无 CDN（原则平移）
 │           ├── index.html
 │           ├── styles.css      #   设计系统原样平移（三级表面/四级字号/五状态）
@@ -155,7 +155,7 @@ JS 渲染。收益：Rust 侧薄（Controller 只管状态，与现有文档「C
     "security": { "csp": null }                 // 离线本地静态页；见 §10 风险 R7
   },
   "build": {
-    "frontendDist": "../ui",                    // 静态目录，无打包器
+    "frontendDist": "ui",                       // 相对 tauri.conf.json（静态目录，无打包器）
     "devUrl": null                              // 无 vite：dev 模式同样吃静态目录
   }
 }
@@ -313,15 +313,22 @@ portable-builder resolve-upstream <provider-args>   # ← scripts/upstream/resol
 
 | 现方法（gui.py） | 新命令 | 说明 |
 |---|---|---|
-| `state / snapshot_for_render / refresh_plan` | `snapshot` | 单一状态快照，前端渲染的唯一切口 |
-| `set_lang / toggle_lang` | `set_lang` | 返回新快照+新语言包 |
-| `set_mode / set_installer / set_folder / set_target / set_arch / set_archive / set_url / set_local_path / set_token / set_workdir / set_tool_*` | `set_input(key, value)` 或逐个命令 | 逐个平移，均返回新快照 |
-| `refresh_targets / refresh_installers` | `refresh` | 目录扫描在后台线程做 |
-| `start_build / run_tool / cancel` | `start / run_tool / cancel` | 语义不变 |
-| `pick_installer / pick_local / pick_tool_file / pick_folder / pick_workdir / pick_tool_dir / new_folder / _ask_save` | `pick(kind)` | tauri-plugin-dialog 的 async 命令——替换「Python 问、JS 回调 done」模式 |
-| `open_workdir / open_subdir / open_path` | `open_path` | tauri-plugin-opener |
-| `append_log / log_text / clear_log / save_log / copy_log / set_autoscroll / toggle_log` | `log_*` | save/copy 走对话框+剪贴板插件 |
-| `done`（文件对话框回调） | 不再需要 | async 命令天然等待 |
+| `state / snapshot_for_render` | `snapshot` | 单一状态快照，前端渲染的唯一切口 |
+| `set_lang`（`toggle_lang` 由前端换按钮文案） | `set_lang(lang)` | 返回新快照+新语言包 |
+| `refresh_plan`（含整份表单入参） | `refresh(values?)` | 带 values 就落库+重算计划；不带就走 refresh_targets/refresh_installers |
+| `set_* ` 全部 setter | `set_input(key, value)` | 键名沿用 JS 契约（`local_path` → `local`），非法枚举值忽略 |
+| `start_build / run_tool / cancel` | `start / run_tool / cancel` | 语义不变（cancel 仍是两下） |
+| `pick_installer / pick_local / pick_tool_file / pick_folder / pick_workdir / pick_tool_dir / _ask_save` | `pick(kind)` | tauri-plugin-dialog 的阻塞对话框——替换「Python 问、JS 回调 done」模式 |
+| `open_workdir / open_subdir / open_path` | `open_path(path)` | 直接 shell 打开（Windows `start` / `open` / `xdg-open`），不引 opener 插件 |
+| `append_log / log_text / clear_log / save_log / set_autoscroll / toggle_log` | `log(action, value?)` | action = clear / toggle / autoscroll / save / text |
+| `done`（文件对话框回调） | 不再需要 | 阻塞命令天然等待 |
+
+**返回值统一形状**：除 `strings` / `log(action="text")` 外，所有命令返回
+`{snapshot, strings}`——前端拿到就整页重渲染，不需要按命令记返回类型。
+
+**事件形状**（`builder-event`）：`{kind: "state"|"log"|"step"|"done", …}`；
+`log` 带 `text`/`tag`，`step` 带 `index`/`total`/`title`，
+`done` 带 `code`/`elapsed`/`result`/`state`。
 
 ### 6.3 事件泵（80ms drain → mpsc + emit）
 
@@ -390,7 +397,7 @@ Helium 三个真实子仓库配置各跑一次完整 build→archive→verify—
 
 | workflow | 改法 |
 |---|---|
-| `portable-browser.yml`（reusable，被 3 个子仓库调用） | **v2 tag**：check（ubuntu）与 build（windows）删掉 checkout 构建器仓库 + setup-python + pip + PYTHONPATH 四步，改为一步「按 builder-ref 从本仓库 Release 下载 `portable-builder-<ref>-x64.exe` + sha256 校验」；步骤名、输出名、条件表达式不动。v1（Python 版）保留到最后烧尽期结束 |
+| `portable-browser.yml`（reusable，被 3 个子仓库调用） | **v2 tag**：check 与 build 两个 job 各删掉 checkout 构建器仓库 + setup-python + pip + PYTHONPATH 四步，改为一步「`gh release download` 下载自包含引擎包 `portable-builder-{linux,windows}-x64.zip` + sha256 校验 + 解包」；其余命令改成 `& $env:CPB_ENGINE …`。输出名、条件表达式、步骤顺序不动。`python-version` 输入已删除（v2 不再用 Python），子仓库若显式传过要一并去掉。v1（Python 版）保留到最后烧尽期结束 |
 | `build-browser.yml`（单浏览器按需） | 同上：删 setup-python，`prepare_build_target.py` 调用换成 `portable-builder prepare-target` |
 | `actions/build/action.yml`（composite） | 同步改为下载二进制并转发参数；或直接废弃（子仓库若已内联则删） |
 | `update-chrome-plus.yml` | **不动**（Python） |
@@ -515,6 +522,13 @@ Helium 三个真实子仓库配置各跑一次完整 build→archive→verify—
 4. `upstream/resolve.py` 外部脚本入口消失（吸收为 `resolve-upstream` 子命令）；
    `script` provider 的通用语义不变。
 5. GUI 分发形态仍为目录版（不提供单文件 exe），理由见 §8.4。
+6. **GUI 工具箱删掉「Chrome++ 更新」按钮**（原六件套 → 五件套）。
+   `update_chrome_plus.py` 是维护者 CI 的活（本文件 §0 已定「保留 Python」，
+   走 `update-chrome-plus.yml`），Rust 引擎没有对应子命令，
+   终端用户也不该在 GUI 里更新仓库内置的 Chrome++。
+7. **产物落点提示修好了**：Python 版 `_on_done` 先算 `_artifact_hint()` 再调
+   `refresh_plan()`，而后者把 `result_text` 清空——所以界面上从来没显示过
+   产物路径。Rust 版把顺序摆正（差异记录见 §13）。
 
 ---
 
@@ -539,3 +553,27 @@ git diff --no-index old_rel.txt new_rel.txt
 ```
 
 对照产物（old/new 树与 txt）放 `build/`（已 gitignore），验收完即删，不留目录。
+---
+
+## 13. 实施差异清单（相对本文件原计划，落地时改了什么）
+
+1. **GUI 逻辑落在引擎 crate**（`crates/portable-builder/src/gui/`），不是 builder-app。
+   理由：这四块不依赖 tauri，放引擎里就能在 ubuntu CI 上跑 GUI 单测
+   （`cargo test -p portable-builder --lib gui::` 19 条），builder-app 只剩命令转发。
+   引擎「不要 async runtime」的约束不变（runner 用 std::thread + mpsc）。
+2. **资源根探测改成向上找**：`CPB_ENGINE_ROOT` → 当前目录向上 5 层的
+   `catalog/`、`scripts/`、`crates/` → exe 目录。cargo test 的 cwd 是 crate 目录，
+   Python 那套「cwd 或 exe 目录」的二分在 Rust 里会指错。
+3. **引擎命令不再有 frozen/source 两套派发**：`gui_plan.child_command` 的
+   `--run-cli` / `--run-script` 分支消失，所有步骤都是引擎自身的子命令
+   （`prepare_build_target.py` → `prepare-target`，`upstream/resolve.py` → `resolve-upstream`）。
+   引擎 exe 定位：`CPB_ENGINE_EXE` → GUI 旁的 `portable-builder(.exe)` → PATH。
+4. **计时不再另开 Timer 线程**：事件泵按 80ms，每 12 拍（约 1s）刷新一次
+   `elapsed` 并推 state——与旧行为等价，少一个线程。
+5. **打开目录不引 opener 插件**：`os.startfile` 的等价物是
+   `cmd /C start "" <path>`（macOS `open`、其余 `xdg-open`），少一个依赖。
+6. **发布产物是自包含 zip**（引擎 exe + catalog + locales + setdll + 7zr.exe），
+   不是单个 exe：子仓库因此不需要再 checkout 构建器仓库去拿 setdll。
+   Windows 与 Linux 各一个（check job 在 ubuntu 上跑，需要原生二进制）。
+7. **前端仍在补齐**（M4 收尾）：`app.js` 的渲染函数由 `web_ui.py` 的
+   `_topbar/_build_page/_tools_page/_deck` 平移而来，工具箱五件套。

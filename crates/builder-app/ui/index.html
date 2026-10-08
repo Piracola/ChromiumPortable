@@ -13,10 +13,11 @@
     2. {{name}} 标记：     容器由 app.js 的 render* 函数整体生成，
        标记本身会被移除（get Mount：parent.replaceChildren / innerHTML）。
 
-  {{name}} 语义总表（app.js TODO(Wave4) 的移植映射，源自 web_ui.py）：
+  {{name}} 语义总表（app.js 已实现，源自 web_ui.py）：
     {{topbar}}      <- _topbar(s)          顶栏：标记、标题、Tab、状态胶囊、语言按钮
     {{page-build}}  <- _build_page(s,args) 构建页：来源卡（主角）/目标输出/更多选项折叠
-    {{page-tools}}  <- _tools_page(s,args) 工具箱页：输入卡 + 六件套命令卡
+    {{page-tools}}  <- _tools_page(s,args) 工具箱页：输入卡 + 五件套命令卡
+                              （chplus 不移植：Chrome++ 更新走 CI，不进 GUI）
     {{deck}}        <- _deck(s)            执行卡：步骤轨/开始/取消/日志折叠
     {{banner}}      <- render() banner 分支 校验横幅（就地显示，IA §5 不弹窗）
 
@@ -32,7 +33,7 @@
 </head>
 <body>
   <div id="app">
-    <!-- @render:topbar —— app.js renderTopbar()（Wave4）填充；
+    <!-- @render:topbar —— app.js renderTopbar() 填充；
              标题/副标题/Tab/状态胶囊/中EN按钮都来自 snapshot.strings -->
     <!-- {{topbar}} -->
 
@@ -43,20 +44,20 @@
                    plan.error_key 非空时显示 class="banner warn" 横幅 -->
           <div id="banner" class="banner warn" hidden></div>
 
-          <!-- @render:page-build —— renderBuildPage()（Wave4）填充。
+          <!-- @render:page-build —— renderBuildPage() 填充。
                    页面骨架照 _build_page()：唯一编号卡（来源，主角）、
                    目标与输出设置条、默认收起的「更多选项」折叠（IA R1/R3）。
                    卡内的输入控件带 data-bind，执行卡按钮带 data-action。 -->
           <!-- {{page-build}} -->
 
-          <!-- @render:page-tools —— renderToolsPage()（Wave4）填充。
-                   页面骨架照 _tools_page()：输入卡 + 六件套命令卡
-                   （TOOL_GLYPHS/TOOL_ORDER 字形与顺序原样平移）。 -->
+          <!-- @render:page-tools —— renderToolsPage() 填充。
+                   页面骨架照 _tools_page()：输入卡 + 五件套命令卡
+                   （TOOL_GLYPHS/TOOL_ORDER 字形与顺序原样平移，chplus 已删）。 -->
           <!-- {{page-tools}} -->
         </div>
 
         <div id="below">
-          <!-- @render:deck —— renderDeck()（Wave4）填充。
+          <!-- @render:deck —— renderDeck() 填充（#deck 里的骨架是静态的，只填文本/可见性）。
                    页面骨架照 _deck()：执行卡 = 步骤轨 + 开始/取消 + 日志折叠，
                    随内容流（空闲时不再常驻占屏，IA §5）。 -->
           <section id="deck" hidden>

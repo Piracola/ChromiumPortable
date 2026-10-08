@@ -4,12 +4,13 @@
 //! 这里只做两件事：把命令面接到 Controller（docs/MIGRATION_RUST_TAURI.md §6.2），
 //! 以及跑那个 80ms 的事件泵（§6.3）。
 //!
+//! 命令名与参数形状由前端 app.js 尾部的「命令面契约」表定义，改一边要同步改另一边。
 //! 启动冒烟判据沿用旧约定：窗口标题含 ChromiumPortable（test_gui_launch.py 的精神）。
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use portable_builder::gui::controller::{Controller, Emit};
-use serde_json::{json, Value};
+use serde_json::{json, Map, Value};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -26,13 +27,36 @@ fn lock<'a>(state: &'a State<'_, Shared>) -> MutexGuard<'a, Controller> {
     state.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
-/// 所有命令的统一返回形状：{snapshot, strings}（前端拿它整页重渲染）。
+/// 所有命令的统一返回形状：{snapshot, strings}（前端拿它整页重渲染或就地更新）。
 fn payload(controller: &Controller) -> Value {
     controller.snapshot_payload()
 }
 
+/// 打开文件/目录对话框，返回选中的路径。
+fn ask_path(app: &tauri::AppHandle, kind: &str) -> Option<PathBuf> {
+    match kind {
+        "save_log" => app
+            .dialog()
+            .file()
+            .set_file_name("ChromiumPortable-build.log")
+            .blocking_save_file()
+            .and_then(|path| path.into_path().ok()),
+        "folder" | "workdir" | "tool_dir" | "new_folder" => app
+            .dialog()
+            .file()
+            .blocking_pick_folder()
+            .and_then(|path| path.into_path().ok()),
+        _ => app
+            .dialog()
+            .file()
+            .add_filter("Installer", &["exe", "msi", "7z", "zip", "rar", "cab"])
+            .blocking_pick_file()
+            .and_then(|path| path.into_path().ok()),
+    }
+}
+
 // --------------------------------------------------------------------------
-// 命令面（§6.2 映射表）
+// 命令面（app.js 的 actionArgs / ACTION_COMMAND 表）
 // --------------------------------------------------------------------------
 
 #[tauri::command]
@@ -52,26 +76,27 @@ fn set_lang(state: State<'_, Shared>, lang: String) -> Value {
     payload(&controller)
 }
 
+/// 整份表单落库（前端传 {values: collect()}）；也接受单个 {key, value}。
 #[tauri::command]
-fn set_input(state: State<'_, Shared>, key: String, value: Value) -> Value {
+fn set_input(state: State<'_, Shared>, args: Value) -> Value {
     let mut controller = lock(&state);
-    controller.set_input(&key, value);
+    let form = args
+        .get("values")
+        .and_then(Value::as_object)
+        .or_else(|| args.as_object())
+        .cloned()
+        .unwrap_or_else(Map::new);
+    controller.refresh_plan(Some(&form));
     payload(&controller)
 }
 
-/// 两种用法都收：带 values（整份表单）就重算计划，不带就重扫目录表与安装包。
+/// kind = "installers" / "targets"：重扫目录表与安装包目录后重算计划。
 #[tauri::command]
-fn refresh(state: State<'_, Shared>, values: Option<Value>) -> Value {
+fn refresh(state: State<'_, Shared>, kind: Option<String>) -> Value {
     let mut controller = lock(&state);
-    match values.as_ref().and_then(Value::as_object) {
-        Some(form) => {
-            controller.refresh_plan(Some(form));
-        }
-        None => {
-            controller.refresh();
-            controller.refresh_plan(None);
-        }
-    }
+    let _ = kind;
+    controller.refresh();
+    controller.refresh_plan(None);
     payload(&controller)
 }
 
@@ -96,37 +121,20 @@ fn cancel(state: State<'_, Shared>) -> Value {
     payload(&controller)
 }
 
-/// 文件/目录对话框：替换 Python 版「问一下、JS 回调 done」的模式（§6.2）。
 #[tauri::command]
 fn pick(app: tauri::AppHandle, state: State<'_, Shared>, kind: String) -> Value {
-    let chosen: Option<PathBuf> = match kind.as_str() {
-        "save_log" => app
-            .dialog()
-            .file()
-            .set_file_name("ChromiumPortable-build.log")
-            .blocking_save_file()
-            .and_then(|path| path.into_path().ok()),
-        "folder" | "workdir" | "tool_dir" => app
-            .dialog()
-            .file()
-            .blocking_pick_folder()
-            .and_then(|path| path.into_path().ok()),
-        _ => app
-            .dialog()
-            .file()
-            .add_filter("Installer", &["exe", "msi", "7z", "zip", "rar", "cab"])
-            .blocking_pick_file()
-            .and_then(|path| path.into_path().ok()),
-    };
-
     let mut controller = lock(&state);
-    let Some(path) = chosen else {
+    let Some(path) = ask_path(&app, &kind) else {
         return payload(&controller);
     };
     let text = path.to_string_lossy().into_owned();
     match kind.as_str() {
-        "save_log" => {
-            controller.save_log(&path);
+        "new_folder" => {
+            if let Err(err) = std::fs::create_dir_all(&path) {
+                controller.set_banner(Some(&err.to_string()), "err", &text);
+                return payload(&controller);
+            }
+            controller.set_input("folder", json!(text));
         }
         "folder" => {
             controller.set_input("folder", json!(text));
@@ -134,14 +142,11 @@ fn pick(app: tauri::AppHandle, state: State<'_, Shared>, kind: String) -> Value 
         "workdir" => {
             controller.set_input("workdir", json!(text));
         }
-        "tool_dir" => {
+        "tool_dir" | "tool_file" => {
             controller.set_input("tool_path", json!(text));
         }
         "local" => {
             controller.set_input("local_path", json!(text));
-        }
-        "tool_file" => {
-            controller.set_input("tool_path", json!(text));
         }
         _ => {
             controller.set_input("installer", json!(text));
@@ -165,20 +170,52 @@ fn open_path(state: State<'_, Shared>, path: String) -> Value {
 }
 
 #[tauri::command]
-fn log(state: State<'_, Shared>, action: String, value: Option<Value>) -> Value {
+fn log_toggle(state: State<'_, Shared>) -> Value {
     let mut controller = lock(&state);
-    match action.as_str() {
-        "clear" => {
-            controller.clear_log();
+    controller.toggle_log();
+    payload(&controller)
+}
+
+#[tauri::command]
+fn log_autoscroll(state: State<'_, Shared>, value: bool) -> Value {
+    let mut controller = lock(&state);
+    controller.set_autoscroll(value);
+    payload(&controller)
+}
+
+#[tauri::command]
+fn log_clear(state: State<'_, Shared>) -> Value {
+    let mut controller = lock(&state);
+    controller.clear_log();
+    payload(&controller)
+}
+
+#[tauri::command]
+fn log_text(state: State<'_, Shared>) -> Value {
+    json!({ "text": lock(&state).log_text() })
+}
+
+/// 保存日志：对话框在这里开，落盘在 Controller 里（与 Python 版同一分工）。
+#[tauri::command]
+fn log_save(app: tauri::AppHandle, state: State<'_, Shared>) -> Value {
+    let mut controller = lock(&state);
+    match ask_path(&app, "save_log") {
+        Some(path) => {
+            controller.save_log(&path);
         }
-        "toggle" => {
-            controller.toggle_log();
-        }
-        "autoscroll" => {
-            controller.set_autoscroll(value.as_ref().and_then(Value::as_bool).unwrap_or(true));
-        }
-        "text" => return json!({"text": controller.log_text()}),
-        _ => {}
+        None => return payload(&controller),
+    }
+    payload(&controller)
+}
+
+/// 剪贴板由前端 navigator.clipboard 负责（见 app.js），这里只给成功横幅。
+#[tauri::command]
+fn log_copy(state: State<'_, Shared>, ok: Option<bool>) -> Value {
+    let mut controller = lock(&state);
+    if ok.unwrap_or(true) {
+        controller.log_copied_banner();
+    } else {
+        controller.set_banner(Some("clipboard unavailable"), "err", "");
     }
     payload(&controller)
 }
@@ -245,17 +282,8 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            snapshot,
-            strings,
-            set_lang,
-            set_input,
-            refresh,
-            start,
-            run_tool,
-            cancel,
-            pick,
-            open_path,
-            log
+            snapshot, strings, set_lang, set_input, refresh, start, run_tool, cancel, pick, open_path,
+            log_toggle, log_autoscroll, log_clear, log_text, log_save, log_copy
         ])
         .run(tauri::generate_context!())
         .expect("error while running ChromiumPortableBuilder");

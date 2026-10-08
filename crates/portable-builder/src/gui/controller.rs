@@ -196,7 +196,11 @@ impl Controller {
     }
 
     pub fn workdir(&self) -> PathBuf {
-        let raw = self.vars["workdir"].as_str().unwrap_or("").trim().to_string();
+        let raw = self.vars["workdir"]
+            .as_str()
+            .unwrap_or("")
+            .trim()
+            .to_string();
         if raw.is_empty() {
             super::default_workdir()
         } else {
@@ -222,7 +226,9 @@ impl Controller {
             return json!([]);
         }
         let mut entries: Vec<PathBuf> = match std::fs::read_dir(&folder) {
-            Ok(reader) => reader.filter_map(|item| item.ok().map(|e| e.path())).collect(),
+            Ok(reader) => reader
+                .filter_map(|item| item.ok().map(|e| e.path()))
+                .collect(),
             Err(_) => return json!([]),
         };
         entries.sort_by_key(|path| {
@@ -355,7 +361,10 @@ impl Controller {
     /// invoke("refresh")：重读目录表 + 重扫安装包目录（gui.py 的两个 refresh_*）。
     pub fn refresh(&mut self) -> Value {
         let choices = super::target_choices();
-        self.append_log(&format!("[INFO] catalog targets: {}\n", choices.len()), None);
+        self.append_log(
+            &format!("[INFO] catalog targets: {}\n", choices.len()),
+            None,
+        );
         self.state()
     }
 
@@ -405,7 +414,11 @@ impl Controller {
 
     /// gui.py:_require_workdir —— 失败就地提示，不弹窗。
     fn require_workdir(&mut self) -> Option<PathBuf> {
-        let raw = self.vars["workdir"].as_str().unwrap_or("").trim().to_string();
+        let raw = self.vars["workdir"]
+            .as_str()
+            .unwrap_or("")
+            .trim()
+            .to_string();
         if raw.is_empty() {
             let text = self.t("gui_need_workdir");
             self.set_banner(Some(&text), "warn", "");
@@ -418,11 +431,7 @@ impl Controller {
             super::app_root().join(expanded)
         };
         if let Err(err) = std::fs::create_dir_all(&workdir) {
-            self.set_banner(
-                Some(&err.to_string()),
-                "err",
-                &workdir.to_string_lossy(),
-            );
+            self.set_banner(Some(&err.to_string()), "err", &workdir.to_string_lossy());
             return None;
         }
         self.vars
@@ -439,11 +448,7 @@ impl Controller {
         self.prepare_workspace(Some(workdir));
         let plan = plan_build(&self.current_request());
         self.plan = plan.clone();
-        self.plan_titles = plan
-            .steps
-            .iter()
-            .map(|step| self.t(&step.title))
-            .collect();
+        self.plan_titles = plan.steps.iter().map(|step| self.t(&step.title)).collect();
         if !plan.ok() {
             let text = self.t(&plan.error_key);
             let detail = plan.error_detail.clone();
@@ -459,7 +464,11 @@ impl Controller {
             return self.state();
         };
         self.prepare_workspace(Some(workdir.clone()));
-        let mut path = self.vars["tool_path"].as_str().unwrap_or("").trim().to_string();
+        let mut path = self.vars["tool_path"]
+            .as_str()
+            .unwrap_or("")
+            .trim()
+            .to_string();
         if !path.is_empty() && !Path::new(&path).is_absolute() {
             path = workdir.join(&path).to_string_lossy().into_owned();
         }
@@ -506,12 +515,16 @@ impl Controller {
         self.set_status(status, "run");
         self.task_title = first;
         let total = self.plan_titles.len().to_string();
-        self.task_meta = self.tf("gui_task_step", &[("index", "0"), ("total", total.as_str())]);
+        self.task_meta = self.tf(
+            "gui_task_step",
+            &[("index", "0"), ("total", total.as_str())],
+        );
         self.elapsed_text = String::new();
         self.result_text = String::new();
         self.cancel_armed = false;
         self.set_banner(None, "info", "");
-        self.runner.start(self.plan.steps.clone(), self.plan_titles.clone());
+        self.runner
+            .start(self.plan.steps.clone(), self.plan_titles.clone());
         let state = self.state();
         self.emit_event(json!({"kind": "state", "state": state}));
         self.tick_clock();
@@ -563,7 +576,7 @@ impl Controller {
     pub fn pump_once(&mut self) -> usize {
         let handled = self.drain_once();
         self.tick_counter += 1;
-        if self.runner.running() && self.tick_counter % 12 == 0 {
+        if self.runner.running() && self.tick_counter.is_multiple_of(12) {
             self.tick_clock();
             let state = self.state();
             self.emit_event(json!({"kind": "state", "state": state}));
@@ -584,7 +597,10 @@ impl Controller {
         let total_text = total.to_string();
         self.task_meta = self.tf(
             "gui_task_step",
-            &[("index", index_text.as_str()), ("total", total_text.as_str())],
+            &[
+                ("index", index_text.as_str()),
+                ("total", total_text.as_str()),
+            ],
         );
         self.append_log(
             &format!("\n===== [{index}/{total}] {title} =====\n"),
@@ -651,7 +667,7 @@ impl Controller {
                         }
                     }
                 }
-                newest.sort_by(|a, b| a.0.cmp(&b.0));
+                newest.sort_by_key(|entry| entry.0);
                 if let Some((_, path)) = newest.pop() {
                     let name = path
                         .file_name()
@@ -876,7 +892,10 @@ mod tests {
         assert_eq!(state["plan"]["error_key"], "");
         assert_eq!(state["status"]["tone"], "idle");
         assert_eq!(state["banner"]["tone"], "info");
-        assert!(state["artifact"]["release"].as_str().unwrap().ends_with("release"));
+        assert!(state["artifact"]["release"]
+            .as_str()
+            .unwrap()
+            .ends_with("release"));
     }
 
     /// 工作区准备：installers/、README.txt、folder 默认值（gui.py:_prepare_workspace）。
@@ -937,10 +956,7 @@ mod tests {
         let state = controller.refresh_plan(None);
         assert_eq!(state["plan"]["error_key"], "gui_need_installer");
         assert_eq!(state["banner"]["tone"], "warn");
-        assert_eq!(
-            state["banner"]["text"],
-            controller.t("gui_need_installer")
-        );
+        assert_eq!(state["banner"]["text"], controller.t("gui_need_installer"));
     }
 
     /// 真跑一个子进程走完 start → step → done：状态、计时、结果提示都要落地。
@@ -968,7 +984,9 @@ mod tests {
         assert_eq!(controller.status_tone, "ok");
         let template = controller.tf("gui_status_done", &[("seconds", "0.1s")]);
         assert!(
-            controller.status_text.starts_with(template.split("0.1s").next().unwrap()),
+            controller
+                .status_text
+                .starts_with(template.split("0.1s").next().unwrap()),
             "状态串: {}",
             controller.status_text
         );
@@ -1027,7 +1045,9 @@ mod tests {
         assert!(controller.log_text().starts_with("line-500\n"));
         controller.clear_log();
         assert_eq!(controller.log_lines.len(), 1);
-        assert!(controller.log_text().contains(&controller.t("gui_log_empty")));
+        assert!(controller
+            .log_text()
+            .contains(&controller.t("gui_log_empty")));
     }
 
     /// 事件出口：状态/日志/步骤/完成四类事件都要带着 kind 发出去。

@@ -3,14 +3,14 @@
 //! 界面侧按 80ms 批量取走（逐行推会在解包几千行日志时把 IPC 打满）。
 
 use std::fs;
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
-#[cfg(windows)]
-use std::os::windows::process::CommandExt;
 use std::time::{Duration, Instant};
 
 use super::plan::Step;
@@ -40,10 +40,8 @@ pub enum JobEvent {
 pub fn list2cmdline(args: &[String]) -> String {
     let mut parts: Vec<String> = Vec::new();
     for arg in args {
-        let needs_quote = arg.is_empty()
-            || arg
-                .chars()
-                .any(|ch| ch == ' ' || ch == '\t' || ch == '"');
+        let needs_quote =
+            arg.is_empty() || arg.chars().any(|ch| ch == ' ' || ch == '\t' || ch == '"');
         if !needs_quote {
             parts.push(arg.clone());
             continue;
@@ -79,10 +77,7 @@ pub fn list2cmdline(args: &[String]) -> String {
 fn log_file_name() -> PathBuf {
     static COUNTER: AtomicU64 = AtomicU64::new(0);
     let unique = COUNTER.fetch_add(1, Ordering::Relaxed);
-    std::env::temp_dir().join(format!(
-        "cpb-{}-{unique}",
-        std::process::id()
-    ))
+    std::env::temp_dir().join(format!("cpb-{}-{unique}", std::process::id()))
 }
 
 /// 在后台线程里顺序执行步骤（gui_runner.JobRunner）。
@@ -223,10 +218,7 @@ fn run_step(
         return 1;
     }
     let log_path = folder.join("job.log");
-    let _ = tx.send(JobEvent::Log(format!(
-        "\n$ {}\n",
-        list2cmdline(&step.cmd)
-    )));
+    let _ = tx.send(JobEvent::Log(format!("\n$ {}\n", list2cmdline(&step.cmd))));
 
     let stream = match fs::File::create(&log_path) {
         Ok(file) => file,

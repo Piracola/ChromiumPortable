@@ -81,9 +81,7 @@ pub fn locales_path() -> PathBuf {
 }
 
 pub fn catalog_path() -> PathBuf {
-    engine_root()
-        .join("catalog")
-        .join("browser_catalog.json")
+    engine_root().join("catalog").join("browser_catalog.json")
 }
 
 fn catalog_json() -> Option<Value> {
@@ -332,12 +330,27 @@ pub fn selftest(report_path: Option<&Path>) -> i32 {
         } else {
             format!("  {detail}")
         };
-        lines.push(format!("[{}] {label}{suffix}", if ok { "OK" } else { "FAIL" }));
+        lines.push(format!(
+            "[{}] {label}{suffix}",
+            if ok { "OK" } else { "FAIL" }
+        ));
     }
 
     let root = engine_root();
-    check(&mut lines, &mut healthy, "engine", true, &env!("CARGO_PKG_VERSION"));
-    check(&mut lines, &mut healthy, "engine root", root.is_dir(), &root.display().to_string());
+    check(
+        &mut lines,
+        &mut healthy,
+        "engine",
+        true,
+        env!("CARGO_PKG_VERSION"),
+    );
+    check(
+        &mut lines,
+        &mut healthy,
+        "engine root",
+        root.is_dir(),
+        &root.display().to_string(),
+    );
     for relative in [
         "7zr.exe",
         "catalog/browser_catalog.json",
@@ -435,7 +448,11 @@ mod tests {
     #[test]
     fn locale_pack_covers_required_keys() {
         let strings = crate::i18n::load_strings_default(&locales_path(), "zh-CN");
-        assert!(!strings.is_empty(), "读不到 language pack: {:?}", locales_path());
+        assert!(
+            !strings.is_empty(),
+            "读不到 language pack: {:?}",
+            locales_path()
+        );
         let missing: Vec<&str> = REQUIRED_LOCALE_KEYS
             .iter()
             .copied()

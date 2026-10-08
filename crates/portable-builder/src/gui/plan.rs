@@ -297,8 +297,7 @@ pub fn plan_tool(
 
     match tool {
         "inspect" => {
-            let mut args: Vec<&str> =
-                vec!["inspect-package", path, "--architecture", architecture];
+            let mut args: Vec<&str> = vec!["inspect-package", path, "--architecture", architecture];
             if json_output {
                 args.push("--json");
             }
@@ -355,14 +354,22 @@ pub fn plan_tool(
         "resolve" => Plan {
             steps: vec![Step::new(
                 "gui_tool_resolve",
-                engine_command(&workdir, &["resolve-upstream", "--browser", target, "--json"]),
+                engine_command(
+                    &workdir,
+                    &["resolve-upstream", "--browser", target, "--json"],
+                ),
                 workdir,
             )],
             ..Plan::default()
         },
         "verify" => {
-            let mut args: Vec<&str> =
-                vec!["--config", config_text.as_str(), "--target", target, "verify"];
+            let mut args: Vec<&str> = vec![
+                "--config",
+                config_text.as_str(),
+                "--target",
+                target,
+                "verify",
+            ];
             if no_smoke {
                 args.push("--no-smoke");
             }

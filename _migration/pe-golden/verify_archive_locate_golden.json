@@ -1,0 +1,5 @@
+{
+ "empty_error": "No archive matching ProbeBrowser_{version}_{date}.7z in C:\\Users\\NullCola\\AppData\\Local\\Temp\\cpb_vloc_x9ceuy82\\build\\assets. Present: (none)",
+ "regex_pattern": "^ProbeBrowser_\\d+(?:\\.\\d+)+_\\d{4}-\\d{2}-\\d{2}\\.7z$",
+ "selected": "ProbeBrowser_1.0.0.0_2026-07-01.7z"
+}

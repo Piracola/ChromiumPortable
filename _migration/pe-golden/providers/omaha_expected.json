@@ -1,0 +1,20 @@
+{
+ "note": "expected decode_response + get_package output for the sample XML; dl.google.com preferred over cache.pack",
+ "version": "153.6798.95.102",
+ "file_name": "83.0.4103.116_chrome_installer.exe",
+ "sha256": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcd",
+ "size": 98765432,
+ "urls_in_order": [
+  "https://dl.google.com/release2/chrome/83.0.4103.116_chrome_installer.exe",
+  "http://cache.pack.google.com/edgedl/chrome/83.0.4103.116_chrome_installer.exe"
+ ],
+ "get_package_url": "https://dl.google.com/release2/chrome/83.0.4103.116_chrome_installer.exe",
+ "quirk_notes": [
+  "urls = codebase + package_name (string concat, no slash normalization)",
+  "preferred_hosts default [\"https://dl.google.com\"], prefix match",
+  "file_name fallback \"chrome.7z.exe\" when package node name empty (get_package layer)",
+  "size must be all-digits else None (int() guarded)",
+  "missing manifest/package/url => RuntimeError with exact messages: \"No manifest found in Google Omaha response.\" / \"No package found in Google Omaha response.\" / \"No download URL found in Google Omaha response.\"",
+  "channel unknown => KeyError \"Google Omaha channel '<ch>' is not configured.\""
+ ]
+}

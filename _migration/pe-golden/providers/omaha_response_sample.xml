@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<response protocol="3.1" server="prod">
+  <daystart elapsed_seconds="3600"/>
+  <app appid="{8A69D345-D564-463C-AFF1-A69D9E530F96}" status="ok">
+    <updatecheck status="ok">
+      <manifest version="153.6798.95.102">
+        <packages>
+          <package name="83.0.4103.116_chrome_installer.exe" hash_sha256="abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcd" size="98765432" required="true"/>
+        </packages>
+        <actions>
+          <action event="0" run="83.0.4103.116_chrome_installer.exe"/>
+        </actions>
+      </manifest>
+      <urls>
+        <url codebase="https://dl.google.com/release2/chrome/"/>
+        <url codebase="http://cache.pack.google.com/edgedl/chrome/"/>
+      </urls>
+    </updatecheck>
+  </app>
+</response>

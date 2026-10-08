@@ -1,0 +1,55 @@
+{
+ "alternatives": [
+  {
+   "path": "_migration\\pe-golden\\tmp_inspect\\thorium\\layer-01-chrome.7z\\Chrome-bin\\152.0.7977.55\\pak_mingw64.exe",
+   "product": "pak_mingw64",
+   "score": 70
+  },
+  {
+   "path": "_migration\\pe-golden\\tmp_inspect\\thorium\\layer-01-chrome.7z\\Chrome-bin\\152.0.7977.55\\pak_mingw32.exe",
+   "product": "pak_mingw32",
+   "score": -45
+  },
+  {
+   "path": "_migration\\pe-golden\\tmp_inspect\\thorium\\layer-01-chrome.7z\\Chrome-bin\\152.0.7977.55\\chrome_pwa_launcher.exe",
+   "product": "Thorium",
+   "score": -70
+  },
+  {
+   "path": "_migration\\pe-golden\\tmp_inspect\\thorium\\layer-01-chrome.7z\\Chrome-bin\\152.0.7977.55\\chromedriver.exe",
+   "product": "ChromeDriver",
+   "score": -70
+  },
+  {
+   "path": "_migration\\pe-golden\\tmp_inspect\\thorium\\layer-01-chrome.7z\\Chrome-bin\\chrome_proxy.exe",
+   "product": "Thorium",
+   "score": -80
+  }
+ ],
+ "architecture": "x64",
+ "executable": "Chrome-bin/thorium.exe",
+ "layers": [
+  {
+   "depth": 0,
+   "kind": "archive",
+   "source": "thorium_AVX2_mini_installer.exe"
+  },
+  {
+   "depth": 1,
+   "kind": "nested_archive",
+   "source": "chrome.7z"
+  }
+ ],
+ "package": "bin\\thorium_AVX2_mini_installer.exe",
+ "product": "Thorium",
+ "reasons": [
+  "架构为 x64",
+  "文件名是常见浏览器主程序",
+  "产品信息表明它属于 Chromium 浏览器",
+  "原始文件名与当前文件一致",
+  "同目录存在版本资源目录",
+  "直接加载浏览器 ELF 组件"
+ ],
+ "score": 275,
+ "version": "152.0.7977.55"
+}

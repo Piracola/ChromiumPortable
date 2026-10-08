@@ -1,0 +1,286 @@
+{
+ "brave": {
+  "print_report": "[OK] 浏览器：Brave Browser\n[OK] 版本：153.1.95.102 (x64)\n[OK] 主程序：Chrome-bin/brave.exe\n[OK] 可信分：275\n[OK] 判断依据：架构为 x64；文件名是常见浏览器主程序；产品信息表明它属于 Chromium 浏览器；原始文件名与当前文件一致；同目录存在版本资源目录；直接加载浏览器 ELF 组件\n",
+  "public": {
+   "alternatives": [
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\brave\\layer-02-chrome.7z\\Chrome-bin\\153.1.95.102\\chrome_pwa_launcher.exe",
+     "product": "Brave Browser",
+     "score": -70
+    },
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\brave\\layer-02-chrome.7z\\Chrome-bin\\chrome_proxy.exe",
+     "product": "Brave Browser",
+     "score": -80
+    },
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\brave\\layer-02-chrome.7z\\Chrome-bin\\153.1.95.102\\brave_vpn_helper.exe",
+     "product": "Brave VPN Helper",
+     "score": -210
+    },
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\brave\\layer-02-chrome.7z\\Chrome-bin\\153.1.95.102\\elevation_service.exe",
+     "product": "Brave Browser",
+     "score": -210
+    },
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\brave\\layer-02-chrome.7z\\Chrome-bin\\153.1.95.102\\notification_helper.exe",
+     "product": "Brave Browser",
+     "score": -210
+    }
+   ],
+   "architecture": "x64",
+   "executable": "Chrome-bin/brave.exe",
+   "layers": [
+    {
+     "depth": 0,
+     "kind": "brave_omaha",
+     "source": "BraveBrowserStandaloneSetup.exe"
+    },
+    {
+     "depth": 1,
+     "kind": "nested_archive",
+     "source": "brave_installer.exe.{AFE6A462-C574-4B8A-AF43-4CC60DF4563B}"
+    },
+    {
+     "depth": 2,
+     "kind": "nested_archive",
+     "source": "chrome.7z"
+    }
+   ],
+   "package": "bin\\BraveBrowserStandaloneSetup.exe",
+   "product": "Brave Browser",
+   "reasons": [
+    "架构为 x64",
+    "文件名是常见浏览器主程序",
+    "产品信息表明它属于 Chromium 浏览器",
+    "原始文件名与当前文件一致",
+    "同目录存在版本资源目录",
+    "直接加载浏览器 ELF 组件"
+   ],
+   "score": 275,
+   "version": "153.1.95.102"
+  }
+ },
+ "csex": {
+  "print_report": "[OK] 浏览器：360极速浏览器X\n[OK] 版本：23.1.1253.64 (x64)\n[OK] 主程序：Chrome-bin/360chromex.exe\n[OK] 可信分：220\n[OK] 判断依据：架构为 x64；文件名是常见浏览器主程序；产品信息表明它属于 Chromium 浏览器；原始文件名与当前文件一致；同目录存在版本资源目录\n",
+  "public": {
+   "alternatives": [
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\csex\\layer-01-chrome.7z\\Chrome-bin\\23.1.1253.64\\360bdoctor.exe",
+     "product": "360BDoctor Module",
+     "score": -30
+    },
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\csex\\layer-01-chrome.7z\\Chrome-bin\\23.1.1253.64\\safehp.exe",
+     "product": "360安全浏览器",
+     "score": -30
+    },
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\csex\\layer-01-chrome.7z\\Chrome-bin\\23.1.1253.64\\360BDoctorExt\\bin\\360FeedBack.exe",
+     "product": "360反馈建议",
+     "score": -85
+    },
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\csex\\layer-01-chrome.7z\\Chrome-bin\\23.1.1253.64\\win_clang_x86\\360chromeie.exe",
+     "product": "360极速浏览器",
+     "score": -110
+    },
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\csex\\layer-01-chrome.7z\\Chrome-bin\\23.1.1253.64\\installer\\SodaDownloader.exe",
+     "product": "苏打办公下载器",
+     "score": -155
+    }
+   ],
+   "architecture": "x64",
+   "executable": "Chrome-bin/360chromex.exe",
+   "layers": [
+    {
+     "depth": 0,
+     "kind": "archive",
+     "source": "360csex_23.1.1253.64.exe"
+    },
+    {
+     "depth": 1,
+     "kind": "nested_archive",
+     "source": "chrome.7z"
+    }
+   ],
+   "package": "bin\\360csex_23.1.1253.64.exe",
+   "product": "360极速浏览器X",
+   "reasons": [
+    "架构为 x64",
+    "文件名是常见浏览器主程序",
+    "产品信息表明它属于 Chromium 浏览器",
+    "原始文件名与当前文件一致",
+    "同目录存在版本资源目录"
+   ],
+   "score": 220,
+   "version": "23.1.1253.64"
+  }
+ },
+ "opera": {
+  "print_report": "[OK] 浏览器：Opera Internet Browser\n[OK] 版本：135.0.5973.92 (x64)\n[OK] 主程序：opera.exe\n[OK] 可信分：250\n[OK] 判断依据：架构为 x64；文件名是常见浏览器主程序；产品信息表明它属于 Chromium 浏览器；同目录存在 Chromium 核心文件；直接加载浏览器 ELF 组件\n",
+  "public": {
+   "alternatives": [
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\opera\\layer-00-package\\opera_gx_splash.exe",
+     "product": "opera_gx_splash",
+     "score": 50
+    },
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\opera\\layer-01-assistant_package\\browser_assistant.exe",
+     "product": "Opera Browser Assistant",
+     "score": 40
+    },
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\opera\\layer-00-package\\installer_helper_64.exe",
+     "product": "installer_helper_64",
+     "score": -130
+    },
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\opera\\layer-00-package\\notification_helper.exe",
+     "product": "Opera",
+     "score": -230
+    },
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\opera\\layer-00-package\\installer.exe",
+     "product": "Opera Installer",
+     "score": -245
+    }
+   ],
+   "architecture": "x64",
+   "executable": "opera.exe",
+   "layers": [
+    {
+     "depth": 0,
+     "kind": "archive",
+     "source": "Opera_135.0.5973.92_Setup_x64.exe"
+    },
+    {
+     "depth": 1,
+     "kind": "nested_archive",
+     "source": "assistant_package"
+    }
+   ],
+   "package": "bin\\Opera_135.0.5973.92_Setup_x64.exe",
+   "product": "Opera Internet Browser",
+   "reasons": [
+    "架构为 x64",
+    "文件名是常见浏览器主程序",
+    "产品信息表明它属于 Chromium 浏览器",
+    "同目录存在 Chromium 核心文件",
+    "直接加载浏览器 ELF 组件"
+   ],
+   "score": 250,
+   "version": "135.0.5973.92"
+  }
+ },
+ "seven_zip_resolved": "7zr.exe",
+ "thorium": {
+  "print_report": "[OK] 浏览器：Thorium\n[OK] 版本：152.0.7977.55 (x64)\n[OK] 主程序：Chrome-bin/thorium.exe\n[OK] 可信分：275\n[OK] 判断依据：架构为 x64；文件名是常见浏览器主程序；产品信息表明它属于 Chromium 浏览器；原始文件名与当前文件一致；同目录存在版本资源目录；直接加载浏览器 ELF 组件\n",
+  "public": {
+   "alternatives": [
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\thorium\\layer-01-chrome.7z\\Chrome-bin\\152.0.7977.55\\pak_mingw64.exe",
+     "product": "pak_mingw64",
+     "score": 70
+    },
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\thorium\\layer-01-chrome.7z\\Chrome-bin\\152.0.7977.55\\pak_mingw32.exe",
+     "product": "pak_mingw32",
+     "score": -45
+    },
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\thorium\\layer-01-chrome.7z\\Chrome-bin\\152.0.7977.55\\chrome_pwa_launcher.exe",
+     "product": "Thorium",
+     "score": -70
+    },
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\thorium\\layer-01-chrome.7z\\Chrome-bin\\152.0.7977.55\\chromedriver.exe",
+     "product": "ChromeDriver",
+     "score": -70
+    },
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\thorium\\layer-01-chrome.7z\\Chrome-bin\\chrome_proxy.exe",
+     "product": "Thorium",
+     "score": -80
+    }
+   ],
+   "architecture": "x64",
+   "executable": "Chrome-bin/thorium.exe",
+   "layers": [
+    {
+     "depth": 0,
+     "kind": "archive",
+     "source": "thorium_AVX2_mini_installer.exe"
+    },
+    {
+     "depth": 1,
+     "kind": "nested_archive",
+     "source": "chrome.7z"
+    }
+   ],
+   "package": "bin\\thorium_AVX2_mini_installer.exe",
+   "product": "Thorium",
+   "reasons": [
+    "架构为 x64",
+    "文件名是常见浏览器主程序",
+    "产品信息表明它属于 Chromium 浏览器",
+    "原始文件名与当前文件一致",
+    "同目录存在版本资源目录",
+    "直接加载浏览器 ELF 组件"
+   ],
+   "score": 275,
+   "version": "152.0.7977.55"
+  }
+ },
+ "vivaldi": {
+  "print_report": "[OK] 浏览器：Vivaldi\n[OK] 版本：8.2.4133.52 (x64)\n[OK] 主程序：Vivaldi-bin/vivaldi.exe\n[OK] 可信分：275\n[OK] 判断依据：架构为 x64；文件名是常见浏览器主程序；产品信息表明它属于 Chromium 浏览器；原始文件名与当前文件一致；同目录存在版本资源目录；直接加载浏览器 ELF 组件\n",
+  "public": {
+   "alternatives": [
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\vivaldi\\layer-01-vivaldi.7z\\Vivaldi-bin\\vivaldi_proxy.exe",
+     "product": "Vivaldi",
+     "score": -80
+    },
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\vivaldi\\layer-01-vivaldi.7z\\Vivaldi-bin\\8.2.4133.52\\notification_helper.exe",
+     "product": "Vivaldi",
+     "score": -210
+    },
+    {
+     "path": "_migration\\pe-golden\\tmp_inspect\\vivaldi\\layer-01-vivaldi.7z\\Vivaldi-bin\\update_notifier.exe",
+     "product": "Vivaldi update notifier",
+     "score": -220
+    }
+   ],
+   "architecture": "x64",
+   "executable": "Vivaldi-bin/vivaldi.exe",
+   "layers": [
+    {
+     "depth": 0,
+     "kind": "archive",
+     "source": "Vivaldi.8.2.4133.52.x64.exe"
+    },
+    {
+     "depth": 1,
+     "kind": "nested_archive",
+     "source": "vivaldi.7z"
+    }
+   ],
+   "package": "bin\\Vivaldi.8.2.4133.52.x64.exe",
+   "product": "Vivaldi",
+   "reasons": [
+    "架构为 x64",
+    "文件名是常见浏览器主程序",
+    "产品信息表明它属于 Chromium 浏览器",
+    "原始文件名与当前文件一致",
+    "同目录存在版本资源目录",
+    "直接加载浏览器 ELF 组件"
+   ],
+   "score": 275,
+   "version": "8.2.4133.52"
+  }
+ }
+}

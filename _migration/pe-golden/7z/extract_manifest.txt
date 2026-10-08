@@ -1,0 +1,3 @@
+extracted\chrome++.defaults.ini  2598
+extracted\chrome++.ini  16088
+extracted\version.txt  8

@@ -1,0 +1,54 @@
+{
+ "alternatives": [
+  {
+   "path": "_migration\\pe-golden\\tmp_inspect\\csex\\layer-01-chrome.7z\\Chrome-bin\\23.1.1253.64\\360bdoctor.exe",
+   "product": "360BDoctor Module",
+   "score": -30
+  },
+  {
+   "path": "_migration\\pe-golden\\tmp_inspect\\csex\\layer-01-chrome.7z\\Chrome-bin\\23.1.1253.64\\safehp.exe",
+   "product": "360安全浏览器",
+   "score": -30
+  },
+  {
+   "path": "_migration\\pe-golden\\tmp_inspect\\csex\\layer-01-chrome.7z\\Chrome-bin\\23.1.1253.64\\360BDoctorExt\\bin\\360FeedBack.exe",
+   "product": "360反馈建议",
+   "score": -85
+  },
+  {
+   "path": "_migration\\pe-golden\\tmp_inspect\\csex\\layer-01-chrome.7z\\Chrome-bin\\23.1.1253.64\\win_clang_x86\\360chromeie.exe",
+   "product": "360极速浏览器",
+   "score": -110
+  },
+  {
+   "path": "_migration\\pe-golden\\tmp_inspect\\csex\\layer-01-chrome.7z\\Chrome-bin\\23.1.1253.64\\installer\\SodaDownloader.exe",
+   "product": "苏打办公下载器",
+   "score": -155
+  }
+ ],
+ "architecture": "x64",
+ "executable": "Chrome-bin/360chromex.exe",
+ "layers": [
+  {
+   "depth": 0,
+   "kind": "archive",
+   "source": "360csex_23.1.1253.64.exe"
+  },
+  {
+   "depth": 1,
+   "kind": "nested_archive",
+   "source": "chrome.7z"
+  }
+ ],
+ "package": "bin\\360csex_23.1.1253.64.exe",
+ "product": "360极速浏览器X",
+ "reasons": [
+  "架构为 x64",
+  "文件名是常见浏览器主程序",
+  "产品信息表明它属于 Chromium 浏览器",
+  "原始文件名与当前文件一致",
+  "同目录存在版本资源目录"
+ ],
+ "score": 220,
+ "version": "23.1.1253.64"
+}

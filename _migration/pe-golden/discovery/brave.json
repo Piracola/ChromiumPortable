@@ -1,0 +1,60 @@
+{
+ "alternatives": [
+  {
+   "path": "_migration\\pe-golden\\tmp_inspect\\brave\\layer-02-chrome.7z\\Chrome-bin\\153.1.95.102\\chrome_pwa_launcher.exe",
+   "product": "Brave Browser",
+   "score": -70
+  },
+  {
+   "path": "_migration\\pe-golden\\tmp_inspect\\brave\\layer-02-chrome.7z\\Chrome-bin\\chrome_proxy.exe",
+   "product": "Brave Browser",
+   "score": -80
+  },
+  {
+   "path": "_migration\\pe-golden\\tmp_inspect\\brave\\layer-02-chrome.7z\\Chrome-bin\\153.1.95.102\\brave_vpn_helper.exe",
+   "product": "Brave VPN Helper",
+   "score": -210
+  },
+  {
+   "path": "_migration\\pe-golden\\tmp_inspect\\brave\\layer-02-chrome.7z\\Chrome-bin\\153.1.95.102\\elevation_service.exe",
+   "product": "Brave Browser",
+   "score": -210
+  },
+  {
+   "path": "_migration\\pe-golden\\tmp_inspect\\brave\\layer-02-chrome.7z\\Chrome-bin\\153.1.95.102\\notification_helper.exe",
+   "product": "Brave Browser",
+   "score": -210
+  }
+ ],
+ "architecture": "x64",
+ "executable": "Chrome-bin/brave.exe",
+ "layers": [
+  {
+   "depth": 0,
+   "kind": "brave_omaha",
+   "source": "BraveBrowserStandaloneSetup.exe"
+  },
+  {
+   "depth": 1,
+   "kind": "nested_archive",
+   "source": "brave_installer.exe.{AFE6A462-C574-4B8A-AF43-4CC60DF4563B}"
+  },
+  {
+   "depth": 2,
+   "kind": "nested_archive",
+   "source": "chrome.7z"
+  }
+ ],
+ "package": "bin\\BraveBrowserStandaloneSetup.exe",
+ "product": "Brave Browser",
+ "reasons": [
+  "架构为 x64",
+  "文件名是常见浏览器主程序",
+  "产品信息表明它属于 Chromium 浏览器",
+  "原始文件名与当前文件一致",
+  "同目录存在版本资源目录",
+  "直接加载浏览器 ELF 组件"
+ ],
+ "score": 275,
+ "version": "153.1.95.102"
+}

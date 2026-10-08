@@ -955,6 +955,14 @@ pub fn finalize(target: &Value, workdir: &Path, staged: &Staged) -> Result<PathB
 
     std::fs::create_dir_all(&release_dir)?;
     remove_path(&final_app_dir);
+    if final_app_dir.exists() {
+        // remove_path 重试后仍删不掉（句柄被长期占用）：给出指向残骸的明确错误，
+        // 而不是让下面的 rename 报一个含糊的 os error 145。
+        return Err(anyhow::anyhow!(
+            "无法清理旧的输出目录（可能被杀毒软件或资源管理器占用）: {}",
+            final_app_dir.display()
+        ));
+    }
     std::fs::rename(&staged.app_root, &final_app_dir)?;
 
     std::fs::write(final_app_dir.join("version.txt"), &staged.version)?;

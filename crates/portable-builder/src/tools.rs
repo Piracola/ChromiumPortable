@@ -19,6 +19,7 @@
 use std::fs;
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 use std::process::Command;
 
 use anyhow::{anyhow, bail, Result};
@@ -572,9 +573,20 @@ pub fn find_version_dir(root: &Path, preferred_version: Option<&str>) -> Option<
 
 /// Port of tools.py::remove_path - dirs are removed recursively, files unlink.
 /// Missing paths are a no-op, like Python's branch structure.
+///
+/// Windows 上刚解出的 exe 常被杀软/索引器抓着句柄，remove_dir_all 会瞬时
+/// os error 145/32；重试几轮再放弃（Python 的 rmtree 在同一现场同样要靠
+/// onerror 兜）。静默吞掉的错误与 Python 一致——调用方随后 rename/重建会
+/// 把不可删除的残留暴露出来。
 pub fn remove_path(path: &Path) {
     if path.is_dir() {
-        let _ = fs::remove_dir_all(path);
+        for attempt in 0..4 {
+            match fs::remove_dir_all(path) {
+                Ok(()) => return,
+                Err(_) if attempt < 3 => std::thread::sleep(Duration::from_millis(300)),
+                Err(_) => return,
+            }
+        }
     } else if path.exists() {
         let _ = fs::remove_file(path);
     }

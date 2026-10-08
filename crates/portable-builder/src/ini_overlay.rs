@@ -155,7 +155,9 @@ fn decode_python_utf16(data: &[u8]) -> Option<String> {
         _ => (true, data),
     };
     let units: Vec<u16> = payload
-        .chunks_exact(2)
+        .as_chunks::<2>()
+        .0
+        .iter()
         .map(|pair| {
             if little_endian {
                 u16::from_le_bytes([pair[0], pair[1]])

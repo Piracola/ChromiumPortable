@@ -324,8 +324,8 @@ mod tests {
 
         for row in golden["compare"].as_array().unwrap() {
             let (a, b) = (row["a"].as_str().unwrap(), row["b"].as_str().unwrap());
-            let expected_cmp = row["cmp"].as_i64().unwrap() as i32;
-            let got = compare_versions(a, b);
+            let expected_cmp = row["cmp"].as_i64().unwrap();
+            let got = i64::from(compare_versions(a, b));
             assert_eq!(
                 got, expected_cmp,
                 "compare_versions({a}, {b}) = {got}, Python = {expected_cmp}"

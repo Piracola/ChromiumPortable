@@ -485,12 +485,14 @@ mod tests {
             ("CREATE_NEW_RELEASE".to_string(), "false".to_string()),
             ("MINOR_UPDATE".to_string(), "false".to_string()),
             ("RELEASE_ID".to_string(), "123456".to_string()),
-            ("RELEASE_TAG".to_string(), "Chrome-v153.1.95.102".to_string()),
+            (
+                "RELEASE_TAG".to_string(),
+                "Chrome-v153.1.95.102".to_string(),
+            ),
             ("CHROME_PLUS_VERSION".to_string(), "1.18.2".to_string()),
         ];
 
-        let dir = std::env::temp_dir()
-            .join(format!("pe-envjson-replay-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("pe-envjson-replay-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let env_file = dir.join("github_env.txt");
         let out_file = dir.join("github_output.txt");
@@ -517,5 +519,4 @@ mod tests {
             "GITHUB_OUTPUT bytes (incl. env_json blob) differ from Python golden"
         );
     }
-
 }

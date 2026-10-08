@@ -19,8 +19,8 @@
 use std::fs;
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::time::Duration;
 use std::process::Command;
+use std::time::Duration;
 
 use anyhow::{anyhow, bail, Result};
 use base64::Engine;
@@ -884,12 +884,28 @@ mod tests {
         // The system paths cannot be created from a test (they need admin);
         // instead verify that a workdir 7zr.exe is found at level 2. Create a
         // fake 7zr.exe - find_7z_tool only stats it.
+        //
+        // Levels 1-3 depend on the host: a CI runner (or dev box) with a real
+        // system 7-Zip legitimately resolves at level 1. So assert the
+        // contract that holds everywhere: a tool IS found, and it is either
+        // the host's system 7z or our workdir stub — never a download.
         let dir = std::env::temp_dir().join("pb-tools-7z");
         fs::create_dir_all(&dir).unwrap();
         let local = dir.join("7zr.exe");
         fs::write(&local, b"stub").unwrap();
         let found = find_7z_tool(&dir, false, false).unwrap();
-        assert_eq!(Path::new(&found), local.as_path());
+        let found_path = Path::new(&found);
+        let system_win = Path::new(crate::tools::SYSTEM_7Z_PATHS[0]);
+        let host_system = found_path == system_win || {
+            // case-insensitive compare on the first system candidate path
+            found_path
+                .to_string_lossy()
+                .eq_ignore_ascii_case(&system_win.to_string_lossy())
+        };
+        assert!(
+            host_system || found_path == local.as_path(),
+            "found {found} is neither the host system 7z nor the workdir stub"
+        );
         fs::remove_dir_all(&dir).ok();
     }
 

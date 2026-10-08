@@ -745,6 +745,39 @@ fn collect_files(root: &Path) -> Vec<PathBuf> {
 
 /// builder.py::inject_dll - setdll /t probe, /d:<relpath> injection,
 /// portable-import assertion, backup + tool cleanup.
+/// `os.path.relpath(dll, exe_dir)` for the setdll `/d:` argument (Python
+/// builder.py). Walk both component lists to their common ancestor, emit `..`
+/// for each exe-dir level below it, then the remaining dll components.
+///
+/// A plain `strip_prefix` is wrong whenever the DLL is not a descendant of the
+/// exe dir — the chrome_stable shape (exe at `App\<ver>\chrome.exe`, dll at
+/// `App\version.dll`) — because the fallback was an ABSOLUTE path, which setdll
+/// writes verbatim into the import descriptor; verify.rs then rejects the
+/// resulting non-portable import. (review-Wave3 finding 1, HIGH.)
+fn relpath_from(dll: &Path, from_dir: &Path) -> String {
+    let dll_comps: Vec<_> = dll.components().collect();
+    let dir_comps: Vec<_> = from_dir.components().collect();
+    let mut common = 0usize;
+    while common < dll_comps.len()
+        && common < dir_comps.len()
+        && dll_comps[common] == dir_comps[common]
+    {
+        common += 1;
+    }
+    let mut rel = PathBuf::new();
+    for _ in common..dir_comps.len() {
+        rel.push("..");
+    }
+    for comp in &dll_comps[common..] {
+        rel.push(comp);
+    }
+    if rel.as_os_str().is_empty() {
+        dll.to_string_lossy().into_owned()
+    } else {
+        rel.to_string_lossy().into_owned()
+    }
+}
+
 pub fn inject_dll(target: &Value, staged: &mut Staged) -> Result<()> {
     let target_exe = match &staged.executable {
         Some(exe) => exe.clone(),
@@ -849,10 +882,7 @@ pub fn inject_dll(target: &Value, staged: &mut Staged) -> Result<()> {
         }
     };
     let dll_arg_value = if same_drive() {
-        dll_plain
-            .strip_prefix(&exe_dir_plain)
-            .map(|rel| rel.to_string_lossy().into_owned())
-            .unwrap_or_else(|_| dll_plain.to_string_lossy().into_owned())
+        relpath_from(&dll_plain, &exe_dir_plain)
     } else {
         dll_plain.to_string_lossy().into_owned()
     };
@@ -1273,6 +1303,52 @@ fn env_non_empty(name: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// review-Wave3 finding 1: the /d: argument must stay relative in every
+    /// same-root shape, including the chrome_stable one where version.dll sits
+    /// beside the version directory instead of inside it.
+    #[test]
+    fn relpath_from_matches_os_path_relpath() {
+        let cases: [(Vec<&str>, Vec<&str>, Vec<&str>); 3] = [
+            // chrome_stable: exe at App\<ver>\chrome.exe, dll at App\version.dll
+            (
+                vec!["App", "version.dll"],
+                vec!["App", "120.0.1", "chrome"],
+                vec!["..", "..", "version.dll"],
+            ),
+            // dll inside the exe dir -> bare name
+            (
+                vec!["App", "v", "version.dll"],
+                vec!["App", "v"],
+                vec!["version.dll"],
+            ),
+            // sibling dirs -> single hop up
+            (
+                vec!["App", "bin", "version.dll"],
+                vec!["App", "v"],
+                vec!["..", "bin", "version.dll"],
+            ),
+        ];
+        for (dll_parts, dir_parts, want_parts) in cases {
+            let mut dll = PathBuf::new();
+            for p in &dll_parts {
+                dll.push(p);
+            }
+            let mut dir = PathBuf::new();
+            for p in &dir_parts {
+                dir.push(p);
+            }
+            let mut want = PathBuf::new();
+            for p in &want_parts {
+                want.push(p);
+            }
+            assert_eq!(
+                relpath_from(&dll, &dir),
+                want.to_string_lossy(),
+                "{dll:?} from {dir:?}"
+            );
+        }
+    }
 
     /// Golden: build_context_reference.json safe_output (Python _safe_output_name).
     #[test]

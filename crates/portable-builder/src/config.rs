@@ -157,12 +157,33 @@ pub fn get_target(config: &Value, target_name: &str) -> Result<Value, ConfigErro
     };
 
     // Python: target = dict(targets[target_name]) - a copy, never a reference.
+    // dict() RAISES on non-mapping values (ValueError for str, TypeError for
+    // None/bool/list); a scalar target entry must be rejected here, not passed
+    // through (review-B1 finding 1, migration doc S4.1 entry validation).
     let mut target = source.clone();
-    if let Value::Object(map) = &mut target {
-        // Python: target.setdefault("target", target_name) - keep an existing
-        // value, inject the queried name only when the key is absent.
-        map.entry("target".to_string())
-            .or_insert_with(|| Value::String(target_name.to_string()));
+    match &mut target {
+        Value::Object(map) => {
+            // Python: target.setdefault("target", target_name) - keep an existing
+            // value, inject the queried name only when the key is absent.
+            map.entry("target".to_string())
+                .or_insert_with(|| Value::String(target_name.to_string()));
+        }
+        other => {
+            return Err(ConfigError::Schema {
+                name: target_name.to_string(),
+                detail: format!(
+                    "target entry must be a mapping (object), got {}",
+                    match other {
+                        Value::Null => "null".to_string(),
+                        Value::Bool(b) => format!("boolean {b}"),
+                        Value::Number(n) => format!("number {n}"),
+                        Value::String(s) => format!("string {s:?}"),
+                        Value::Array(_) => "array".to_string(),
+                        Value::Object(_) => unreachable!(),
+                    }
+                ),
+            });
+        }
     }
     Ok(target)
 }
@@ -329,12 +350,31 @@ mod tests {
     use serde_json::json;
 
     /// Isolated temp dir keyed by pid + test-unique file name.
-    fn temp_file(name: &str, content: &str) -> std::path::PathBuf {
+    /// The returned guard removes the whole directory on drop (review-B1
+    /// finding 3: no %TEMP% residue across repeated test runs).
+    struct TempGuard {
+        dir: std::path::PathBuf,
+    }
+
+    impl TempGuard {
+        fn file(&self, name: &str, content: &str) -> std::path::PathBuf {
+            std::fs::write(self.dir.join(name), content).expect("write temp test file");
+            self.dir.join(name)
+        }
+    }
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.dir);
+        }
+    }
+
+    fn temp_file(name: &str, content: &str) -> (TempGuard, std::path::PathBuf) {
         let dir = std::env::temp_dir().join(format!("pe-config-tests-{}", std::process::id()));
         std::fs::create_dir_all(&dir).expect("create temp test dir");
-        let path = dir.join(name);
-        std::fs::write(&path, content).expect("write temp test file");
-        path
+        let guard = TempGuard { dir };
+        let path = guard.file(name, content);
+        (guard, path)
     }
 
     const CHROME_STABLE_TOML: &str = r#"
@@ -356,7 +396,7 @@ name = "Chrome"
 
     #[test]
     fn load_json_and_get_target_matches_golden() {
-        let path = temp_file(
+        let (_guard_i, path) = temp_file(
             "load.json",
             r#"{"targets": {"chrome_stable": {"name": "Chrome", "display_name": "Chrome++", "architecture": "x64", "layout": "move_version_root"}}}"#,
         );
@@ -377,7 +417,7 @@ name = "Chrome"
 
     #[test]
     fn load_toml_matches_golden() {
-        let path = temp_file("load.toml", CHROME_STABLE_TOML);
+        let (_guard_i, path) = temp_file("load.toml", CHROME_STABLE_TOML);
         let config = load_config(&path).expect("toml config loads");
         // Golden: config_toml_errors_golden.json toml_load.
         assert_eq!(
@@ -397,7 +437,7 @@ name = "Chrome"
 
     #[test]
     fn unsupported_suffix_error_names_file_and_formats() {
-        let path = temp_file("config.txt", "not a config");
+        let (_guard_i, path) = temp_file("config.txt", "not a config");
         let err = load_config(&path).expect_err("bad suffix must fail");
         let message = err.to_string();
         // Python: "Unsupported config format: {suffix}" - extended with the file
@@ -415,14 +455,15 @@ name = "Chrome"
 
     #[test]
     fn yaml_is_dropped_in_the_rust_port() {
-        let path = temp_file("config.yaml", "targets: {}");
+        let (_guard_i, path) = temp_file("config.yaml", "targets: {}");
         let err = load_config(&path).expect_err("yaml must fail now");
         assert!(err.to_string().contains("Unsupported config format: .yaml"));
     }
 
     #[test]
     fn unknown_target_error_text_is_exact() {
-        let config = load_config(temp_file("unknown.toml", CHROME_STABLE_TOML)).unwrap();
+        let (_guard_u, path_u) = temp_file("unknown.toml", CHROME_STABLE_TOML);
+        let config = load_config(path_u).expect("load toml");
         let err = get_target(&config, "nope").expect_err("unknown target");
         // Golden: config_toml_errors_golden.json errors.unknown_target, minus the
         // Python exception-type wrapper: KeyError("...") -> "...".
@@ -457,9 +498,24 @@ name = "Chrome"
 
         // The loaded config itself is never mutated: no "target" key
         // appears on the stored mapping after get_target runs.
-        let config = load_config(temp_file("quirk.toml", CHROME_STABLE_TOML)).unwrap();
+        let (_guard_q, path_q) = temp_file("quirk.toml", CHROME_STABLE_TOML);
+        let config = load_config(path_q).expect("load toml");
         let _ = get_target(&config, "chrome_stable").unwrap();
         assert!(config["targets"]["chrome_stable"].get("target").is_none());
+    }
+
+    #[test]
+    fn non_object_target_entry_is_rejected() {
+        // review-B1 finding 1: Python dict(targets[name]) raises on non-mapping
+        // entries; the port must reject scalars/null/arrays with a Schema error.
+        for bad in [json!("a string"), json!(null), json!(true), json!([1, 2])] {
+            let config = json!({ "targets": { "bad": bad } });
+            let err = get_target(&config, "bad").expect_err("non-object target");
+            assert!(
+                err.to_string().contains("must be a mapping"),
+                "unexpected error: {err}"
+            );
+        }
     }
 
     #[test]

@@ -1,0 +1,8 @@
+[package]
+name = "builder-app"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "ChromiumPortableBuilder GUI (Tauri 2 scaffold lands in M4)"
+
+[dependencies]

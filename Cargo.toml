@@ -1,0 +1,14 @@
+# ChromiumPortable - Rust + Tauri 2 workspace (docs/MIGRATION_RUST_TAURI.md)
+[workspace]
+resolver = "2"
+members = ["crates/portable-builder", "crates/builder-app"]
+
+[workspace.package]
+edition = "2021"
+version = "2.0.0"
+license = "MIT"
+
+[profile.release]
+lto = "thin"
+strip = true
+codegen-units = 1

@@ -207,7 +207,9 @@ pub fn verify_file_digest(path: &Path, sha256: Option<&str>, size: Option<u64>) 
         let expected = normalize_sha256(Some(sha256))?.ok_or_else(|| {
             anyhow!(
                 "SHA256 mismatch for {}: expected None, got <not verified yet>",
-                path.file_name().map(|n| n.to_string_lossy()).unwrap_or_default()
+                path.file_name()
+                    .map(|n| n.to_string_lossy())
+                    .unwrap_or_default()
             )
         })?;
         let actual = sha256_file(path)?;

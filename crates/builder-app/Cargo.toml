@@ -9,9 +9,8 @@ description = "ChromiumPortableBuilder GUI (Tauri 2)"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-portable-builder = { path = "../portable-builder" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
-tauri-plugin-opener = "2"
-serde = { version = "1", features = ["derive"] }
-serde_json = { version = "1", features = ["preserve_order"] }
+tauri-plugin-clipboard-manager = "2"

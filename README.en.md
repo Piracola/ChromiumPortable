@@ -55,41 +55,22 @@ These are **not** products of this project: no download-site product cards, buil
 2. Extract anywhere and copy installer packages into **`installers\`** (see `README.txt` inside).
 3. Run `builder-app.exe`:
 
-- Left-side navigation separates **Build** and **Toolbox**; the workspace sits on the right, the streaming log opens on demand at the bottom.
-- The **Pipeline** panel lays out the steps your current selection will run (prepare → build → 7z → verify for online + archive) before you press anything, and tracks them while it runs.
-- Source is one of three modes (single installer / a folder / an online target); the installer list reads `installers\`; architecture and the 7z toggle share one row.
+- The page reads top-to-bottom in four steps: **Source** (single installer / a folder / an online target; the installer list reads `installers\`) → **Options** (architecture, optional 7z packaging) → **Output** (working directory and artifact locations) → **Plan and run**.
+- The plan panel lays out the engine commands your selection will run (prepare → build → 7z → verify for online + archive) before you press anything; the commands you see are the commands that run.
 - **Toolbox**: static installer inspection, batch research, single-target config, upstream URL resolution, artifact verification — each runnable on its own.
-- While a task runs, Start becomes Cancel; the log expands/collapses, auto-scrolls, clears, copies, and saves. `7zr.exe` is provisioned into the working directory automatically.
-- The **working directory** holds `installers\`, `build\release\`, and `build\assets\`; it defaults to the current workspace (or the exe folder) and can be changed at any time.
+- While a task runs, Start becomes Cancel; the log auto-scrolls and can be cleared, copied, and saved. `7zr.exe` is provisioned into the working directory automatically.
+- The **working directory** holds `installers\`, `build\release\`, and `build\assets\`; it defaults to the exe folder and can be changed at any time.
 
-The UI language follows your system (Simplified Chinese / English).
+UI language: Simplified Chinese / English, switchable in the top-right corner.
 
 **Command line**
 
 ```powershell
 portable-builder.exe --workdir . build-package <installer> --archive
 portable-builder.exe --workdir . inspect-package <installer> --json
-portable-builder.exe --selftest --out selftest.txt    # GUI-side self check
 ```
 
 Building from source: install [Rust](https://rustup.rs/) and run `cargo build --release -p portable-builder -p builder-app`.
-
-- Left-side navigation separates **Build** and **Toolbox**; the workspace sits on the right, the streaming log opens on demand at the bottom.
-- The **Pipeline** panel lays out the steps your current selection will run (prepare → build → 7z → verify for online + archive) before you press anything, and tracks them while it runs.
-- Source is one of three modes (single installer / a folder / an online target); the installer list reads `installers\`; architecture and the 7z toggle share one row.
-- **Toolbox**: static installer inspection, batch research, single-target config, upstream URL resolution, Chrome++ resource sync, artifact verification — each runnable on its own.
-- While a task runs, Start becomes Cancel; the log expands/collapses, auto-scrolls, clears, copies, and saves. `7zr.exe` is provisioned into the working directory automatically.
-- The **working directory** holds `installers\`, `build\release\`, and `build\assets\`; it defaults to the current workspace (or the exe folder) and can be changed at any time.
-
-The GUI language matches the wizard (system locale, overridable with `WIZARD_LANG`).
-
-The same exe also works as a CLI:
-
-```powershell
-ChromiumPortableBuilder.exe --run-cli --help
-ChromiumPortableBuilder.exe --run-script prepare_build_target.py --browser chrome_stable --output build\selected.browser.json
-ChromiumPortableBuilder.exe --selftest --out selftest.txt    # check the bundled resources
-```
 
 Supported online browsers, CI release flow, and advanced CLI: [development docs](./docs/DEVELOPMENT.md).
 

@@ -1,0 +1,14 @@
+{
+  "$schema": "gen/schemas/desktop-schema.json",
+  "identifier": "main-capability",
+  "description": "主窗口需要的全部权限：事件、自定义命令、文件对话框、剪贴板、shell 打开目录。",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:event:default",
+    "core:event:allow-emit",
+    "core:event:allow-listen",
+    "dialog:default",
+    "clipboard-manager:allow-write-text"
+  ]
+}

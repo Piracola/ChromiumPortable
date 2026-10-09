@@ -11,13 +11,15 @@
     "windows": [
       {
         "title": "ChromiumPortable 便携构建器",
-        "width": 980,
-        "height": 720,
+        "width": 1024,
+        "height": 760,
+        "minWidth": 860,
+        "minHeight": 600,
         "resizable": true
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; font-src 'self'"
     }
   },
   "bundle": {

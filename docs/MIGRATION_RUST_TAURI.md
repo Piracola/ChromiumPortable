@@ -1,5 +1,12 @@
 # 迁移工程文档：Rust + Tauri 2
 
+> **状态（2026-10）：引擎部分仍然准确；GUI 部分（§2.2、§6、§6.2 命令面、`gui/`
+> 模块、`builder-event`、`--selftest`）描述的旧实现已整体删除重写。**
+> 新架构一句话：GUI 逻辑全部在 `crates/builder-app`（命令面 `src/main.rs` +
+> 静态渲染层 `ui/`），引擎 crate 是纯 CLI；引擎工作由 GUI 以子进程方式调用
+> `portable-builder.exe` 完成，命令序列与 CLI 完全一致。本文保留作为迁移期
+> 决策记录，GUI 细节以 `AGENTS.md`「图形界面」一节为准。
+
 本文是整个重构的施工图：迁移什么、不迁移什么、每块代码落到哪里、分几步走、
 每一步怎么验收、出问题怎么回滚。它**先于代码**存在——所有结构性决策在这里定死，
 写代码时不再重新发明。
@@ -556,6 +563,12 @@ git diff --no-index old_rel.txt new_rel.txt
 ---
 
 ## 13. 实施差异清单（相对本文件原计划，落地时改了什么）
+
+> **2026-10 追记：第 1、4 条描述的「GUI 逻辑在引擎 crate」结构已在界面重写中
+> 废止——`crates/portable-builder/src/gui/` 整体删除，GUI 逻辑全部回到
+> `crates/builder-app`（命令面 + `ui/`），引擎改为纯 CLI + GUI 子进程调用。
+> 第 3 条的结论保留：引擎命令只有子命令一种派发。**
+> 以下保留原文作为当时的决策记录。
 
 1. **GUI 逻辑落在引擎 crate**（`crates/portable-builder/src/gui/`），不是 builder-app。
    理由：这四块不依赖 tauri，放引擎里就能在 ubuntu CI 上跑 GUI 单测

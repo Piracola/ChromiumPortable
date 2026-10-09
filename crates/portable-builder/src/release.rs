@@ -53,6 +53,11 @@ pub struct AssetMatcher {
     pub predicate: Box<dyn Fn(&str) -> bool>,
 }
 
+/// The (description, predicate) pair a match-arm produces before becoming an
+/// [`AssetMatcher`]. An alias keeps the match expression readable and clippy's
+/// `type_complexity` quiet.
+type MatcherParts = (String, Box<dyn Fn(&str) -> bool>);
+
 fn target_str<'a>(target: &'a Value, key: &str) -> Option<&'a str> {
     target.get(key).and_then(Value::as_str)
 }
@@ -467,36 +472,43 @@ pub fn asset_matchers(target: &Value) -> Result<Vec<AssetMatcher>> {
                 .and_then(Value::as_str)
                 .unwrap_or("contains")
                 .to_lowercase();
-            let description;
-            let predicate: Box<dyn Fn(&str) -> bool>;
-            match mode.as_str() {
+            let (description, predicate): MatcherParts = match mode.as_str() {
                 "exact" => {
-                    description = format!("asset_match(exact):{asset_match}");
                     let needle = asset_match.to_lowercase();
-                    predicate = Box::new(move |name: &str| name.to_lowercase() == needle);
+                    (
+                        format!("asset_match(exact):{asset_match}"),
+                        Box::new(move |name: &str| name.to_lowercase() == needle),
+                    )
                 }
                 "prefix" => {
-                    description = format!("asset_match(prefix):{asset_match}");
                     let needle = asset_match.to_lowercase();
-                    predicate =
-                        Box::new(move |name: &str| name.to_lowercase().starts_with(&needle));
+                    (
+                        format!("asset_match(prefix):{asset_match}"),
+                        Box::new(move |name: &str| name.to_lowercase().starts_with(&needle)),
+                    )
                 }
                 "suffix" => {
-                    description = format!("asset_match(suffix):{asset_match}");
                     let needle = asset_match.to_lowercase();
-                    predicate = Box::new(move |name: &str| name.to_lowercase().ends_with(&needle));
+                    (
+                        format!("asset_match(suffix):{asset_match}"),
+                        Box::new(move |name: &str| name.to_lowercase().ends_with(&needle)),
+                    )
                 }
                 "regex" => {
-                    description = format!("asset_match(regex):{asset_match}");
                     let compiled = compile_pattern(&asset_match)?;
-                    predicate = Box::new(move |name: &str| compiled.is_match(name));
+                    (
+                        format!("asset_match(regex):{asset_match}"),
+                        Box::new(move |name: &str| compiled.is_match(name)),
+                    )
                 }
                 _ => {
-                    description = format!("asset_match(contains):{asset_match}");
                     let needle = asset_match.to_lowercase();
-                    predicate = Box::new(move |name: &str| name.to_lowercase().contains(&needle));
+                    (
+                        format!("asset_match(contains):{asset_match}"),
+                        Box::new(move |name: &str| name.to_lowercase().contains(&needle)),
+                    )
                 }
-            }
+            };
             matchers.push(AssetMatcher {
                 description,
                 predicate,

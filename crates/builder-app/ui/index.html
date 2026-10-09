@@ -1,90 +1,259 @@
 <!DOCTYPE html>
 <!--
-  ChromiumPortableBuilder GUI — index.html（静态页骨架）
-  提取自 portable_builder/web_ui.py 的 render()（Wave1-E，Python→Rust 迁移）。
-
-  架构：docs/MIGRATION_RUST_TAURI.md §2.2 决策 B —— 页面骨架与 CSS 原样平移，
-  动态内容改为 JS 拿状态快照后填充。设计规范（不可违背）：
-  docs/ui-architecture.md —— 唯一主角、三级表面、四级字号、五种状态。
-
-  挂载点约定（两种写法并存，语义相同）：
-    1. 空容器 + 固定 id：  app.js 按 id 填充（与 web_ui.py JS 的 getElementById
-       一致，如 #banner / #loghead / #logbox）；
-    2. {{name}} 标记：     容器由 app.js 的 render* 函数整体生成，
-       标记本身会被移除（get Mount：parent.replaceChildren / innerHTML）。
-
-  {{name}} 语义总表（app.js 已实现，源自 web_ui.py）：
-    {{topbar}}      <- _topbar(s)          顶栏：标记、标题、Tab、状态胶囊、语言按钮
-    {{page-build}}  <- _build_page(s,args) 构建页：来源卡（主角）/目标输出/更多选项折叠
-    {{page-tools}}  <- _tools_page(s,args) 工具箱页：输入卡 + 五件套命令卡
-                              （chplus 不移植：Chrome++ 更新走 CI，不进 GUI）
-    {{deck}}        <- _deck(s)            执行卡：步骤轨/开始/取消/日志折叠
-    {{banner}}      <- render() banner 分支 校验横幅（就地显示，IA §5 不弹窗）
-
-  无 CDN、无任何外部 URL、仅系统字体栈——目标机可能完全离线。
+  ChromiumPortableBuilder 渲染层（2026-10 重写版）。
+  静态资产：无构建步骤、无 CDN、无外部字体；脚本只有同目录 app.js。
+  排版原则（第一性）：一次构建 = 来源 → 选项 → 输出 → 计划执行，四问垂直排列；
+  日志是唯一弹性区域；状态常驻底栏。文案集中在 app.js 的 STR 表。
 -->
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <title>ChromiumPortable 便携构建器</title>
   <link rel="stylesheet" href="styles.css">
-  <script src="app.js" defer></script>
 </head>
 <body>
-  <div id="app">
-    <!-- @render:topbar —— app.js renderTopbar() 填充；
-             标题/副标题/Tab/状态胶囊/中EN按钮都来自 snapshot.strings -->
-    <!-- {{topbar}} -->
+  <div class="frame">
 
-    <div id="body">
-      <div id="main">
-        <div id="content">
-          <!-- @render:banner —— renderBanner()（已移植）填充：
-                   plan.error_key 非空时显示 class="banner warn" 横幅 -->
-          <div id="banner" class="banner warn" hidden></div>
-
-          <!-- @render:page-build —— renderBuildPage() 填充。
-                   页面骨架照 _build_page()：唯一编号卡（来源，主角）、
-                   目标与输出设置条、默认收起的「更多选项」折叠（IA R1/R3）。
-                   卡内的输入控件带 data-bind，执行卡按钮带 data-action。 -->
-          <!-- {{page-build}} -->
-
-          <!-- @render:page-tools —— renderToolsPage() 填充。
-                   页面骨架照 _tools_page()：输入卡 + 五件套命令卡
-                   （TOOL_GLYPHS/TOOL_ORDER 字形与顺序原样平移，chplus 已删）。 -->
-          <!-- {{page-tools}} -->
-        </div>
-
-        <div id="below">
-          <!-- @render:deck —— renderDeck() 填充（#deck 里的骨架是静态的，只填文本/可见性）。
-                   页面骨架照 _deck()：执行卡 = 步骤轨 + 开始/取消 + 日志折叠，
-                   随内容流（空闲时不再常驻占屏，IA §5）。 -->
-          <section id="deck" hidden>
-            <div class="head">
-              <span class="t"></span>
-              <span class="n" id="railcap"></span>
-            </div>
-            <div id="rail"></div>
-            <div class="result" id="result"></div>
-            <div class="acts">
-              <button type="button" class="btn primary" id="start" data-action="start_build" hidden></button>
-              <button type="button" class="btn ghost" id="cancel" data-action="cancel" hidden></button>
-              <span class="grow"></span>
-              <span class="elapsed" id="elapsed"></span>
-            </div>
-            <div id="logwrap">
-              <!-- @render:loghead —— renderLogHead()（已移植）填充：
-                       展开/收起按钮、行数计数（data-tpl 含 {count} 占位）、
-                       自动滚动/保存/复制/清空 -->
-              <div id="loghead"></div>
-              <div id="logbox" hidden></div>
-            </div>
-          </section>
-          <!-- {{deck}} -->
-        </div>
+    <!-- ═══ 页眉：品牌 / 页签 / 语言 ═══ -->
+    <header class="top">
+      <div class="brand">
+        <span class="brand-name">ChromiumPortable</span>
+        <span class="brand-sub" data-i18n="tagline">解包 + Chrome++ 注入 · 不安装、不启动浏览器</span>
       </div>
-    </div>
+      <div class="top-actions">
+        <nav class="seg seg-sm" aria-label="页面">
+          <label><input type="radio" name="page" value="build" checked><span data-i18n="navBuild">构建</span></label>
+          <label><input type="radio" name="page" value="tools"><span data-i18n="navTools">工具箱</span></label>
+        </nav>
+        <select id="lang" class="control control-sm" aria-label="Language">
+          <option value="zh">中文</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+    </header>
+
+    <div id="warn-engine" class="banner" hidden
+         data-i18n="warnEngine">同目录没有 portable-builder.exe，构建不可用。</div>
+
+    <!-- ═══ 主区 ═══ -->
+    <main class="body">
+
+      <!-- ── 页：构建 ── -->
+      <section id="page-build" class="page">
+        <div class="page-head">
+          <h1 data-i18n="buildTitle">构建便携版</h1>
+          <p class="page-desc" data-i18n="buildDesc">把安装包变成随身携带的浏览器文件夹：解包 → 注入 Chrome++ → 可选打包 7z。</p>
+        </div>
+
+        <div class="cols">
+          <!-- 左列：来源 / 选项 / 输出 -->
+          <div class="col-form">
+            <fieldset class="sect" id="fs-source">
+              <legend class="sect-k" data-i18n="sectSource">1 · 来源</legend>
+
+              <div class="seg" role="radiogroup">
+                <label><input type="radio" name="mode" value="one" checked><span data-i18n="modeOne">本机安装包</span></label>
+                <label><input type="radio" name="mode" value="folder"><span data-i18n="modeFolder">整个文件夹</span></label>
+                <label><input type="radio" name="mode" value="online"><span data-i18n="modeOnline">在线目标</span></label>
+              </div>
+
+              <!-- 来源：本机安装包 -->
+              <div class="source" id="source-one">
+                <div class="row-head">
+                  <span class="label" data-i18n="installerList">installers 文件夹</span>
+                  <span class="row-tools">
+                    <button type="button" class="btn-text" id="btn-refresh" data-i18n="refresh">刷新</button>
+                    <button type="button" class="btn-text" id="btn-open-installers" data-i18n="openInstallers">打开 installers</button>
+                  </span>
+                </div>
+                <div id="installer-list" class="picklist" role="listbox"></div>
+                <p class="hint" id="installer-empty" data-i18n="installerEmpty" hidden>installers\ 里还没有安装包</p>
+                <label class="label" for="in-installer" data-i18n="installerLabel">或直接指定路径</label>
+                <input id="in-installer" class="control" type="text" spellcheck="false"
+                       placeholder="installers\ChromeSetup.exe">
+              </div>
+
+              <!-- 来源：整个文件夹 -->
+              <div class="source" id="source-folder" hidden>
+                <label class="label" for="in-folder" data-i18n="folderLabel">安装包目录</label>
+                <div class="row">
+                  <input id="in-folder" class="control" type="text" spellcheck="false"
+                         placeholder="installers">
+                  <button type="button" class="btn btn-secondary" id="btn-browse-folder" data-i18n="browseDir">浏览文件夹…</button>
+                </div>
+                <p class="hint" data-i18n="folderHint">每个安装包各自出一份产物，互不影响。</p>
+              </div>
+
+              <!-- 来源：在线目标 -->
+              <div class="source" id="source-online" hidden>
+                <label class="label" for="target-build" data-i18n="targetLabel">目标</label>
+                <div class="row">
+                  <select id="target-build" class="control"></select>
+                </div>
+                <p class="hint" data-i18n="targetHint">目标来自目录表，由上游提供安装包。</p>
+                <label class="label" for="in-url" data-i18n="urlLabel">自定义直链（可选）</label>
+                <input id="in-url" class="control" type="text" spellcheck="false">
+                <p class="hint" data-i18n="urlHint">仅当目标没有公开安装包、或要指定具体版本时填写。</p>
+                <label class="label" for="in-local" data-i18n="localLabel">本地包（可选）</label>
+                <input id="in-local" class="control" type="text" spellcheck="false">
+                <p class="hint" data-i18n="localHint">自己准备的安装包，优先于直链。</p>
+              </div>
+            </fieldset>
+
+            <fieldset class="sect" id="fs-options">
+              <legend class="sect-k" data-i18n="sectOptions">2 · 选项</legend>
+              <div class="grid-2">
+                <div>
+                  <label class="label" for="in-arch" data-i18n="archLabel">架构</label>
+                  <select id="in-arch" class="control">
+                    <option value="x64">x64</option>
+                    <option value="x86">x86</option>
+                    <option value="arm64">arm64</option>
+                  </select>
+                </div>
+                <div class="check-block">
+                  <label class="check">
+                    <input type="checkbox" id="in-archive">
+                    <span data-i18n="archiveLabel">打包 7z</span>
+                  </label>
+                  <p class="hint" data-i18n="archiveHint">打包并做一次静态校验；关掉只留解包目录。</p>
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="sect" id="fs-output">
+              <legend class="sect-k" data-i18n="sectOutput">3 · 输出</legend>
+              <label class="label" for="in-workdir" data-i18n="workdirLabel">工作目录</label>
+              <div class="row">
+                <input id="in-workdir" class="control" type="text" readonly>
+                <button type="button" class="btn btn-secondary" id="btn-change-workdir" data-i18n="changeWorkdir">更改…</button>
+                <button type="button" class="btn btn-secondary" id="btn-open-workdir" data-i18n="open">打开</button>
+              </div>
+              <p class="hint" data-i18n="workdirHint">installers\、build\ 与 7zr.exe 都放在这里。</p>
+              <p class="hint" data-i18n="outputHint">解包目录在 build\release\，7z 在 build\assets\。</p>
+              <div class="row row-tight">
+                <button type="button" class="btn-text" id="btn-open-release" data-i18n="openRelease">打开 build\release</button>
+                <button type="button" class="btn-text" id="btn-open-assets" data-i18n="openAssets">打开 build\assets</button>
+              </div>
+            </fieldset>
+          </div>
+
+          <!-- 右列：计划与执行 -->
+          <aside class="col-run">
+            <fieldset class="sect sect-run" id="fs-run">
+              <legend class="sect-k" data-i18n="sectRun">4 · 计划与执行</legend>
+              <p class="hint" id="plan-empty" data-i18n="planIdle">选好来源后，这里显示将要执行的引擎命令。</p>
+              <ol id="plan" class="plan"></ol>
+              <div class="run-actions">
+                <button type="button" class="btn btn-primary" id="btn-start" data-i18n="start" disabled>开始构建</button>
+                <button type="button" class="btn btn-danger" id="btn-cancel" data-i18n="cancel" hidden>取消</button>
+              </div>
+            </fieldset>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ── 页：工具箱 ── -->
+      <section id="page-tools" class="page" hidden>
+        <div class="page-head">
+          <h1 data-i18n="toolsTitle">工具箱</h1>
+          <p class="page-desc" data-i18n="toolsDesc">每个命令独立运行，结果写进下方日志，不产出便携目录。</p>
+        </div>
+
+        <div class="cols cols-tools">
+          <div class="col-form">
+            <fieldset class="sect" id="fs-tool-input">
+              <legend class="sect-k" data-i18n="sectToolInput">输入</legend>
+              <label class="label" for="in-tool-path" data-i18n="toolPathLabel">安装包或文件夹</label>
+              <div class="row">
+                <input id="in-tool-path" class="control" type="text" spellcheck="false">
+                <button type="button" class="btn btn-secondary" id="btn-tool-file" data-i18n="browseFile">浏览文件…</button>
+                <button type="button" class="btn btn-secondary" id="btn-tool-dir" data-i18n="browseDir">浏览文件夹…</button>
+              </div>
+              <p class="hint" data-i18n="toolPathHint">识别安装包用文件，批量巡检用文件夹。</p>
+              <label class="label" for="target-tool" data-i18n="targetLabel">目标</label>
+              <select id="target-tool" class="control"></select>
+              <div class="row row-tight checks">
+                <label class="check"><input type="checkbox" id="in-tool-json"><span data-i18n="jsonOpt">JSON 输出</span></label>
+                <label class="check"><input type="checkbox" id="in-tool-nosmoke" checked><span data-i18n="noSmokeOpt">跳过冒烟（静态校验）</span></label>
+              </div>
+            </fieldset>
+          </div>
+
+          <div class="col-form">
+            <fieldset class="sect" id="fs-tool-cmds">
+              <legend class="sect-k" data-i18n="sectToolCmds">命令</legend>
+              <div class="tool-list">
+                <div class="tool">
+                  <div class="tool-main">
+                    <span class="tool-name" data-i18n="toolInspect">识别安装包</span>
+                    <span class="tool-desc" data-i18n="toolInspectDesc">不运行安装包，解析结构并定位主程序。</span>
+                  </div>
+                  <button type="button" class="btn btn-secondary btn-run" data-tool="inspect" data-i18n="run">运行</button>
+                </div>
+                <div class="tool">
+                  <div class="tool-main">
+                    <span class="tool-name" data-i18n="toolResearch">批量巡检</span>
+                    <span class="tool-desc" data-i18n="toolResearchDesc">文件夹里每个安装包各识别一次。</span>
+                  </div>
+                  <button type="button" class="btn btn-secondary btn-run" data-tool="research" data-i18n="run">运行</button>
+                </div>
+                <div class="tool">
+                  <div class="tool-main">
+                    <span class="tool-name" data-i18n="toolPrepare">生成单目标配置</span>
+                    <span class="tool-desc" data-i18n="toolPrepareDesc">按所选目标写出 build\selected.browser.json。</span>
+                  </div>
+                  <button type="button" class="btn btn-secondary btn-run" data-tool="prepare" data-i18n="run">运行</button>
+                </div>
+                <div class="tool">
+                  <div class="tool-main">
+                    <span class="tool-name" data-i18n="toolResolve">解析上游地址</span>
+                    <span class="tool-desc" data-i18n="toolResolveDesc">取目标最新安装包的直链与校验值。</span>
+                  </div>
+                  <button type="button" class="btn btn-secondary btn-run" data-tool="resolve" data-i18n="run">运行</button>
+                </div>
+                <div class="tool">
+                  <div class="tool-main">
+                    <span class="tool-name" data-i18n="toolVerify">校验产物压缩包</span>
+                    <span class="tool-desc" data-i18n="toolVerifyDesc">按 build\selected.browser.json 校验产物。</span>
+                  </div>
+                  <button type="button" class="btn btn-secondary btn-run" data-tool="verify" data-i18n="run">运行</button>
+                </div>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── 日志（两页共用） ── -->
+      <section class="logbox">
+        <div class="log-head">
+          <span class="sect-k" data-i18n="logTitle">运行日志</span>
+          <span class="log-count" id="log-count"></span>
+          <span class="spacer"></span>
+          <label class="check check-sm">
+            <input type="checkbox" id="in-autoscroll">
+            <span data-i18n="autoscroll">自动滚动</span>
+          </label>
+          <button type="button" class="btn-text" id="btn-log-save" data-i18n="logSave">保存</button>
+          <button type="button" class="btn-text" id="btn-log-copy" data-i18n="logCopy">复制</button>
+          <button type="button" class="btn-text" id="btn-log-clear" data-i18n="logClear">清空</button>
+        </div>
+        <pre id="log" class="log" aria-live="polite"></pre>
+      </section>
+    </main>
+
+    <!-- ═══ 状态栏 ═══ -->
+    <footer class="statusbar">
+      <span class="dot" id="status-dot"></span>
+      <span id="status-text" data-i18n="statusIdle">就绪</span>
+      <span class="spacer"></span>
+      <span class="footer-note" data-i18n="footer">静态解包与注入 · 绝不运行安装包与浏览器</span>
+    </footer>
   </div>
+
+  <script src="app.js"></script>
 </body>
 </html>

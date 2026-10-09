@@ -127,7 +127,7 @@ fork 用户无需额外 secret 即可对公开上游使用；请自行评估再�
 | `cse360_stable` | 360 极速浏览器 X | `browser.360.cn/browser_download_link.js`（仅 csex） |
 | `helium_stable` | Helium | 可能需 `package_url` |
 
-图形构建器：`builder-app.exe`（Release 下载或 `cargo run -p builder-app`，交互选安装包/在线下载/架构/是否打包）。
+图形构建器：`builder-app.exe`（Release 下载或 `cargo run -p builder-app`；来源三选一：本机安装包 / 整个文件夹 / 在线目标，架构与是否打包 7z 在选项区）。
 安装包请放入专用目录 `installers\`（GUI 默认识别该目录；`bin\` 仍是开发用回归样本，不是用户投放目录）。
 GitHub 系解析（Thorium / Helium）建议设置 `GITHUB_TOKEN`，避免未认证 API 限流；Helium 常无公开 Windows 资产，请自备安装包。
 批量：`portable-builder.exe --workdir . build-packages <目录> [--archive]`。

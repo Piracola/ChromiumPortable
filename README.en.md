@@ -12,7 +12,7 @@ Shared build core for portable Chromium-family browsers
 
 **Language / 语言:** [简体中文](README.md) · **English**
 
-[Download site](https://piracola.github.io/ChromiumPortable/) · [Help](https://piracola.github.io/ChromiumPortable/) · [Development docs](./docs/DEVELOPMENT.md)
+[Download site](https://piracola.github.io/ChromiumPortable/) · [Help](https://piracola.github.io/ChromiumPortable/) · [Sibling engine](#sibling-engine) · [Development docs](./docs/DEVELOPMENT.md)
 
 </div>
 
@@ -35,6 +35,25 @@ These three channels have dedicated release repositories and ongoing builds.
 - **Helium**: stable; auto layout parsing; artifacts `Helium_*`. Official product builds live in the child repo. If upstream has no public Windows package, pass `package_url`.
 
 See the [download site](https://piracola.github.io/ChromiumPortable/) for files, versions, and checksums.
+
+## Sibling engine
+
+Chromium-family and Firefox-family builds each have their own engine. The two repositories are maintained and released independently, but they follow the same shape: unpack with 7-Zip → inject the portability runtime (Chrome++ on the Chromium side, [libportable][link-libportable] on the Gecko side) → package as 7z and publish a SHA256.
+
+| Family | Engine repository | Browsers covered |
+| --- | --- | --- |
+| **Chromium family** | [ChromiumPortable][link-repo] (this repo) | Chrome, Edge, Helium, plus personal builds such as Brave / Vivaldi |
+| **Gecko family** | [Gecko-Portable][link-gecko] | Firefox, Floorp, Zen |
+
+**Gecko-family products (built by the sibling engine)**
+
+| Product | Repository |
+| --- | --- |
+| **Firefox Portable** | [Firefox-Portable][link-gecko-firefox] |
+| **Floorp Portable** | [Floorp_portable][link-gecko-floorp] |
+| **Zen Portable** | [Zen-Portable][link-gecko-zen] |
+
+The channels under [Current products](#current-products) are built by this repository; the three Gecko channels are built by [Gecko-Portable][link-gecko].
 
 ## Using a portable build
 
@@ -118,3 +137,10 @@ Project source uses the [MIT License](./LICENSE). Chrome++, browser binaries, an
 [badge-helium-downloads]: https://img.shields.io/github/downloads/Piracola/Helium_Portable/total?style=flat-square&color=2ea043&label=
 [badge-helium-stars]: https://img.shields.io/github/stars/Piracola/Helium_Portable?style=flat-square&color=2f81f7&label=
 [link-helium]: https://github.com/Piracola/Helium_Portable/releases/latest
+
+[link-gecko]: https://github.com/Piracola/Gecko-Portable
+[link-libportable]: https://github.com/adonais/libportable
+
+[link-gecko-firefox]: https://github.com/Piracola/Firefox-Portable
+[link-gecko-floorp]: https://github.com/Piracola/Floorp_portable
+[link-gecko-zen]: https://github.com/Piracola/Zen-Portable

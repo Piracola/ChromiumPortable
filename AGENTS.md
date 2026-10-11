@@ -26,10 +26,15 @@ GUI `crates/builder-app`：Tauri 2 + WebView2）、7-Zip/`7zr.exe`（外部工�
 
 - 2026-10 重写版：**GUI 逻辑全部在 `crates/builder-app`**（`src/main.rs` 命令面 + `ui/` 静态渲染层）；引擎 crate 是纯 CLI，不含任何 GUI 代码
 - `ui/` 无构建步骤、无 CDN、无外部字体；文案集中在 `app.js` 的 STR 表（zh/en），HTML 的 `data-i18n` 键与之对应
+- 视觉系统 v4（2026-10 柔化版）：浅灰纸 + 白卡片 + 软灰线，圆角 6/10/14 + 胶囊，投影只给卡片与按钮。**灰底（`--sunken`）只用于「容纳物」——输入框、段控轨道、清单、日志；白面 + 投影只用于「承载体」——卡片、按钮**。区块标题在卡片**上方**（`<legend>` 只当分组名，卡片是里面的 `<div class="sect-box">`），15px 全黑。悬停只加深材质，不做整块黑白翻转；纯黑只留给文字与主按钮，**绝不做容器描边**。蓝色（`--select`）只许表示四件事：选中 / 聚焦 / 进行中 / 主按钮（「开始构建」），不做装饰。**说明文案（`.hint` / `.page-desc` / `.tool-desc`）统一为最浅一档灰、不带底、不响应悬停；凡是能点的都带底（`.btn` / `.btn-mini`），只有「标题本身就是开关」时例外（日志标题只带箭头 + hover）**。页眉 48（「就绪」是页眉里的一枚状态胶囊）；**日志是流程里的一行标题**（与「1 · 来源」同级同字号），展开时在全部选项的**下方**把页面顶长（`.body` 是唯一的滚动容器，`scrollbar-gutter: stable`），选项原地不动、不被切也不被盖。垂直空间优先给内容，不给框。全部值都在 `styles.css` 顶部 token，暗色模式只换 token
+- 不引入 React/Tailwind 组件库（HeroUI/NextUI 这类要 React 19 + Tailwind v4 + 打包器，CSP 也只允许 `'self'`）：`ui/` 的门槛就是「改完刷新即生效」，任何要求预编译的前端栈都会把这条毁掉
 - Rust 侧只有 7 个命令：snapshot / workdir / plan / start / cancel / open / save_log；所有引擎工作 = 子进程调同目录 `portable-builder.exe`，命令序列与手敲 CLI 完全一致（`--workdir` 在前）
 - 计划只有一个事实来源：`build_plan()` 同时服务「计划预览」与「实际执行」，预览即真实命令
 - 事件泵：子进程 stdout/stderr → mpsc → 80ms 批量 emit `app-event`（节流保留——逐行推会把 IPC 打满）
-- Tauri 2 capabilities 在 `crates/builder-app/capabilities/main.json`；对话框/剪贴板/事件权限都在这里声明
+- 跨步骤事实：引擎把 `KEY=value`（`BUILT_VERSION`、`ASSET_PATH` 等）打到 stdout，GUI 捕获后喂给后续步骤——CI 里这一步由 `GITHUB_ENV` 承担，漏了它 `archive` 会压出没有版本号的包名（`Chrome++_stable__日期.7z`），`verify` 跟着匹配不上
+- 引擎的目录表探测（§6.5）猜不到开发态布局（exe 在 `target\debug`、catalog 在仓库根），所以 GUI 每一步都显式带 `--builder-dir <仓库根>`
+- 窗口无边框（`decorations: false`）：标题栏自绘，拖动靠 `data-drag`，最小化/最大化/关闭走 `core:window:allow-*`；关窗请求仍由 Rust 侧拦截确认
+- Tauri 2 capabilities 在 `crates/builder-app/capabilities/main.json`；对话框/剪贴板/事件/窗口权限都在这里声明
 - 验证 GUI 真能开：看**主窗口标题**（含 ChromiumPortable），别看进程还在不在
 
 ## 目录与约定

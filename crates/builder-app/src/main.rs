@@ -5,7 +5,9 @@
 //! 所有引擎工作都以子进程方式调用同目录的 `portable-builder.exe` 完成，
 //! 命令序列与手敲 CLI 完全一致（`--workdir` 在前，子命令在后）。
 //! 子进程的 stdout/stderr 逐行进 mpsc，由泵线程每 80ms 批量 emit 一次
-//! `app-event`（逐行推会把 IPC 打满，节流是刻意的）。
+//! `app-event`（逐行推会把 IPC 打满，节流是刻意的）；同一批行里出现的
+//! `KEY=value` 是引擎的跨步骤事实（CI 里由 GITHUB_ENV 落盘），这里现场捕获、
+//! 喂给后续步骤——archive 拿不到 BUILT_VERSION 就会压出没有版本号的包名。
 //!
 //! 命令面（7 个）：
 //! - `app_snapshot`  工作目录 + installers 清单 + 目录表 targets + 引擎在不在
@@ -24,6 +26,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::{
+    collections::HashMap,
     fs,
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
@@ -224,8 +227,15 @@ fn engine_found() -> bool {
 
 fn catalog_path(workdir: &Path) -> Option<PathBuf> {
     let mut candidates = Vec::new();
+    // 开发态 exe 在 target\debug\ 下，catalog 在仓库根：沿父目录向上找几层
+    // （与引擎的资源探测同一思路）；发布态 exe 旁就有 catalog，第一跳即中。
     if let Ok(dir) = std::env::current_exe() {
-        candidates.push(dir.parent().unwrap_or(Path::new(".")).join("catalog"));
+        let mut dir = dir.parent().map(Path::to_path_buf);
+        for _ in 0..6 {
+            let Some(d) = dir else { break };
+            candidates.push(d.join("catalog"));
+            dir = d.parent().map(Path::to_path_buf);
+        }
     }
     candidates.push(workdir.join("catalog"));
     candidates
@@ -332,11 +342,23 @@ fn quote_arg(arg: &str) -> String {
 // 计划：与 CLI 契约一字不差（旧 gui/plan.rs 的行为基线）
 // ---------------------------------------------------------------------------
 
+/// 仓库根（catalog 的上一级）。引擎的资源探测按 §6.5 分五级，但开发态
+/// exe 在 `target\debug`、catalog 在仓库根，它自己猜不到；GUI 已经解析出来了，
+/// 就显式交给它，等价于一级探测（`--builder-dir`）。
+fn builder_dir(workdir: &Path) -> Option<PathBuf> {
+    let catalog = catalog_path(workdir)?;
+    Some(catalog.parent()?.parent()?.to_path_buf())
+}
+
 fn engine_step(title_key: &str, workdir: &Path, rest: &[&str]) -> Step {
     let mut args = vec![
         "--workdir".to_string(),
         workdir.to_string_lossy().into_owned(),
     ];
+    if let Some(dir) = builder_dir(workdir) {
+        args.push("--builder-dir".to_string());
+        args.push(dir.to_string_lossy().into_owned());
+    }
     args.extend(rest.iter().map(|s| s.to_string()));
     Step {
         title_key: title_key.to_string(),
@@ -613,11 +635,33 @@ fn spawn_reader<R: std::io::Read + Send + 'static>(stream: Option<R>, tx: mpsc::
     });
 }
 
-fn pump_lines(app: AppHandle, rx: mpsc::Receiver<String>) {
+/// 跨步骤事实（`KEY=value`）。CI 里 GITHUB_ENV 负责落盘并在下一步自动继承；
+/// 本地子进程模式下没有 GITHUB_ENV，引擎就把它们打到 stdout，
+/// 承接这份契约的是调用方——也就是这里。
+type Facts = Arc<Mutex<HashMap<String, String>>>;
+
+fn collect_facts(line: &str, facts: &mut HashMap<String, String>) {
+    let Some((key, value)) = line.split_once('=') else {
+        return;
+    };
+    // 只认环境变量样子的键：大写字母开头，其余是大写字母/数字/下划线。
+    // 日志行（`[INFO] ...`）和 7-Zip 的输出都过不了这一关。
+    let mut bytes = key.bytes();
+    let starts_upper = bytes.next().is_some_and(|b| b.is_ascii_uppercase());
+    let rest_env_like = bytes.all(|b| b.is_ascii_uppercase() || b.is_ascii_digit() || b == b'_');
+    if starts_upper && rest_env_like {
+        facts.insert(key.to_string(), value.to_string());
+    }
+}
+
+fn pump_lines(app: AppHandle, rx: mpsc::Receiver<String>, facts: Facts) {
     let mut batch: Vec<String> = Vec::new();
     loop {
         match rx.recv_timeout(PUMP) {
-            Ok(line) => batch.push(line),
+            Ok(line) => {
+                collect_facts(&line, &mut facts.lock().unwrap());
+                batch.push(line);
+            }
             Err(mpsc::RecvTimeoutError::Timeout) => {
                 if !batch.is_empty() {
                     let _ = app.emit(EVENT, json!({ "type": "line", "lines": batch }));
@@ -635,13 +679,23 @@ fn pump_lines(app: AppHandle, rx: mpsc::Receiver<String>) {
 }
 
 /// 跑单步：返回退出码。cancel 通过杀子进程让 wait 封闭。
-fn run_step(handle: &JobHandle, step: &Step, workdir: &Path, app: &AppHandle) -> i32 {
-    let child = Command::new(engine_exe())
-        .args(&step.args)
-        .current_dir(workdir)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn();
+fn run_step(
+    handle: &JobHandle,
+    step: &Step,
+    workdir: &Path,
+    app: &AppHandle,
+    facts: &Facts,
+) -> i32 {
+    let mut cmd = Command::new(engine_exe());
+    cmd.args(&step.args).current_dir(workdir);
+    {
+        // 前面步骤攒下的事实在这一步生效（等价于 CI 里 GITHUB_ENV 的继承）。
+        let facts = facts.lock().unwrap();
+        for (key, value) in facts.iter() {
+            cmd.env(key, value);
+        }
+    }
+    let child = cmd.stdout(Stdio::piped()).stderr(Stdio::piped()).spawn();
     let mut child = match child {
         Ok(c) => c,
         Err(e) => {
@@ -660,7 +714,8 @@ fn run_step(handle: &JobHandle, step: &Step, workdir: &Path, app: &AppHandle) ->
     *handle.child.lock().unwrap() = Some(child);
     let pump = {
         let app = app.clone();
-        thread::spawn(move || pump_lines(app, rx))
+        let facts = Arc::clone(facts);
+        thread::spawn(move || pump_lines(app, rx, facts))
     };
 
     let code = loop {
@@ -697,6 +752,8 @@ fn run_plan(
     let mut completed = 0usize;
     let mut last_code = 0i32;
     let mut failed = false;
+    // 事实按任务清空：上一次构建的版本号绝不允许漏进这一次。
+    let facts: Facts = Arc::new(Mutex::new(HashMap::new()));
 
     for (index, step) in plan.steps.iter().enumerate() {
         if handle.cancel.load(Ordering::SeqCst) {
@@ -716,7 +773,7 @@ fn run_plan(
             EVENT,
             json!({ "type": "line", "lines": [format!("portable-builder {display}")], "cmd": true }),
         );
-        let code = run_step(&handle, step, &workdir, &app);
+        let code = run_step(&handle, step, &workdir, &app, &facts);
         let _ = app.emit(
             EVENT,
             json!({ "type": "stepEnd", "index": index, "code": code }),
@@ -931,4 +988,34 @@ fn main() {
 fn crate_close_message() -> String {
     // 文案在前端字典之外：原生对话框不经过 WebView，直接双语并写。
     "任务还在运行，确定退出吗？\nA task is still running. Quit anyway?".to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn facts_come_from_env_lines_only() {
+        let mut facts = HashMap::new();
+        collect_facts("BUILT_VERSION=155.0.8059.40", &mut facts);
+        collect_facts("OUTPUT_DIR=Chrome", &mut facts);
+        // 日志行、7-Zip 输出、裸值行都不算事实。
+        collect_facts(
+            "[INFO] Applied 4 override(s): open_url_new_tab=1",
+            &mut facts,
+        );
+        collect_facts(
+            "7-Zip 26.03 (x64) : Copyright (c) 1999-2026 Igor Pavlov",
+            &mut facts,
+        );
+        collect_facts("chrome_stable", &mut facts);
+        collect_facts("Files read from disk: 269", &mut facts);
+
+        assert_eq!(
+            facts.get("BUILT_VERSION").map(String::as_str),
+            Some("155.0.8059.40")
+        );
+        assert_eq!(facts.get("OUTPUT_DIR").map(String::as_str), Some("Chrome"));
+        assert_eq!(facts.len(), 2);
+    }
 }

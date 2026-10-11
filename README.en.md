@@ -36,25 +36,6 @@ These three channels have dedicated release repositories and ongoing builds.
 
 See the [download site](https://piracola.github.io/ChromiumPortable/) for files, versions, and checksums.
 
-## Sibling engine
-
-Chromium-family and Firefox-family builds each have their own engine. The two repositories are maintained and released independently, but they follow the same shape: unpack with 7-Zip → inject the portability runtime (Chrome++ on the Chromium side, [libportable][link-libportable] on the Gecko side) → package as 7z and publish a SHA256.
-
-| Family | Engine repository | Browsers covered |
-| --- | --- | --- |
-| **Chromium family** | [ChromiumPortable][link-repo] (this repo) | Chrome, Edge, Helium, plus personal builds such as Brave / Vivaldi |
-| **Gecko family** | [Gecko-Portable][link-gecko] | Firefox, Floorp, Zen |
-
-**Gecko-family products (built by the sibling engine)**
-
-| Product | Repository |
-| --- | --- |
-| **Firefox Portable** | [Firefox-Portable][link-gecko-firefox] |
-| **Floorp Portable** | [Floorp_portable][link-gecko-floorp] |
-| **Zen Portable** | [Zen-Portable][link-gecko-zen] |
-
-The channels under [Current products](#current-products) are built by this repository; the three Gecko channels are built by [Gecko-Portable][link-gecko].
-
 ## Using a portable build
 
 1. Download the archive for your browser.
@@ -97,6 +78,25 @@ Supported online browsers, CI release flow, and advanced CLI: [development docs]
 
 This repository is the build core, not a browser-binary distribution. To add a browser, wire a build, or maintain releases, see [development docs](./docs/DEVELOPMENT.md). Download-site maintenance: [docs/README.md](./docs/README.md).
 
+## Sibling engine
+
+Chromium-family and Firefox-family builds each have their own engine. The two repositories are maintained and released independently, but they follow the same shape: unpack with 7-Zip → inject the portability runtime (Chrome++ on the Chromium side, [libportable][link-libportable] on the Gecko side) → package as 7z and publish a SHA256.
+
+| Family | Engine repository | Browsers covered |
+| --- | --- | --- |
+| **Chromium family** | [ChromiumPortable][link-repo] (this repo) | Chrome, Edge, Helium, plus personal builds such as Brave / Vivaldi |
+| **Gecko family** | [Gecko-Portable][link-gecko] | Firefox, Floorp, Zen |
+
+**Gecko-family products (built by the sibling engine)**
+
+| Product | Repository |
+| --- | --- |
+| **Firefox Portable** | [Firefox-Portable][link-gecko-firefox] |
+| **Floorp Portable** | [Floorp_portable][link-gecko-floorp] |
+| **Zen Portable** | [Zen-Portable][link-gecko-zen] |
+
+The channels under [Current products](#current-products) are built by this repository; the three Gecko channels are built by [Gecko-Portable][link-gecko].
+
 ## License
 
 Project source uses the [MIT License](./LICENSE). Chrome++, browser binaries, and other third-party components follow their own licenses; trademarks: [NOTICE](./NOTICE).
@@ -105,7 +105,7 @@ Project source uses the [MIT License](./LICENSE). Chrome++, browser binaries, an
 
 <div align="center">
 
-<sub>Built and maintained by</sub>
+<sub>Built and maintained with ❤️ by</sub>
 
 **Piracola**
 

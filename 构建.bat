@@ -1,4 +1,5 @@
 @echo off
-rem 双击或命令行都行，参数原样转给 build.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0build.ps1" %*
-pause
+rem ChromiumPortable build launcher. ASCII-only on purpose: this file runs
+rem before any codepage switch, so non-ASCII here would print as mojibake.
+chcp 65001 >nul
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0tui.ps1" %*

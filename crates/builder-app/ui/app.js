@@ -14,7 +14,7 @@
 const STR = {
   zh: {
     tagline: "解包 + Chrome++ 注入 · 不安装、不启动浏览器",
-    navBuild: "构建", navTools: "工具箱",
+    navBuild: "构建", navTools: "调试台",
     warnEngine: "同目录没有 portable-builder.exe，构建不可用。",
     buildTitle: "构建便携版",
     buildDesc: "把安装包变成随身携带的浏览器文件夹：解包 → 注入 Chrome++ → 可选打包 7z。",
@@ -40,8 +40,8 @@ const STR = {
     sectRun: "4 · 计划与执行",
     planIdle: "选好来源后，这里显示将要执行的引擎命令。",
     start: "开始构建", cancel: "取消",
-    toolsTitle: "工具箱",
-    toolsDesc: "每个命令独立运行，结果写进下方日志，不产出便携目录。",
+    toolsTitle: "调试台",
+    toolsDesc: "单步跑引擎命令：排查链路、更新目录表。",
     sectToolInput: "输入", sectToolCmds: "命令",
     toolPathLabel: "安装包或文件夹",
     toolPathHint: "识别安装包用文件，批量巡检用文件夹。",
@@ -55,7 +55,7 @@ const STR = {
     logTitle: "运行日志", autoscroll: "自动滚动",
     logSave: "保存", logCopy: "复制", logClear: "清空",
     logLines: "{count} 行",
-    statusIdle: "就绪", footer: "静态解包与注入 · 绝不运行安装包与浏览器",
+    statusIdle: "就绪",
     statusRunning: "正在执行：{title}",
     statusDone: "完成（{seconds} 秒）",
     statusFailed: "失败（退出码 {code}）",
@@ -89,7 +89,7 @@ const STR = {
   },
   en: {
     tagline: "Extract + Chrome++ injection · never installs or launches a browser",
-    navBuild: "Build", navTools: "Toolbox",
+    navBuild: "Build", navTools: "Debug",
     warnEngine: "portable-builder.exe not found next to this app; building is unavailable.",
     buildTitle: "Build a portable browser",
     buildDesc: "Turn an installer into a browser folder you can carry around: extract, inject Chrome++, optionally package.",
@@ -115,8 +115,8 @@ const STR = {
     sectRun: "4 · Plan and run",
     planIdle: "Pick a source and the engine commands appear here.",
     start: "Start build", cancel: "Cancel",
-    toolsTitle: "Toolbox",
-    toolsDesc: "Each command runs on its own, logs below, and produces no portable folder.",
+    toolsTitle: "Debug console",
+    toolsDesc: "Run one engine command at a time to debug a chain or refresh the catalog.",
     sectToolInput: "Input", sectToolCmds: "Commands",
     toolPathLabel: "Installer or folder",
     toolPathHint: "Inspect wants a file; batch research wants a folder.",
@@ -130,7 +130,7 @@ const STR = {
     logTitle: "Log", autoscroll: "Auto-scroll",
     logSave: "Save", logCopy: "Copy", logClear: "Clear",
     logLines: "{count} lines",
-    statusIdle: "Ready", footer: "Static extract and injection · never runs installers or browsers",
+    statusIdle: "Ready",
     statusRunning: "Running: {title}",
     statusDone: "Done ({seconds}s)",
     statusFailed: "Failed (exit code {code})",
@@ -457,6 +457,7 @@ function bindEvents() {
     try {
       await invoke("app_start", { req: planRequest() });
       setRunning(true);
+      unfoldLog();
       setStatus("run", "statusRunning", { title: tr("start") });
     } catch (e) {
       setStatus("fail", String(e).replace(/^"|"$/g, ""));
@@ -473,6 +474,7 @@ function bindEvents() {
       try {
         await invoke("app_start", { req: toolRequest(b.dataset.tool) });
         setRunning(true);
+        unfoldLog();
         setStatus("run", "statusRunning", { title: tr("step_" + b.dataset.tool) });
       } catch (e) {
         setStatus("fail", String(e).replace(/^"|"$/g, ""));
@@ -512,6 +514,26 @@ function bindEvents() {
     logCount = 0;
     $("log-count").textContent = tr("logLines", { count: 0 });
   });
+
+  // 日志折叠：折叠时把空间还给上面的表单；开始构建时自动展开
+  $("btn-log-fold").addEventListener("click", () => {
+    const box = $("logbox");
+    const folded = box.classList.toggle("folded");
+    $("btn-log-fold").setAttribute("aria-expanded", String(!folded));
+  });
+
+  const unfoldLog = () => {
+    $("logbox").classList.remove("folded");
+    $("btn-log-fold").setAttribute("aria-expanded", "true");
+    // 日志在全部选项的下方，跑起来时把它滚进视野（真在窗外才动，别乱跳）
+    $("logbox").scrollIntoView({ block: "nearest" });
+  };
+
+  // 自绘窗口钮（原生标题栏已关）
+  const win = () => tauri().window.getCurrentWindow();
+  $("win-min").addEventListener("click", () => win().minimize());
+  $("win-max").addEventListener("click", () => win().toggleMaximize());
+  $("win-close").addEventListener("click", () => win().close());
 }
 
 /* ── 事件泵消费 ───────────────────────────────────────── */

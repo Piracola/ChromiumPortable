@@ -12,7 +12,7 @@
 
 **语言 / Language:** **简体中文** · [English](README.en.md)
 
-[下载页面](https://piracola.github.io/ChromiumPortable/) · [使用帮助](https://piracola.github.io/ChromiumPortable/) · [开发文档](./docs/DEVELOPMENT.md)
+[下载页面](https://piracola.github.io/ChromiumPortable/) · [使用帮助](https://piracola.github.io/ChromiumPortable/) · [姊妹内核](#姊妹内核) · [开发文档](./docs/DEVELOPMENT.md)
 
 </div>
 
@@ -35,6 +35,25 @@
 - **Helium**：稳定线；auto 结构解析；产物 `Helium_*`。官方产品构建在子仓库；本核心 `build-browser` 若上游未挂公开安装包资产，需提供 `package_url`。
 
 更多下载、版本信息和文件校验值请访问：[便携版下载页面](https://piracola.github.io/ChromiumPortable/)。
+
+## 姊妹内核
+
+Chromium 系和 Firefox 系各有一个构建核心，两个仓库独立维护、各自发布，但目录结构与发布思路是同一套：用 7-Zip 解包 → 注入便携化运行时（Chromium 侧是 Chrome++，Gecko 侧是 [libportable][link-libportable]）→ 打包 7z 并公布 SHA256。
+
+| 内核 | 构建核心仓库 | 负责的浏览器 |
+| --- | --- | --- |
+| **Chromium 系** | [ChromiumPortable][link-repo]（本仓库） | Chrome、Edge、Helium，以及 Brave / Vivaldi 等自用构建 |
+| **Gecko 系** | [Gecko-Portable][link-gecko] | Firefox、Floorp、Zen |
+
+**Gecko 系成品（由姊妹内核构建）**
+
+| 项目 | 仓库 |
+| --- | --- |
+| **Firefox 便携版** | [Firefox-Portable][link-gecko-firefox] |
+| **Floorp 便携版** | [Floorp_portable][link-gecko-floorp] |
+| **Zen 便携版** | [Zen-Portable][link-gecko-zen] |
+
+上方的[当前项目](#当前项目)三个渠道由本仓库构建；Gecko 系三个渠道由 [Gecko-Portable][link-gecko] 构建。
 
 ## 使用方法
 
@@ -126,3 +145,10 @@ portable-builder.exe --workdir . inspect-package <安装包> --json
 [badge-helium-downloads]: https://img.shields.io/github/downloads/Piracola/Helium_Portable/total?style=flat-square&color=2ea043&label=
 [badge-helium-stars]: https://img.shields.io/github/stars/Piracola/Helium_Portable?style=flat-square&color=2f81f7&label=
 [link-helium]: https://github.com/Piracola/Helium_Portable/releases/latest
+
+[link-gecko]: https://github.com/Piracola/Gecko-Portable
+[link-libportable]: https://github.com/adonais/libportable
+
+[link-gecko-firefox]: https://github.com/Piracola/Firefox-Portable
+[link-gecko-floorp]: https://github.com/Piracola/Floorp_portable
+[link-gecko-zen]: https://github.com/Piracola/Zen-Portable

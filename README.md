@@ -36,25 +36,6 @@
 
 更多下载、版本信息和文件校验值请访问：[便携版下载页面](https://piracola.github.io/ChromiumPortable/)。
 
-## 姊妹内核
-
-Chromium 系和 Firefox 系各有一个构建核心，两个仓库独立维护、各自发布，但目录结构与发布思路是同一套：用 7-Zip 解包 → 注入便携化运行时（Chromium 侧是 Chrome++，Gecko 侧是 [libportable][link-libportable]）→ 打包 7z 并公布 SHA256。
-
-| 内核 | 构建核心仓库 | 负责的浏览器 |
-| --- | --- | --- |
-| **Chromium 系** | [ChromiumPortable][link-repo]（本仓库） | Chrome、Edge、Helium，以及 Brave / Vivaldi 等自用构建 |
-| **Gecko 系** | [Gecko-Portable][link-gecko] | Firefox、Floorp、Zen |
-
-**Gecko 系成品（由姊妹内核构建）**
-
-| 项目 | 仓库 |
-| --- | --- |
-| **Firefox 便携版** | [Firefox-Portable][link-gecko-firefox] |
-| **Floorp 便携版** | [Floorp_portable][link-gecko-floorp] |
-| **Zen 便携版** | [Zen-Portable][link-gecko-zen] |
-
-上方的[当前项目](#当前项目)三个渠道由本仓库构建；Gecko 系三个渠道由 [Gecko-Portable][link-gecko] 构建。
-
 ## 使用方法
 
 1. 下载所需浏览器的压缩包。
@@ -105,6 +86,25 @@ portable-builder.exe --workdir . inspect-package <安装包> --json
 
 本仓库是构建核心，不是浏览器成品仓库。新增浏览器、配置构建流程或维护发布任务，请阅读 [开发与接入文档](./docs/DEVELOPMENT.md)。下载站维护说明见 [docs/README.md](./docs/README.md)。
 
+## 姊妹内核
+
+Chromium 系和 Firefox 系各有一个构建核心，两个仓库独立维护、各自发布，但目录结构与发布思路是同一套：用 7-Zip 解包 → 注入便携化运行时（Chromium 侧是 Chrome++，Gecko 侧是 [libportable][link-libportable]）→ 打包 7z 并公布 SHA256。
+
+| 内核 | 构建核心仓库 | 负责的浏览器 |
+| --- | --- | --- |
+| **Chromium 系** | [ChromiumPortable][link-repo]（本仓库） | Chrome、Edge、Helium，以及 Brave / Vivaldi 等自用构建 |
+| **Gecko 系** | [Gecko-Portable][link-gecko] | Firefox、Floorp、Zen |
+
+**Gecko 系成品（由姊妹内核构建）**
+
+| 项目 | 仓库 |
+| --- | --- |
+| **Firefox 便携版** | [Firefox-Portable][link-gecko-firefox] |
+| **Floorp 便携版** | [Floorp_portable][link-gecko-floorp] |
+| **Zen 便携版** | [Zen-Portable][link-gecko-zen] |
+
+上方的[当前项目](#当前项目)三个渠道由本仓库构建；Gecko 系三个渠道由 [Gecko-Portable][link-gecko] 构建。
+
 ## 许可证
 
 项目源码使用 [MIT License](./LICENSE)。Chrome++、浏览器本体及其他第三方组件遵循各自的许可证；商标归属见 [NOTICE](./NOTICE)。
@@ -113,7 +113,7 @@ portable-builder.exe --workdir . inspect-package <安装包> --json
 
 <div align="center">
 
-<sub>Built and maintained by</sub>
+<sub>Built and maintained with ❤️ by</sub>
 
 **Piracola**
 

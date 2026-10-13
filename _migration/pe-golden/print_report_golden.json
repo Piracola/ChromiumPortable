@@ -1,0 +1,4 @@
+{
+ "opera": "[OK] 浏览器：Opera Internet Browser\n[OK] 版本：135.0.5973.92 (x64)\n[OK] 主程序：opera.exe\n[OK] 可信分：250\n[OK] 判断依据：架构为 x64；文件名是常见浏览器主程序；产品信息表明它属于 Chromium 浏览器；同目录存在 Chromium 核心文件；直接加载浏览器 ELF 组件\n",
+ "vivaldi": "[OK] 浏览器：Vivaldi\n[OK] 版本：8.2.4133.52 (x64)\n[OK] 主程序：Vivaldi-bin/vivaldi.exe\n[OK] 可信分：275\n[OK] 判断依据：架构为 x64；文件名是常见浏览器主程序；产品信息表明它属于 Chromium 浏览器；原始文件名与当前文件一致；同目录存在版本资源目录；直接加载浏览器 ELF 组件\n"
+}

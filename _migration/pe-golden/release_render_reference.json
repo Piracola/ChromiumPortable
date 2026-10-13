@@ -1,0 +1,21 @@
+{
+ "asset_name": "ProbeBrowser-153.1.95.102-x64-2026-07-01",
+ "format_pair_multiline": [
+  "BODY<<PORTABLE_BUILDER_EOF",
+  "line1\nline2",
+  "PORTABLE_BUILDER_EOF"
+ ],
+ "format_pair_single": [
+  "TAG=Probe-v153.1.95.102"
+ ],
+ "rendered": {
+  "body_path": "_migration\\pe-golden\\tmp_relwork\\build\\release_body.md",
+  "tag": "ProbeBrowser-v153.1.95.102",
+  "title": "Probe Browser 153.1.95.102 Portable"
+ },
+ "rendered_keys": [
+  "body_path",
+  "tag",
+  "title"
+ ]
+}

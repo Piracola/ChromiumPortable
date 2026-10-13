@@ -1,0 +1,94 @@
+{
+ "omaha_channels": [],
+ "omaha_constants": [
+  "DEFAULT_UPDATE_URL =",
+  "CHANNELS ="
+ ],
+ "edge_constants": [
+  "USER_AGENT =",
+  "EDGE_UPDATE_API =",
+  "EDGE_DOWNLOAD_API ="
+ ],
+ "edge_verify_ssl_default": true,
+ "direct_keys": [
+  "config.get(\"file_name\"",
+  "config.get(\"installer_path\"",
+  "config.get(\"path\"",
+  "config.get(\"size\"",
+  "config.get(\"url\"",
+  "config.get(\"verify_ssl\"",
+  "config.get(\"version\"",
+  "config.get(\"version_regex\""
+ ],
+ "script_keys": [
+  "config.get(\"_workdir\"",
+  "config.get(\"command\"",
+  "config.get(\"verify_ssl\""
+ ],
+ "catalog_provider_shapes": {
+  "chrome_stable": {
+   "type": "google_omaha",
+   "keys": [
+    "channel",
+    "type"
+   ]
+  },
+  "chrome_beta": {
+   "type": "google_omaha",
+   "keys": [
+    "channel",
+    "type"
+   ]
+  },
+  "edge_stable": {
+   "type": "microsoft_edge",
+   "keys": [
+    "app_id",
+    "type",
+    "verify_ssl"
+   ]
+  },
+  "helium_stable": {
+   "type": "script",
+   "keys": [
+    "command",
+    "type"
+   ]
+  },
+  "brave_stable": {
+   "type": "script",
+   "keys": [
+    "command",
+    "type"
+   ]
+  },
+  "vivaldi_stable": {
+   "type": "script",
+   "keys": [
+    "command",
+    "type"
+   ]
+  },
+  "opera_stable": {
+   "type": "script",
+   "keys": [
+    "command",
+    "type"
+   ]
+  },
+  "thorium_stable": {
+   "type": "script",
+   "keys": [
+    "command",
+    "type"
+   ]
+  },
+  "cse360_stable": {
+   "type": "script",
+   "keys": [
+    "command",
+    "type"
+   ]
+  }
+ }
+}

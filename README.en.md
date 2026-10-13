@@ -49,20 +49,28 @@ Browsing data is usually stored next to the browser folder in `Data` and `Cache`
 This toolchain can also produce portable builds of Brave, Vivaldi, Opera, Thorium, 360 Extreme Browser X, and similar.  
 These are **not** products of this project: no download-site product cards, builds are for learning and personal use only. Read upstream terms before redistributing (see [NOTICE](./NOTICE)).
 
-**Local one-shot (recommended)**
+**Graphical builder (recommended)**
 
-1. Install [Python 3](https://www.python.org/) (enable “Add to PATH”).
-2. Copy installer packages into the dedicated folder **`installers\`** (see `README.txt` inside).
-3. Double-click **`开始构建.bat`** at the repo root, or run:
+1. Grab `ChromiumPortableBuilder-windows-x64.zip` from [Releases](../../releases) (engine and GUI included; the target machine does **not** need Python).
+2. Extract anywhere and copy installer packages into **`installers\`** (see `README.txt` inside).
+3. Run `builder-app.exe`:
+
+- The page reads top-to-bottom in four steps: **Source** (single installer / a folder / an online target; the installer list reads `installers\`) → **Options** (architecture, optional 7z packaging) → **Output** (working directory and artifact locations) → **Plan and run**.
+- The plan panel lays out the engine commands your selection will run (prepare → build → 7z → verify for online + archive) before you press anything; the commands you see are the commands that run.
+- **Toolbox**: static installer inspection, batch research, single-target config, upstream URL resolution, artifact verification — each runnable on its own.
+- While a task runs, Start becomes Cancel; the log auto-scrolls and can be cleared, copied, and saved. `7zr.exe` is provisioned into the working directory automatically.
+- The **working directory** holds `installers\`, `build\release\`, and `build\assets\`; it defaults to the exe folder and can be changed at any time.
+
+UI language: Simplified Chinese / English, switchable in the top-right corner.
+
+**Command line**
 
 ```powershell
-python scripts\wizard.py
+portable-builder.exe --workdir . build-package <installer> --archive
+portable-builder.exe --workdir . inspect-package <installer> --json
 ```
 
-4. Pick a mode (single package / whole folder / online download), architecture, and whether to archive.  
-   Portable output lands in `build\release\`; archives in `build\assets\`.
-
-The wizard UI language follows your system (Simplified Chinese / English). Force one with `WIZARD_LANG=en`.
+Building from source: install [Rust](https://rustup.rs/) and run `cargo build --release -p portable-builder -p builder-app`.
 
 Supported online browsers, CI release flow, and advanced CLI: [development docs](./docs/DEVELOPMENT.md).
 

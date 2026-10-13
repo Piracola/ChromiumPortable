@@ -1,0 +1,42 @@
+{
+ "architectures_in_catalog": [
+  "x64"
+ ],
+ "chrome_stable_full": {
+  "architecture": "x64",
+  "archive_name": "Chrome++_stable_{version}_{date}.7z",
+  "display_name": "Chrome++",
+  "exe_name": "chrome.exe",
+  "ini_location": "app_root",
+  "layout": "move_version_root",
+  "name": "Chrome",
+  "output_dir": "Chrome",
+  "product": true,
+  "provider": {
+   "channel": "win_stable_x64",
+   "type": "google_omaha"
+  },
+  "release": {
+   "asset_match": "stable",
+   "body": "Chrome++ 构建版本\n\n构建时间: {date}\nChrome 版本: {version}\n",
+   "tag": "v{version}",
+   "title": "Chrome++ {version}"
+  },
+  "start_script": "开始.bat",
+  "version_dll_location": "app_root",
+  "version_root": "Chrome-bin"
+ },
+ "non_product_marking": {},
+ "product_marking": {
+  "chrome_stable": true,
+  "chrome_beta": true,
+  "edge_stable": true,
+  "helium_stable": true,
+  "brave_stable": false,
+  "vivaldi_stable": false,
+  "opera_stable": false,
+  "thorium_stable": false,
+  "cse360_stable": false
+ },
+ "schema_note": "product:true marks产品面 (Chrome/Edge/Helium); absent or false = 产物面 (Unofficial marking handled at release title/body layer, not catalog)"
+}

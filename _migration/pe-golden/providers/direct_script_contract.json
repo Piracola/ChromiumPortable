@@ -1,0 +1,35 @@
+{
+ "direct": {
+  "note": "direct.py contract. Keys: url, path/installer_path, version, version_regex, file_name, verify_ssl(default True), sha256, size.",
+  "rules": [
+   "url XOR path required, else ValueError \"direct provider requires 'url' or 'path'\"",
+   "version_regex extracts group(1) from URL when version absent",
+   "no version at all => \"0.0.0.0\"",
+   "file_name fallback chain: config file_name > URL last segment > \"browser-installer.exe\""
+  ]
+ },
+ "script": {
+  "note": "script.py contract. Keys: command (list or str), plus passthrough fields the script prints.",
+  "rules": [
+   "runs command, decodes stdout, parses JSON",
+   "parse_json_output: empty stdout => RuntimeError \"Script provider returned empty stdout.\"",
+   "full-text JSON parse first; on failure scan lines REVERSED, first line that starts { and ends } => parse",
+   "all fail => RuntimeError \"Script provider stdout must contain a JSON object.\"",
+   "command str => shlex.split (POSIX rules); list => as-is"
+  ]
+ },
+ "samples": {
+  "script_stdout_multiline": "noise line 1\nnoise line 2\n{\"version\": \"135.0.5973.92\", \"url\": \"https://example.invalid/op.exe\", \"file_name\": \"op.exe\", \"sha256\": null, \"size\": null, \"verify_ssl\": true}",
+  "script_stdout_pure": "{\"version\": \"1.2.3.4\"}",
+  "direct_case_url_regex": {
+   "url": "https://example.invalid/Vivaldi.8.2.4133.52.x64.exe",
+   "version_regex": "Vivaldi\\.([0-9.]+)\\.",
+   "expect_version": "8.2.4133.52",
+   "expect_file_name": "Vivaldi.8.2.4133.52.x64.exe"
+  },
+  "direct_case_no_version": {
+   "url": "https://example.invalid/setup.exe",
+   "expect_version": "0.0.0.0"
+  }
+ }
+}

@@ -1,0 +1,46 @@
+# Rust engine CI (docs/MIGRATION_RUST_TAURI.md S8.1)
+# - ubuntu: fmt + clippy + pure-logic tests (1x minutes)
+# - windows: full workspace tests + release build (7z/PE integration later in M2+)
+name: engine-ci
+
+on:
+  push:
+    branches: [main, rust-migration]
+    paths:
+      - "crates/**"
+      - ".github/workflows/engine-ci.yml"
+  pull_request:
+    paths:
+      - "crates/**"
+      - ".github/workflows/engine-ci.yml"
+
+concurrency:
+  group: engine-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - name: Format
+        run: cargo fmt --all -- --check
+      - name: Clippy
+        run: cargo clippy -p portable-builder --all-targets -- -D warnings
+      - name: Pure-logic tests
+        run: cargo test -p portable-builder --lib
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Tests
+        run: cargo test -p portable-builder
+      - name: Release build
+        run: cargo build -p portable-builder --release

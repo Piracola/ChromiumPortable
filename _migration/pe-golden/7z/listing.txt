@@ -1,0 +1,24 @@
+
+7-Zip (r) 26.02 (x86) : Igor Pavlov : Public domain : 2026-06-25
+
+Scanning the drive for archives:
+1 file, 5284 bytes (6 KiB)
+
+Listing archive: probe.7z
+
+--
+Path = probe.7z
+Type = 7z
+Physical Size = 5284
+Headers Size = 221
+Method = LZMA2:24k
+Solid = +
+Blocks = 1
+
+   Date      Time    Attr         Size   Compressed  Name
+------------------- ----- ------------ ------------  ------------------------
+2026-07-26 22:42:27 ....A         2598         5063  chrome++.defaults.ini
+2026-07-26 22:42:27 ....A        16088               chrome++.ini
+2026-09-12 01:13:43 ....A            8               version.txt
+------------------- ----- ------------ ------------  ------------------------
+2026-09-12 01:13:43              18694         5063  3 files

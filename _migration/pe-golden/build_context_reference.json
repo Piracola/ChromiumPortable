@@ -1,0 +1,27 @@
+{
+ "context_full": {
+  "arch": "x64",
+  "archive": "X-1.2.3-x64-2026-07-01.7z",
+  "chrome_plus_version": "1.18.2",
+  "date": "2026-07-01",
+  "display_name": "Chrome++",
+  "name": "Chrome",
+  "output_dir": "Chrome",
+  "package_version": "1.2.3.3",
+  "run_url": "",
+  "sha256": "abababababababababababababababababababababababababababababababab",
+  "size": "941.9 MB",
+  "target": "chrome_stable",
+  "version": "1.2.3.4"
+ },
+ "format_missing_key_error": "KeyError('nope')",
+ "human_size_in_context": "941.9 MB",
+ "safe_output": {
+  "": "Browser",
+  "  ..x..  ": "x",
+  "Chrome": "Chrome",
+  "Chromium:Portable?": "Chromium_Portable_",
+  "None": "Browser",
+  "a/b\\c": "a_b_c"
+ }
+}

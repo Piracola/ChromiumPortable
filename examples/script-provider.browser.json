@@ -2,9 +2,9 @@
   "targets": {
     "chrome_stable": {
       "name": "Chrome",
-      "display_name": "Chrome++",
+      "display_name": "Chrome",
       "output_dir": "Chrome",
-      "exe_name": "chrome.exe",
+      "exe_name": "..\\chrome.exe",
       "architecture": "x64",
       "provider": {
         "type": "script",

@@ -1,0 +1,27 @@
+{
+ "errors": {
+  "json_bad_suffix": {
+   "error": "FileNotFoundError(2, 'No such file or directory')"
+  },
+  "unknown_target": {
+   "error": "KeyError(\"Target 'nope' not found. Available targets: chrome_stable\")"
+  }
+ },
+ "toml_get_target": {
+  "architecture": "x64",
+  "display_name": "Chrome++",
+  "layout": "move_version_root",
+  "name": "Chrome",
+  "target": "chrome_stable"
+ },
+ "toml_load": {
+  "targets": {
+   "chrome_stable": {
+    "architecture": "x64",
+    "display_name": "Chrome++",
+    "layout": "move_version_root",
+    "name": "Chrome"
+   }
+  }
+ }
+}

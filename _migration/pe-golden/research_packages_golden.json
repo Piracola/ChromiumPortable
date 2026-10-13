@@ -1,0 +1,67 @@
+{
+ "combined_shape_keys": [
+  "failed",
+  "recognized"
+ ],
+ "failed_count": 1,
+ "failed_example": {
+  "error": "Extraction failed: _migration\\pe-golden\\tmp_samples\\junk.exe",
+  "package": "_migration\\pe-golden\\tmp_samples\\junk.exe"
+ },
+ "full_combined": {
+  "failed": [
+   {
+    "error": "Extraction failed: _migration\\pe-golden\\tmp_samples\\junk.exe",
+    "package": "_migration\\pe-golden\\tmp_samples\\junk.exe"
+   }
+  ],
+  "recognized": [
+   {
+    "alternatives": [
+     {
+      "path": "_migration\\pe-golden\\tmp_rp\\02-Vivaldi.8.2.4133.52.x64\\layer-01-vivaldi.7z\\Vivaldi-bin\\vivaldi_proxy.exe",
+      "product": "Vivaldi",
+      "score": -80
+     },
+     {
+      "path": "_migration\\pe-golden\\tmp_rp\\02-Vivaldi.8.2.4133.52.x64\\layer-01-vivaldi.7z\\Vivaldi-bin\\8.2.4133.52\\notification_helper.exe",
+      "product": "Vivaldi",
+      "score": -210
+     },
+     {
+      "path": "_migration\\pe-golden\\tmp_rp\\02-Vivaldi.8.2.4133.52.x64\\layer-01-vivaldi.7z\\Vivaldi-bin\\update_notifier.exe",
+      "product": "Vivaldi update notifier",
+      "score": -220
+     }
+    ],
+    "architecture": "x64",
+    "executable": "Vivaldi-bin/vivaldi.exe",
+    "layers": [
+     {
+      "depth": 0,
+      "kind": "archive",
+      "source": "Vivaldi.8.2.4133.52.x64.exe"
+     },
+     {
+      "depth": 1,
+      "kind": "nested_archive",
+      "source": "vivaldi.7z"
+     }
+    ],
+    "package": "_migration\\pe-golden\\tmp_samples\\Vivaldi.8.2.4133.52.x64.exe",
+    "product": "Vivaldi",
+    "reasons": [
+     "架构为 x64",
+     "文件名是常见浏览器主程序",
+     "产品信息表明它属于 Chromium 浏览器",
+     "原始文件名与当前文件一致",
+     "同目录存在版本资源目录",
+     "直接加载浏览器 ELF 组件"
+    ],
+    "score": 275,
+    "version": "8.2.4133.52"
+   }
+  ]
+ },
+ "recognized_count": 1
+}

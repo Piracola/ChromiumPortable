@@ -39,7 +39,9 @@ jobs:
           try {
             Invoke-WebRequest -Uri 'https://www.7-zip.org/a/7zr.exe' -OutFile "$stage/7zr.exe" -UseBasicParsing
           } catch { Write-Host "7zr.exe download skipped: $($_.Exception.Message)" }
-          Compress-Archive -Path "$stage/*" -DestinationPath dist/portable-builder-windows-x64.zip -Force
+          # 压顶层目录本身（消费方按 _engine/portable-builder-windows-x64/portable-builder.exe 取），
+          # 不能压 "$stage/*"——那会把内容摊平到 zip 根，Linux 侧同理见下
+          Compress-Archive -Path "$stage" -DestinationPath dist/portable-builder-windows-x64.zip -Force
 
       - name: Stage GUI directory build
         shell: pwsh
@@ -54,7 +56,8 @@ jobs:
           try {
             Invoke-WebRequest -Uri 'https://www.7-zip.org/a/7zr.exe' -OutFile "$stage/7zr.exe" -UseBasicParsing
           } catch { Write-Host "7zr.exe download skipped: $($_.Exception.Message)" }
-          Compress-Archive -Path "$stage/*" -DestinationPath dist/ChromiumPortableBuilder-windows-x64.zip -Force
+          # 同上：压目录本身，保持 zip 内的顶层目录结构
+          Compress-Archive -Path "$stage" -DestinationPath dist/ChromiumPortableBuilder-windows-x64.zip -Force
 
       - name: Write checksums
         shell: pwsh

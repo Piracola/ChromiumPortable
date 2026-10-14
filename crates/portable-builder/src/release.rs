@@ -202,8 +202,13 @@ pub fn github_headers() -> Vec<(String, String)> {
     headers
 }
 
+/// GitHub API 拒绝无 User-Agent 的请求（403）。Python requests 会自动补 UA，
+/// reqwest 默认不发——迁移时这条隐式依赖，在客户端构造处统一补上。
+pub const DEFAULT_USER_AGENT: &str = "portable-builder/2";
+
 fn api_client() -> Result<reqwest::blocking::Client> {
     Ok(reqwest::blocking::Client::builder()
+        .user_agent(DEFAULT_USER_AGENT)
         .timeout(std::time::Duration::from_secs(60))
         .build()?)
 }
@@ -994,6 +999,7 @@ pub fn download_release_asset(asset: &Value, destination: &Path) -> Result<PathB
     }
 
     let client = reqwest::blocking::Client::builder()
+        .user_agent(DEFAULT_USER_AGENT)
         .timeout(std::time::Duration::from_secs(120))
         .build()?;
     let mut response = apply_headers(client.get(download_url), &headers)

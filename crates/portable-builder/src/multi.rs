@@ -756,6 +756,7 @@ pub fn update_multi_release(config: &Value, target_names: &[String], workdir: &P
     }
 
     let client = reqwest::blocking::Client::builder()
+        .user_agent(crate::release::DEFAULT_USER_AGENT)
         .timeout(std::time::Duration::from_secs(60))
         .build()?;
     let mut request = client

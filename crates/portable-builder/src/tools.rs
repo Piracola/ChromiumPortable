@@ -277,6 +277,7 @@ pub fn download_file(
     // Match the contract: no total limit; 120s connect timeout + TCP keepalive keep
     // dead-connection detection while allowing slow links to finish.
     let client = reqwest::blocking::Client::builder()
+        .user_agent(crate::release::DEFAULT_USER_AGENT)
         .danger_accept_invalid_certs(!verify_ssl)
         .connect_timeout(std::time::Duration::from_secs(120))
         .tcp_keepalive(std::time::Duration::from_secs(30))

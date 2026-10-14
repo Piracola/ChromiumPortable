@@ -69,6 +69,7 @@ pub fn build_request_body(os_xml: &str, app_xml: &str) -> String {
 pub fn post_update(update_url: &str, os_xml: &str, app_xml: &str) -> Result<String> {
     let body = build_request_body(os_xml, app_xml);
     let client = reqwest::blocking::Client::builder()
+        .user_agent(crate::release::DEFAULT_USER_AGENT)
         .timeout(std::time::Duration::from_secs(60))
         .build()?;
     let response = client

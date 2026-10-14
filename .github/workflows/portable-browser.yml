@@ -104,6 +104,16 @@ jobs:
           "CPB_ENGINE=$exe" >> $env:GITHUB_ENV
           Write-Host "CPB_ENGINE=$exe"
 
+      # 脚本提供器仍可能调子仓库的 Python 脚本（依赖 requests）；
+      # 内置通道覆盖完成后可删除本步
+      - name: Install Python for script provider
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install requests
+        run: python -m pip install requests
+
       - name: Restore check results
         shell: pwsh
         env:

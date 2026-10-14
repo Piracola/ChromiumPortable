@@ -832,6 +832,10 @@ pub fn inject_dll(target: &Value, staged: &mut Staged) -> Result<()> {
         .ok_or_else(|| anyhow!("version.dll was not staged"))?;
 
     let setdll_abs = setdll.canonicalize().unwrap_or_else(|_| setdll.clone());
+    // staged 路径随 workdir 可能为相对（workdir 常是 "."）；Python 版在入口把
+    // workdir 解析成绝对路径，这条隐式行为在这里补上——否则 relpath_from 拿
+    // 相对路径对绝对 exe 目录做运算，会产出 setdll 无法解析的错误 dll 参数。
+    let version_dll = version_dll.canonicalize().unwrap_or_else(|_| version_dll.clone());
     if target
         .get("verify_architecture")
         .and_then(Value::as_bool)
@@ -904,7 +908,13 @@ pub fn inject_dll(target: &Value, staged: &mut Staged) -> Result<()> {
         if !output.stderr.is_empty() {
             print!("{}", decode_oem_output(&output.stderr));
         }
-        bail!("DLL injection failed.");
+        bail!(
+            "DLL injection failed. exit={:?} cmd={} args=[{dll_arg}, {}] cwd={}",
+            output.status.code(),
+            setdll_abs.display(),
+            target_exe.to_string_lossy(),
+            exe_parent.display(),
+        );
     }
 
     assert_portable_version_import(&target_exe)?;

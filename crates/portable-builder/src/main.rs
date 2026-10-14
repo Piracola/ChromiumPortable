@@ -190,7 +190,13 @@ fn run(cli: &Cli) -> Result<()> {
                 portable_builder::config::get_target(&config, cli.target.as_deref().unwrap_or(""))
                     .map_err(|err| anyhow::anyhow!("{err}"))?;
             let workdir = PathBuf::from(&cli.workdir);
-            portable_builder::builder::build_target(&target, &workdir, cli.builder_dir.as_deref())?;
+            let builder_dir_resolved =
+                resolve_builder_dir(cli.builder_dir.as_deref())?.map(|p| p.to_string_lossy().into_owned());
+            portable_builder::builder::build_target(
+                &target,
+                &workdir,
+                builder_dir_resolved.as_deref(),
+            )?;
             Ok(())
         }
         Cmd::Archive => {
@@ -345,11 +351,13 @@ fn run_release_command(cli: &Cli) -> Result<()> {
             check_targets(&config, &targets, &workdir)?;
         }
         Cmd::BuildTargets { .. } => {
+            let builder_dir_resolved =
+                resolve_builder_dir(cli.builder_dir.as_deref())?.map(|p| p.to_string_lossy().into_owned());
             portable_builder::multi::build_selected_targets(
                 &config,
                 &targets,
                 &workdir,
-                cli.builder_dir.as_deref(),
+                builder_dir_resolved.as_deref(),
             )?;
         }
         Cmd::RenderReleaseTargets { .. } => {

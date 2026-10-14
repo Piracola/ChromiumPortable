@@ -690,7 +690,8 @@ fn research_packages(
 }
 
 /// cli.py resolve_builder_dir - --builder-dir flag > PYTHONPATH entries >
-/// _portable_builder > the package's own checkout (setdll marker).
+/// _portable_builder > the package's own checkout (setdll marker) >
+/// exe-adjacent (self-contained engine bundle layout, migration doc §8.4).
 fn resolve_builder_dir(builder_dir: Option<&str>) -> Result<Option<PathBuf>> {
     if let Some(dir) = builder_dir {
         let path = PathBuf::from(dir);
@@ -698,6 +699,17 @@ fn resolve_builder_dir(builder_dir: Option<&str>) -> Result<Option<PathBuf>> {
             bail!("Builder directory not found: {}", path.display());
         }
         return Ok(Some(path));
+    }
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(parent) = exe.parent() {
+            if parent.join("setdll").exists() {
+                println!(
+                    "[INFO] Using builder files beside the engine executable: {}",
+                    parent.display()
+                );
+                return Ok(Some(parent.to_path_buf()));
+            }
+        }
     }
     if let Ok(pythonpath) = std::env::var("PYTHONPATH") {
         for entry in std::env::split_paths(&pythonpath) {

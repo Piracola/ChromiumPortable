@@ -360,6 +360,27 @@ pub fn prepare_package(target: &Value, workdir: &Path, package: &Value) -> Resul
             extract_with_7z(&inner_archive_path, &temp_dir, &seven_zip)?;
         }
 
+        // repack_layout: flatten->version-root reshaping for upstreams that
+        // ship a flat portable zip (chrome.exe beside DLLs, no version dir).
+        // Runs after extraction, before version_root discovery: it moves the
+        // unpacked files into <version_root>/chrome.exe + <version_root>/<ver>/
+        // so the normal fixed-layout flow takes over unchanged.
+        if let Some(repack) = target.get("repack_layout").and_then(Value::as_str) {
+            let version_root_name = target
+                .get("version_root")
+                .and_then(Value::as_str)
+                .unwrap_or("Chrome-bin");
+            repack_flat_package(
+                &temp_dir,
+                repack,
+                version_root_name,
+                target
+                    .get("repack_exe_name")
+                    .and_then(Value::as_str)
+                    .unwrap_or("chrome.exe"),
+            )?;
+        }
+
         let version_root_name = target
             .get("version_root")
             .and_then(Value::as_str)
@@ -393,6 +414,102 @@ pub fn prepare_package(target: &Value, workdir: &Path, package: &Value) -> Resul
             version,
         })
     }
+}
+
+/// Repack a flat portable-browser archive into version-root layout, the
+/// generalization of Helium_Portable/scripts/helium_package.py::
+/// prepare_builder_archive (chrome.exe to <root>/, everything else under
+/// <root>/<version>/).
+///
+/// `kind` currently accepts only "version_root" — move the extracted single
+/// root directory's contents into <version_root_name>/<exe_name> +
+/// <version_root_name>/<version>/ in place. The version is discovered from
+/// `<dir>/<version>.manifest` (the script's chromium_version() rule; Helium
+/// upstream ships its release version there). The extracted tree may be flat
+/// at temp_dir root or nested one level (the upstream zip wraps everything in
+/// a folder); both are handled.
+pub fn repack_flat_package(
+    temp_dir: &Path,
+    kind: &str,
+    version_root_name: &str,
+    exe_name: &str,
+) -> Result<()> {
+    if kind != "version_root" {
+        bail!("Unknown repack_layout '{kind}'. Supported: version_root");
+    }
+
+    // Locate the unpacked source directory: the single root dir if the zip
+    // wrapped one, else temp_dir itself when files sit at its top level.
+    let source_dir = {
+        let dirs: Vec<_> = std::fs::read_dir(temp_dir)?
+            .filter_map(|e| e.ok())
+            .map(|e| e.path())
+            .filter(|p| p.is_dir())
+            .collect();
+        if dirs.len() == 1 {
+            dirs.into_iter().next().expect("len checked")
+        } else {
+            temp_dir.to_path_buf()
+        }
+    };
+
+    // Version from <source>/<version>.manifest (case-insensitive), the
+    // script's chromium_version() rule.
+    let mut version: Option<String> = None;
+    for entry in std::fs::read_dir(&source_dir)? {
+        let entry = entry?;
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if let Some(raw) = name.strip_suffix(".manifest") {
+            if raw
+                .split('.')
+                .all(|part| !part.is_empty() && part.bytes().all(|b| b.is_ascii_digit()))
+                && raw.matches('.').count() >= 2
+            {
+                version = Some(raw.to_string());
+                break;
+            }
+        }
+    }
+    let Some(version) = version else {
+        bail!(
+            "Unable to determine the browser version from *.manifest files in {}.",
+            source_dir.display()
+        );
+    };
+
+    // Nothing to do if the tree is already in version-root shape.
+    if source_dir.file_name().map(|n| n.to_string_lossy().into_owned()) == Some(version.clone()) {
+        return Ok(());
+    }
+
+    let version_root = temp_dir.join(version_root_name);
+
+    // If a previous repack left the target, start clean.
+    if version_root.exists() {
+        remove_path(&version_root);
+    }
+    std::fs::create_dir_all(&version_root)?;
+
+    for entry in std::fs::read_dir(&source_dir)? {
+        let entry = entry?;
+        let name = entry.file_name().to_string_lossy().into_owned();
+        let target = if name.eq_ignore_ascii_case(exe_name) {
+            version_root.join(exe_name)
+        } else {
+            version_root.join(&version).join(&name)
+        };
+        if let Some(parent) = target.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        std::fs::rename(entry.path(), &target)?;
+    }
+    remove_path(&source_dir);
+
+    info(format!(
+        "Repacked flat package into {} (version {version}).",
+        version_root.display()
+    ));
+    Ok(())
 }
 
 /// builder.py::stage_app.
@@ -1499,5 +1616,75 @@ mod tests {
             "auto_vivaldi_8_2_4133_52_x64"
         );
         assert_eq!(synth("---"), "auto_package");
+    }
+
+    /// repack_flat_package: the Helium shape — zip wraps one folder holding a
+    /// flat install (chrome.exe beside DLLs and <version>.manifest). After the
+    /// repack the temp dir must hold <version_root>/chrome.exe plus
+    /// <version_root>/<version>/ with everything else, matching the fixed
+    /// layout the version-root flow expects.
+    #[test]
+    fn repack_flat_package_helium_shape() {
+        let temp = std::env::temp_dir().join(format!("cpb_repack_test_{}", std::process::id()));
+        remove_path(&temp);
+        let source = temp.join("helium-0.19.2.1");
+        std::fs::create_dir_all(&source).unwrap();
+        std::fs::write(source.join("chrome.exe"), b"MZ exe").unwrap();
+        std::fs::write(source.join("0.19.2.1.manifest"), b"").unwrap();
+        std::fs::create_dir_all(source.join("resources")).unwrap();
+        std::fs::write(source.join("resources").join("icudtl.dat"), b"data").unwrap();
+
+        repack_flat_package(&temp, "version_root", "Helium-bin", "chrome.exe").unwrap();
+
+        let root = temp.join("Helium-bin");
+        assert!(root.join("chrome.exe").is_file());
+        assert!(root.join("0.19.2.1").join("resources").join("icudtl.dat").is_file());
+        // The manifest itself belongs to the version dir, and the flat source
+        // is gone.
+        assert!(root.join("0.19.2.1").join("0.19.2.1.manifest").is_file());
+        assert!(!source.exists());
+        remove_path(&temp);
+    }
+
+    /// Already-repacked input is a no-op (idempotence against re-runs).
+    #[test]
+    fn repack_flat_package_skips_version_shaped_tree() {
+        let temp = std::env::temp_dir().join(format!("cpb_repack_idem_{}", std::process::id()));
+        remove_path(&temp);
+        let source = temp.join("0.19.2.1");
+        std::fs::create_dir_all(&source).unwrap();
+        std::fs::write(source.join("chrome.exe"), b"MZ exe").unwrap();
+        std::fs::write(source.join("0.19.2.1.manifest"), b"").unwrap();
+
+        repack_flat_package(&temp, "version_root", "Helium-bin", "chrome.exe").unwrap();
+        // Tree untouched: no Helium-bin sibling appeared.
+        assert!(!temp.join("Helium-bin").exists());
+        assert!(source.join("chrome.exe").is_file());
+        remove_path(&temp);
+    }
+
+    /// No .manifest file -> the script's chromium_version() error path.
+    #[test]
+    fn repack_flat_package_requires_manifest() {
+        let temp = std::env::temp_dir().join(format!("cpb_repack_nomanifest_{}", std::process::id()));
+        remove_path(&temp);
+        let source = temp.join("pkg");
+        std::fs::create_dir_all(&source).unwrap();
+        std::fs::write(source.join("chrome.exe"), b"MZ exe").unwrap();
+
+        let err = repack_flat_package(&temp, "version_root", "Helium-bin", "chrome.exe").unwrap_err();
+        assert!(err.to_string().contains("Unable to determine the browser version"));
+        remove_path(&temp);
+    }
+
+    /// Unknown repack kind is rejected with the supported list.
+    #[test]
+    fn repack_flat_package_unknown_kind() {
+        let err =
+            repack_flat_package(Path::new("."), "banana", "Helium-bin", "chrome.exe").unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            "Unknown repack_layout 'banana'. Supported: version_root"
+        );
     }
 }

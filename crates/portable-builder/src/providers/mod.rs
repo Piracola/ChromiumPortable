@@ -2,6 +2,7 @@
 //! Owner: Wave2.
 
 pub mod direct;
+pub mod github_release;
 pub mod google_omaha;
 pub mod microsoft_edge;
 pub mod script;
@@ -20,11 +21,12 @@ pub fn get_package(provider_config: &Value) -> Result<Value> {
         .unwrap_or("");
     match provider_type {
         "direct" => direct::get_package(provider_config),
+        "github_release" => github_release::get_package(provider_config),
         "google_omaha" => google_omaha::get_package(provider_config),
         "microsoft_edge" => microsoft_edge::get_package(provider_config),
         "script" => script::get_package(provider_config),
         other => bail!(
-            "Unknown provider '{}'. Available providers: direct, google_omaha, microsoft_edge, script",
+            "Unknown provider '{}'. Available providers: direct, github_release, google_omaha, microsoft_edge, script",
             other
         ),
     }

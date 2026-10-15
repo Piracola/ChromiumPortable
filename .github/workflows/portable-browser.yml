@@ -134,6 +134,8 @@ jobs:
           & $env:CPB_ENGINE --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . verify
 
       - name: Render release metadata
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           & $env:CPB_ENGINE --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . render-release
 

@@ -1,33 +1,3 @@
-//! Port of portable_builder/multi.py - multi-target orchestration. Owner: Wave3.
-//!
-//! Porting notes live in docs/MIGRATION_RUST_TAURI.md. This module is a stub
-//! until its owning wave lands; see the wave table in S9.
-//! Port of portable_builder/multi.py - multi-target orchestration. Owner: Wave3-B.
-//!
-//! Semantics follow the Python source exactly (multi_contract.md + both
-//! addenda are the contract of record):
-//! - env_name: [^A-Za-z0-9]+ -> "_", strip('_'), upper;
-//! - split_targets: comma split + strip, order-preserving (no dedup/sort);
-//! - asset_facts: {prefix}_ARCHIVE/_SHA256/_SIZE with a release-asset fallback
-//!   (digest "sha256:<hex>" split on the first colon), human_size rendering,
-//!   empty -> "-";
-//! - build_flat_context: lowercased env_name prefix feeding the multi release
-//!   body placeholders;
-//! - validate_target_asset_matchers: dry-run sample (123.456.789.0 /
-//!   2099-12-31) rendered archive names cross-tested against every other
-//!   target's matchers - overlap = RuntimeError;
-//! - {prefix}_UPDATE crosses check -> build -> update steps through GITHUB_ENV
-//!   (real env vars, no in-process state);
-//! - render_multi_release falls back to single render_release when the config
-//!   has no top-level release block; tag/title/body defaults differ from the
-//!   single path ("v{date}" / "{date}" / "");
-//! - update_multi_release only deletes assets of targets rebuilt this run
-//!   (UPDATE=true); PATCH body semantics match the single-target path.
-//!
-//! Asset UPLOAD stays out of scope (workflow softprops boundary).
-//!
-//! Porting notes live in docs/MIGRATION_RUST_TAURI.md section 4.6.
-
 use std::path::Path;
 
 use anyhow::{bail, Result};
@@ -45,7 +15,6 @@ use crate::release::{
 use crate::tools::{human_size, sha256_file};
 use crate::versions::{is_upgrade, should_create_new_release};
 
-/// Port of multi.py::env_name.
 pub fn env_name(value: &str) -> String {
     let mut out = String::with_capacity(value.len());
     let mut last_underscore = false;
@@ -58,13 +27,11 @@ pub fn env_name(value: &str) -> String {
             last_underscore = true;
         }
     }
-    // Python: re.sub then .strip("_") then .upper().
     let trimmed = out.trim_matches('_');
     trimmed.to_uppercase()
 }
 
-/// Port of multi.py::split_targets - comma split + strip + drop empties,
-/// order preserved (no dedup, no sort).
+/// Comma split + strip + drop empties, order preserved (no dedup, no sort).
 pub fn split_targets(targets: &str) -> Vec<String> {
     targets
         .split(',')
@@ -91,8 +58,6 @@ pub fn extract_with_pattern(text: &str, pattern: Option<&str>) -> Option<String>
         .map(|m| m.as_str().to_string())
 }
 
-/// multi.py env-prefix resolution: target.get("env_prefix") or
-/// env_name(target_name).
 fn env_prefix_of(target: &Value, target_name: &str) -> String {
     target
         .get("env_prefix")
@@ -102,14 +67,13 @@ fn env_prefix_of(target: &Value, target_name: &str) -> String {
         .unwrap_or_else(|| env_name(target_name))
 }
 
-/// Read an env var as Python os.getenv(name, "") - missing maps to empty.
 fn env_or_empty(name: &str) -> String {
     std::env::var(name).unwrap_or_default()
 }
 
-/// Port of multi.py::asset_facts - archive / digest / size for a target,
-/// however this run produced them. A digest-less target with a release falls
-/// back to the release's latest matching asset.
+/// Archive / digest / size for a target, however this run produced them. A
+/// digest-less target with a release falls back to the release's latest
+/// matching asset.
 pub fn asset_facts(config: &Value, target_name: &str, release_id: Option<i64>) -> Result<Value> {
     let target = get_target(config, target_name)?;
     let prefix = env_prefix_of(&target, target_name);
@@ -169,7 +133,6 @@ pub fn asset_facts(config: &Value, target_name: &str, release_id: Option<i64>) -
     }))
 }
 
-/// Python str(value or "") over a JSON field.
 fn asset_string_or_json(value: &Value) -> String {
     match value {
         Value::String(text) => text.clone(),
@@ -180,8 +143,7 @@ fn asset_string_or_json(value: &Value) -> String {
     }
 }
 
-/// Port of multi.py::build_flat_context - the lowercase-prefixed flat context
-/// feeding multi release body templates.
+/// The lowercase-prefixed flat context feeding multi release body templates.
 pub fn build_flat_context(
     config: &Value,
     target_names: &[String],
@@ -213,7 +175,6 @@ pub fn build_flat_context(
                 .and_then(Value::as_str)
                 .unwrap_or("")
                 .to_string();
-            // Python: value or "-" (empty renders as the dash placeholder).
             context.push((
                 format!("{prefix}_{key}"),
                 if value.is_empty() {
@@ -227,7 +188,6 @@ pub fn build_flat_context(
     Ok(context)
 }
 
-/// Port of multi.py::release_asset_present.
 pub fn release_asset_present(
     config: &Value,
     target_name: &str,
@@ -240,10 +200,9 @@ pub fn release_asset_present(
     Ok(find_latest_target_asset(release_id, &target)?.is_some())
 }
 
-/// Port of multi.py::validate_target_asset_matchers - dry-run sample render
-/// of every target's archive_name, cross-tested against the other targets'
-/// matchers. Overlap = RuntimeError (protects against one target's release
-/// sweeping another target's assets).
+/// Dry-run sample render of every target's archive_name, cross-tested against
+/// the other targets' matchers. Overlap = RuntimeError (protects against one
+/// target's release sweeping another target's assets).
 pub fn validate_target_asset_matchers(config: &Value, target_names: &[String]) -> Result<()> {
     let mut sample_names: Vec<(String, String)> = Vec::new();
     for target_name in target_names {
@@ -321,8 +280,8 @@ pub fn validate_target_asset_matchers(config: &Value, target_names: &[String]) -
     Ok(())
 }
 
-/// Port of multi.py::check_targets - the multi-target check loop. Writes the
-/// shared keys plus per-target {prefix}_UPDATE and UPSTREAM_{prefix}.
+/// The multi-target check loop. Writes the shared keys plus per-target
+/// {prefix}_UPDATE and UPSTREAM_{prefix}.
 pub fn check_targets(
     config: &Value,
     target_names: &[String],
@@ -429,8 +388,6 @@ pub fn check_targets(
             )?;
     }
 
-    // In-place tag/title rewrite only when we deliberately stayed on the same
-    // release; a create_new_release run publishes a fresh tag instead.
     let mut minor_update = false;
     if release_id.is_some() && tag_target_update && !create_new_release {
         minor_update = tag_target_current.is_some()
@@ -477,7 +434,6 @@ pub fn check_targets(
     Ok(values)
 }
 
-/// Python str(bool): "true" / "false".
 fn bool_py(value: bool) -> String {
     if value {
         "true".to_string()
@@ -486,14 +442,9 @@ fn bool_py(value: bool) -> String {
     }
 }
 
-/// Port of multi.py::build_selected_targets - the build loop. Reads
-/// {prefix}_UPDATE from the environment (cross-step GITHUB_ENV protocol),
-/// workflow_dispatch forces every target, writes the six result keys per
-/// built target, and ends with ensure_shared_release_assets.
-///
-/// NOTE: build_target / archive_target live in builder.rs (Wave3-A). The
-/// engine build/archive primitives are invoked through the same module; this
-/// function mirrors Python multi.py's loop shape one-for-one.
+/// The build loop. Reads {prefix}_UPDATE from the environment (cross-step
+/// GITHUB_ENV protocol), workflow_dispatch forces every target, writes the
+/// six result keys per built target, and ends with ensure_shared_release_assets.
 pub fn build_selected_targets(
     config: &Value,
     target_names: &[String],
@@ -568,9 +519,9 @@ pub fn build_selected_targets(
     Ok(built)
 }
 
-/// Port of multi.py::ensure_shared_release_assets - only targets NOT rebuilt
-/// this run ({prefix}_UPDATE != true) carry their previous release asset
-/// forward into build/assets, then publish the carried facts.
+/// Only targets NOT rebuilt this run ({prefix}_UPDATE != true) carry their
+/// previous release asset forward into build/assets, then publish the carried
+/// facts.
 pub fn ensure_shared_release_assets(
     config: &Value,
     target_names: &[String],
@@ -623,8 +574,6 @@ pub fn ensure_shared_release_assets(
         }
         carried.push(destination.to_string_lossy().into_owned());
 
-        // Publish the carried asset's facts too, so the release notes can
-        // show a checksum for a channel that was not rebuilt in this run.
         write_env(&[
             (format!("{prefix}_ARCHIVE"), asset_name),
             (format!("{prefix}_SHA256"), sha256_file(&destination)?),
@@ -637,10 +586,10 @@ pub fn ensure_shared_release_assets(
     Ok(carried)
 }
 
-/// Port of multi.py::render_multi_release - config-level release block
-/// missing => degrade to the single-target render_release; version fallback
-/// {prefix}_PACKAGE_VERSION > {prefix}_VERSION > UPSTREAM_{prefix}; tag /
-/// title / body defaults "v{date}" / "{date}" / "" (different from single!).
+/// Config-level release block missing => degrade to the single-target
+/// render_release; version fallback {prefix}_PACKAGE_VERSION >
+/// {prefix}_VERSION > UPSTREAM_{prefix}; tag / title / body defaults
+/// "v{date}" / "{date}" / "" (different from single!).
 pub fn render_multi_release(
     config: &Value,
     target_names: &[String],
@@ -722,9 +671,9 @@ pub fn render_multi_release(
     }))
 }
 
-/// Port of multi.py::update_multi_release - only rebuilt targets get their
-/// old assets deleted (UPDATE=true); PATCH body semantics match the
-/// single-target path (MINOR_UPDATE adds name+tag_name).
+/// Only rebuilt targets get their old assets deleted (UPDATE=true); PATCH
+/// body semantics match the single-target path (MINOR_UPDATE adds
+/// name+tag_name).
 pub fn update_multi_release(config: &Value, target_names: &[String], workdir: &Path) -> Result<()> {
     let release_id = env_or_empty("RELEASE_ID");
     if release_id.is_empty() {
@@ -771,9 +720,6 @@ pub fn update_multi_release(config: &Value, target_names: &[String], workdir: &P
     info(format!("Updated release {release_id}."));
     Ok(())
 }
-
-// Port of tools.py::human_size passthrough is unused here; kept for parity
-// with the Python import list is unnecessary - dead code would trip clippy.
 
 #[cfg(test)]
 mod tests {
@@ -823,7 +769,6 @@ mod tests {
                 .collect();
             assert_eq!(split_targets(input), expected, "split_targets({input:?})");
         }
-        // Comma-split with empties filtered, order kept, no dedup.
         assert_eq!(
             split_targets("a,, b ,"),
             vec!["a".to_string(), "b".to_string()]
@@ -839,7 +784,6 @@ mod tests {
             extract_with_pattern("Chrome: 153.1.95.102", Some(pattern)),
             Some("153.1.95.102".to_string())
         );
-        // Case-insensitive compile (Python re.IGNORECASE).
         assert_eq!(
             extract_with_pattern("chrome: 1.2.3.4", Some(pattern)),
             Some("1.2.3.4".to_string())
@@ -881,7 +825,6 @@ mod tests {
         let golden: serde_json::Value =
             serde_json::from_str(&std::fs::read_to_string(golden_path).unwrap()).unwrap();
 
-        // Single-threaded env mutation: clear the facts and release id.
         let keys = [
             "CHROME_PLUS_VERSION",
             "RELEASE_ID",
@@ -929,16 +872,12 @@ mod tests {
 
     #[test]
     fn validate_target_asset_matchers_passes_distinct_and_rejects_overlap() {
-        // Distinct templates: no conflict (the through scenario).
         validate_target_asset_matchers(
             &flat_config(),
             &["chrome_stable".to_string(), "edge_stable".to_string()],
         )
         .expect("distinct templates must pass");
 
-        // Overlap requires the OWNER's matcher to hit the OTHER target's
-        // SAMPLE name. Give edge the same template as chrome: edge's dry-run
-        // sample then fullmatches chrome's archive_name matcher.
         let mut overlap = flat_config();
         overlap["targets"]["edge_stable"]["archive_name"] =
             serde_json::json!("Chrome++_{version}_{date}.7z");
@@ -957,8 +896,6 @@ mod tests {
 
     #[test]
     fn flat_context_version_keys_use_lowercase_env_name() {
-        // multi.py: prefix = env_name(target_name).lower(); a target id like
-        // "chrome-beta" yields "chrome_beta_version" keys.
         let config = serde_json::json!({
             "targets": {
                 "chrome-beta": {"name": "ChromeBeta", "display_name": "Chrome Beta"}
@@ -1021,8 +958,6 @@ mod render_tests {
         });
         let target_names = vec!["chrome_stable".to_string(), "edge_stable".to_string()];
 
-        // Env vars are process-global: run everything in this one test and
-        // restore afterwards.
         let keys = [
             "CHROME_PLUS_VERSION",
             "RELEASE_ID",

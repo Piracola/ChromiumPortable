@@ -1,18 +1,6 @@
-//! Port of portable_builder/release.py - release rendering + GitHub API. Owner: Wave3-B.
+//! Owner: Wave3-B.
 //!
-//! Semantics follow the Python source exactly (release_check_contract.md and
-//! its addendum are the contract of record):
-//! - check decision tree produces the UPDATE_NEEDED / UPSTREAM_VERSION /
-//!   CREATE_NEW_RELEASE / MINOR_UPDATE (+ conditional RELEASE_ID / RELEASE_TAG)
-//!   env blob via github_env::write_env;
-//! - asset matchers chain release.asset_regex > archive_name (compiled from
-//!   the template with PLACEHOLDER_PATTERNS) > asset_match (contains/exact/
-//!   prefix/suffix/regex) > default output_dir contains;
-//! - GitHub API: 204-only delete, browser_download_url first with an
-//!   application/octet-stream fallback header for API URLs, substring
-//!   case-insensitive pattern sweep;
-//! - update-release carries body only; name+tag_name only on MINOR_UPDATE=true
-//!   (the in-place version-advance signal).
+//! Contract of record: release_check_contract.md and its addendum.
 //!
 //! Asset UPLOAD is deliberately NOT implemented: the workflow's
 //! softprops/action-gh-release step uploads build/assets/*.7z (contract
@@ -46,23 +34,18 @@ pub const PLACEHOLDER_PATTERNS: [(&str, &str); 4] = [
     ("arch", r"[A-Za-z0-9][A-Za-z0-9.-]*"),
 ];
 
-/// One compiled asset matcher: the description string (the diagnostics half
-/// of Python's (description, matcher) tuples) plus the predicate.
+/// One compiled asset matcher: the description string plus the predicate.
 pub struct AssetMatcher {
     pub description: String,
     pub predicate: Box<dyn Fn(&str) -> bool>,
 }
 
-/// The (description, predicate) pair a match-arm produces before becoming an
-/// [`AssetMatcher`]. An alias keeps the match expression readable and clippy's
-/// `type_complexity` quiet.
 type MatcherParts = (String, Box<dyn Fn(&str) -> bool>);
 
 fn target_str<'a>(target: &'a Value, key: &str) -> Option<&'a str> {
     target.get(key).and_then(Value::as_str)
 }
 
-/// Python target.get("name", target.get("display_name", "")).
 fn name_of(target: &Value) -> String {
     target_str(target, "name")
         .or_else(|| target_str(target, "display_name"))
@@ -70,7 +53,6 @@ fn name_of(target: &Value) -> String {
         .to_string()
 }
 
-/// Python target.get("display_name", target.get("name", "")).
 fn display_name_of(target: &Value) -> String {
     target_str(target, "display_name")
         .or_else(|| target_str(target, "name"))
@@ -78,7 +60,6 @@ fn display_name_of(target: &Value) -> String {
         .to_string()
 }
 
-/// Python target.get("output_dir", target.get("name", "Browser")).
 fn output_dir_of(target: &Value) -> String {
     target_str(target, "output_dir")
         .or_else(|| target_str(target, "name"))
@@ -152,8 +133,6 @@ pub fn build_context(
 ) -> Vec<(String, String)> {
     let env = |name: &str| std::env::var(name).unwrap_or_default();
     let raw_size = env("ARCHIVE_SIZE");
-    // Python: human_size(os.getenv("ARCHIVE_SIZE") or None) - a falsy env
-    // (unset or empty) maps to None, anything else parses as a float.
     let size: Option<f64> = if raw_size.is_empty() {
         None
     } else {
@@ -262,7 +241,6 @@ pub fn extract_version(text: &str) -> Option<String> {
             index += 1;
             continue;
         }
-        // A candidate match starts here: four dot-joined digit runs.
         let mut cursor = index;
         let mut groups = 0;
         let mut end;
@@ -272,7 +250,6 @@ pub fn extract_version(text: &str) -> Option<String> {
             }
             groups += 1;
             end = cursor;
-            // Greedy: a dot followed by at least one digit continues the match.
             if cursor < bytes.len()
                 && bytes[cursor] == b'.'
                 && cursor + 1 < bytes.len()
@@ -286,7 +263,6 @@ pub fn extract_version(text: &str) -> Option<String> {
         if groups >= 4 {
             return Some(text[index..end].to_string());
         }
-        // Not a 4-part run: retry from the next character (re.search semantics).
         index += 1;
     }
     None
@@ -343,8 +319,6 @@ pub fn render_asset_name(
     format_value(&asset_name_template(target), &context)
 }
 
-/// Python re.escape (3.12): keeps [a-zA-Z0-9_] verbatim, escapes every other
-/// ASCII character with a backslash. Non-ASCII passes through.
 fn regex_escape(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
     for ch in text.chars() {
@@ -358,7 +332,6 @@ fn regex_escape(text: &str) -> String {
     out
 }
 
-/// Python re.IGNORECASE compile.
 fn compile_pattern(pattern: &str) -> Result<regex::Regex> {
     RegexBuilder::new(pattern)
         .case_insensitive(true)
@@ -371,8 +344,6 @@ pub fn archive_name_regex_text(target: &Value) -> Result<String> {
     let template = asset_name_template(target);
     let context = asset_context_skeleton(target);
     let mut parts = vec!["^".to_string()];
-    // Walk the template like string.Formatter().parse: literal text, then
-    // {field} placeholders ({{ }} escapes first).
     let bytes = template.as_bytes();
     let mut literal = String::new();
     let mut i = 0;
@@ -396,8 +367,6 @@ pub fn archive_name_regex_text(target: &Value) -> Result<String> {
                 let field = &template[i + 1..end];
                 parts.push(regex_escape(&literal));
                 literal.clear();
-                // Python: value = context.get(field); value not in (None, "")
-                // -> escape it verbatim, else the placeholder pattern.
                 let resolved = context
                     .iter()
                     .find(|(key, _)| key == field)
@@ -428,8 +397,6 @@ pub fn archive_name_regex_text(target: &Value) -> Result<String> {
     Ok(parts.concat())
 }
 
-/// Python str(asset_match) over a JSON value: strings stay verbatim; bools
-/// render as Python True/False. Real configs only carry strings.
 fn asset_match_string(value: &Value) -> String {
     match value {
         Value::String(text) => text.clone(),
@@ -461,8 +428,6 @@ pub fn asset_matchers(target: &Value) -> Result<Vec<AssetMatcher>> {
         let pattern = archive_name_regex_text(target)?;
         let anchored = compile_pattern(&format!("^{pattern}$"))?;
         let description = format!("archive_name:{}", asset_name_template(target));
-        // archive_name uses re.fullmatch semantics: the compiled pattern is
-        // anchored on both ends (Python regex.fullmatch(name)).
         matchers.push(AssetMatcher {
             description,
             predicate: Box::new(move |name: &str| anchored.is_match(name)),
@@ -713,6 +678,22 @@ pub fn decide_update_needed(
     }
 }
 
+/// True when the version advances in place on the existing release rather than
+/// minting a new one: there is an upgrade, we did not opt into a new release,
+/// and the version actually moved.
+fn is_in_place_version_advance(
+    update_needed: bool,
+    create_new_release: bool,
+    upstream: &str,
+    current: Option<&str>,
+) -> bool {
+    update_needed
+        && !create_new_release
+        && current.is_some()
+        && upstream != current.unwrap_or_default()
+        && is_upgrade(upstream, current.unwrap_or(""))
+}
+
 /// Port of release.py::check_updates - the frozen five-branch decision tree
 /// plus the env blob (UPDATE_NEEDED / UPSTREAM_VERSION / CREATE_NEW_RELEASE /
 /// MINOR_UPDATE, with RELEASE_ID / RELEASE_TAG appended when present).
@@ -751,9 +732,6 @@ pub fn check_updates(target: &Value, workdir: &Path) -> Result<Vec<(String, Stri
     ));
     info(format!("Matching release asset present: {asset_present}"));
 
-    // The decision tree, branch by branch (release_check_contract.md);
-    // decide_update_needed holds the branch order, the prints stay here so
-    // the log lines land exactly where Python's chain emits them.
     let (update_needed, branch_message) = decide_update_needed(
         force_build,
         current_version.as_deref(),
@@ -782,12 +760,12 @@ pub fn check_updates(target: &Value, workdir: &Path) -> Result<Vec<(String, Stri
                 &upstream_version,
                 current_version.as_deref().unwrap_or(""),
             )?);
-    // In-place rename only when we stay on the existing release.
-    let minor_update = update_needed
-        && current_version.is_some()
-        && !create_new_release
-        && upstream_version != current_version.clone().unwrap_or_default()
-        && is_upgrade(&upstream_version, current_version.as_deref().unwrap_or(""));
+    let minor_update = is_in_place_version_advance(
+        update_needed,
+        create_new_release,
+        &upstream_version,
+        current_version.as_deref(),
+    );
 
     let mut values: Vec<(String, String)> = vec![
         ("UPDATE_NEEDED".to_string(), bool_py(update_needed)),
@@ -952,7 +930,6 @@ pub fn find_latest_target_asset(release_id: i64, target: &Value) -> Result<Optio
     Ok(Some(matches.swap_remove(0)))
 }
 
-/// Python sort_key: the first non-empty timestamp field, else "".
 fn sort_key_rev(asset: &Value) -> std::cmp::Reverse<String> {
     for key in ["updated_at", "updatedAt", "created_at", "createdAt"] {
         if let Some(text) = asset.get(key).and_then(Value::as_str) {
@@ -993,7 +970,6 @@ pub fn download_release_asset(asset: &Value, destination: &Path) -> Result<PathB
 
     let mut headers = github_headers();
     if browser_url.is_empty() && !api_url.is_empty() {
-        // Python builds a fresh dict and overwrites Accept.
         headers.retain(|(name, _)| name != "Accept");
         headers.push(("Accept".to_string(), "application/octet-stream".to_string()));
     }
@@ -1153,17 +1129,12 @@ mod tests {
         );
         assert_eq!(extract_version(""), None);
         assert_eq!(extract_version("no digits here"), None);
-        // Three-part versions do not match the 4-dot regex.
         assert_eq!(extract_version("v1.2.3"), None);
-        // re.search semantics: the match can start mid-string and must not
-        // be fooled by a 3-part prefix of a longer run.
         assert_eq!(extract_version("1.2.3.4.5"), Some("1.2.3.4.5".to_string()));
     }
 
     #[test]
     fn archive_name_regex_matches_python_pattern_text() {
-        // Python: ^ProbeBrowser_\d+(?:\.\d+)+_\d{4}-\d{2}-\d{2}\.7z$
-        // (golden: verify_archive_locate_golden.json regex_pattern).
         assert_eq!(
             archive_name_regex_text(&probe_target()).unwrap(),
             "^ProbeBrowser_\\d+(?:\\.\\d+)+_\\d{4}-\\d{2}-\\d{2}\\.7z$"
@@ -1178,13 +1149,11 @@ mod tests {
         assert!(compiled.is_match("ProbeBrowser_153.1.95.102_2026-07-01.7z"));
         assert!(!compiled.is_match("prefix ProbeBrowser_153.1.95.102_2026-07-01.7z"));
         assert!(!compiled.is_match("ProbeBrowser_v153_2026-07-01.7z"));
-        // Case-insensitive compile (Python re.IGNORECASE).
         assert!(compiled.is_match("probebrowser_153.1.95.102_2026-07-01.7z"));
     }
 
     #[test]
     fn asset_matchers_chain_order_and_fallback() {
-        // probe target has archive_name + asset_match: two matchers, in order.
         let target = probe_target();
         let matchers = asset_matchers(&target).unwrap();
         assert_eq!(
@@ -1198,7 +1167,6 @@ mod tests {
             ]
         );
 
-        // No release block, no archive_name -> default(contains) on output_dir.
         let bare = json!({"name": "Zeta", "output_dir": "ZetaDir"});
         let matchers = asset_matchers(&bare).unwrap();
         assert_eq!(matchers.len(), 1);
@@ -1246,8 +1214,6 @@ mod tests {
 
     #[test]
     fn render_release_matches_release_render_reference() {
-        // Golden: _migration/pe-golden/release_render_reference.json - tag/title
-        // byte-equal and the body file written under a temp workdir.
         let golden_path = Path::new("_migration/pe-golden/release_render_reference.json");
         if !golden_path.exists() {
             eprintln!("golden not present in this checkout; skipping");
@@ -1278,7 +1244,6 @@ mod tests {
             "\u{81ea}\u{52a8}\u{6784}\u{5efa}\u{7684} Probe Browser \u{4fbf}\u{643a}\u{7248}\n\n\u{6784}\u{5efa}\u{65f6}\u{95f4}: 2026-07-01\nProbe Browser \u{7248}\u{672c}: 153.1.95.102\n"
         );
 
-        // Body file carries the version the version_pattern reads back.
         assert_body_versions(
             &body,
             &[(
@@ -1331,9 +1296,6 @@ mod tests {
 
     #[test]
     fn render_asset_name_matches_reference_asset_name() {
-        // Golden asset_name: ProbeBrowser-153.1.95.102-x64-2026-07-01 -
-        // produced from the reference input's archive_name template (the
-        // hyphen variant recorded in release_render_reference.json).
         let target = json!({
             "target": "probe_stable",
             "display_name": "ProbeBrowser",
@@ -1344,7 +1306,6 @@ mod tests {
             render_asset_name(&target, "153.1.95.102", "2026-07-01", None).unwrap(),
             "ProbeBrowser-153.1.95.102-x64-2026-07-01"
         );
-        // Default template from release.py when archive_name is absent.
         let bare = json!({"display_name": "ProbeBrowser", "architecture": "x64"});
         assert_eq!(
             render_asset_name(&bare, "1.0.0.0", "2026-07-01", None).unwrap(),
@@ -1354,7 +1315,6 @@ mod tests {
 
     #[test]
     fn github_headers_token_optional() {
-        // No token -> Accept only. Token set -> Authorization appended.
         let saved = std::env::var("GITHUB_TOKEN").ok();
         std::env::remove_var("GITHUB_TOKEN");
         let headers = github_headers();
@@ -1366,7 +1326,6 @@ mod tests {
         assert_eq!(headers.len(), 2);
         assert_eq!(headers[1].1, "token t0ken");
 
-        // Empty token is falsy in Python: no header.
         std::env::set_var("GITHUB_TOKEN", "");
         let headers = github_headers();
         assert_eq!(headers.len(), 1);
@@ -1420,20 +1379,14 @@ mod decision_tree_tests {
 
     #[test]
     fn decision_tree_replays_five_branches_with_fake_env() {
-        // Golden replay of the check decision tree
-        // (release_check_contract.md): the branch order and the resulting
-        // UPDATE_NEEDED flag for each of the five branches.
-        // 1. force_build (manual dispatch) wins over everything else.
         let (update, message) = decide_update_needed(true, None, false, "2.0.0.0");
         assert!(update);
         assert_eq!(message, "Manual dispatch detected; forcing build.");
-        // force beats an up-to-date state too.
         let (update, message) =
             decide_update_needed(true, Some("153.1.95.102"), true, "153.1.95.102");
         assert!(update);
         assert_eq!(message, "Manual dispatch detected; forcing build.");
 
-        // 2. no current version.
         let (update, message) = decide_update_needed(false, None, false, "153.1.95.102");
         assert!(update);
         assert_eq!(
@@ -1441,17 +1394,14 @@ mod decision_tree_tests {
             "No existing release version found; build is needed."
         );
 
-        // 3. asset missing.
         let (update, message) = decide_update_needed(false, Some("1.0.0.0"), false, "153.1.95.102");
         assert!(update);
         assert_eq!(message, "Release asset is missing; rebuild is needed.");
 
-        // 4. upgrade detected.
         let (update, message) = decide_update_needed(false, Some("1.0.0.0"), true, "2.0.0.0");
         assert!(update);
         assert_eq!(message, "Version upgrade detected");
 
-        // 5. no newer upstream (equal or downgrade).
         let (update, message) = decide_update_needed(false, Some("2.0.0.0"), true, "2.0.0.0");
         assert!(!update);
         assert_eq!(message, "No newer upstream version detected.");

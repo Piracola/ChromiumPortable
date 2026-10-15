@@ -1,10 +1,4 @@
-//! Port of portable_builder/verify.py - post-archive verification.
-//! Owner: Wave3-A (contract: _migration/pe-golden/verify_smoke_contract.md
-//! + addendum; golden verify_archive_locate_golden.json).
-//!
-//! Judgement chain after extraction:
-//! (a) assert_portable_version_import  (b) assert_no_setdll_backup
-//! (c) assert_no_forbidden_files       (d) smoke_test
+//! Post-archive verification.
 //!
 //! Smoke semantics (AGENTS.md lesson, codeified): the browser exit code
 //! alone proves little - msedge.exe is a launcher stub - so the real
@@ -27,10 +21,9 @@ use crate::multi::env_name;
 use crate::pe::assert_portable_version_import;
 use crate::tools::{
     assert_no_forbidden_files, extract_with_7z, find_7z_tool, find_version_dir, remove_path,
-    sha256_file,
+    sha256_file, SevenZipDownload,
 };
 
-/// verify.py DEFAULT_SMOKE_ARGS.
 pub const DEFAULT_SMOKE_ARGS: [&str; 6] = [
     "--headless=new",
     "--disable-gpu",
@@ -40,7 +33,7 @@ pub const DEFAULT_SMOKE_ARGS: [&str; 6] = [
     "about:blank",
 ];
 
-/// release.py::archive_name_regex equivalent: build the anchored regex for
+/// Build the anchored regex for
 /// the target's archive_name and fullmatch candidate names (addendum 1:
 /// fullmatch, NOT search). Returns the compiled pattern.
 fn archive_name_regex(target: &Value) -> Result<regex::Regex> {
@@ -52,7 +45,7 @@ fn archive_name_regex(target: &Value) -> Result<regex::Regex> {
         .build()?)
 }
 
-/// verify.py::find_target_archive - glob *.7z, fullmatch the archive_name
+/// Glob *.7z, fullmatch the archive_name
 /// regex, pick the newest by mtime. No match: error listing every archive
 /// present.
 pub fn find_target_archive(target: &Value, workdir: &Path) -> Result<PathBuf> {
@@ -122,7 +115,7 @@ pub fn find_target_archive(target: &Value, workdir: &Path) -> Result<PathBuf> {
     Ok(newest)
 }
 
-/// verify.py::locate_executable - auto layout re-runs the static analysis,
+/// Auto layout re-runs the static analysis,
 /// fixed layouts use find_version_dir + exe_name with normpath semantics.
 pub fn locate_executable(target: &Value, app_root: &Path) -> Result<PathBuf> {
     if target.get("layout").and_then(Value::as_str) == Some("auto") {
@@ -146,7 +139,6 @@ pub fn locate_executable(target: &Value, app_root: &Path) -> Result<PathBuf> {
         .and_then(Value::as_str)
         .ok_or_else(|| anyhow!("Target config requires exe_name"))?;
     let executable = version_dir.join(exe_name);
-    // os.path.normpath then existence check.
     let executable = normalize_path(&executable);
     if !executable.exists() {
         bail!(
@@ -169,7 +161,6 @@ fn normalize_path(path: &Path) -> PathBuf {
     out
 }
 
-/// verify.py::wait_for_directory - poll at 0.5s until timeout.
 pub fn wait_for_directory(path: &Path, timeout: Duration, interval: Duration) -> bool {
     let deadline = Instant::now() + timeout;
     loop {
@@ -183,8 +174,7 @@ pub fn wait_for_directory(path: &Path, timeout: Duration, interval: Duration) ->
     }
 }
 
-/// verify.py::describe_tree - sorted relative paths at depth <= 2 for the
-/// failure diagnostics.
+/// Sorted relative paths at depth <= 2 for the failure diagnostics.
 pub fn describe_tree(root: &Path, depth: usize) -> String {
     let mut entries: Vec<String> = Vec::new();
     let mut all: Vec<PathBuf> = Vec::new();
@@ -223,7 +213,7 @@ pub fn describe_tree(root: &Path, depth: usize) -> String {
     }
 }
 
-/// verify.py::run_browser - launch and wait for the direct child. The exit
+/// Launch and wait for the direct child. The exit
 /// code alone proves little: zero is not proof, non-zero is failure.
 pub fn run_browser(
     executable: &Path,
@@ -245,13 +235,10 @@ pub fn run_browser(
     let status = match status {
         Ok(status) => status,
         Err(exc) => {
-            // subprocess.TimeoutExpired analog: handled by the caller
-            // through the elapsed check; spawn errors surface directly.
             bail!("Browser failed to start: {exc}");
         }
     };
     if start.elapsed() > timeout {
-        // The child outlived its budget: Python raises TimeoutExpired.
         bail!(
             "Browser did not exit within {}s: {command_text}",
             timeout.as_secs()
@@ -264,7 +251,7 @@ pub fn run_browser(
     Ok(())
 }
 
-/// verify.py::assert_no_setdll_backup - only the exact <exe>~ path, no
+/// Only the exact <exe>~ path, no
 /// globbing (a tree-wide *~ scan would false-positive on unrelated files).
 pub fn assert_no_setdll_backup(extracted_root: &Path, executable: &Path) -> Result<()> {
     let exe_name = executable
@@ -285,7 +272,7 @@ pub fn assert_no_setdll_backup(extracted_root: &Path, executable: &Path) -> Resu
     Ok(())
 }
 
-/// verify.py::smoke_test - the four-step judgement: no pre-shipped Data
+/// The four-step judgement: no pre-shipped Data
 /// dir, version.txt readout, --version probe, DEFAULT_SMOKE_ARGS run, then
 /// the portable Data directory poll (0.5s x 60s).
 pub fn smoke_test(
@@ -366,7 +353,7 @@ pub fn smoke_test(
     Ok(())
 }
 
-/// verify.py::cleanup - browser subprocesses outlive the parent briefly and
+/// Browser subprocesses outlive the parent briefly and
 /// hold DLL handles: 4 attempts x 3s delay.
 pub fn cleanup(extracted_root: &Path, attempts: u32, delay: Duration) -> bool {
     for attempt in 0..attempts {
@@ -394,7 +381,7 @@ pub fn cleanup(extracted_root: &Path, attempts: u32, delay: Duration) -> bool {
     false
 }
 
-/// verify.py::verify_target - extract the archive, run the assertion chain,
+/// Extract the archive, run the assertion chain,
 /// optionally smoke, then clean up.
 pub fn verify_target(
     target: &Value,
@@ -421,12 +408,17 @@ pub fn verify_target(
     remove_path(&extracted_root);
     std::fs::create_dir_all(&extracted_root)?;
     let auto_layout = target.get("layout").and_then(Value::as_str) == Some("auto");
+    let allow_download = target
+        .get("allow_7z_download")
+        .and_then(Value::as_bool)
+        .unwrap_or(!auto_layout);
     let seven_zip = find_7z_tool(
         workdir,
-        target
-            .get("allow_7z_download")
-            .and_then(Value::as_bool)
-            .unwrap_or(!auto_layout),
+        if allow_download {
+            SevenZipDownload::Allowed
+        } else {
+            SevenZipDownload::Never
+        },
         target
             .get("allow_7z_system_install")
             .and_then(Value::as_bool)
@@ -491,7 +483,7 @@ pub fn verify_target(
     }))
 }
 
-/// verify.py::verify_targets - per-target verification with the env-prefix
+/// Per-target verification with the env-prefix
 /// skip logic, then VERIFIED_TARGETS written through write_env.
 pub fn verify_targets(
     config: &Value,
@@ -547,7 +539,6 @@ mod tests {
             "display_name": "ProbeBrowser",
             "archive_name": "ProbeBrowser_{version}_{date}.7z",
         });
-        // Older match + newer match + non-matching file: newest mtime wins.
         let a = assets.join("ProbeBrowser_1.0.0.0_2026-07-01.7z");
         let b = assets.join("ProbeBrowser_2.0.0.0_2026-07-02.7z");
         let c = assets.join("Other_1.0.0.0_2026-07-01.7z");
@@ -560,7 +551,6 @@ mod tests {
         let selected = find_target_archive(&target, &dir).unwrap();
         assert_eq!(selected.file_name().unwrap(), b.file_name().unwrap());
 
-        // No match: exact error listing present archives.
         let mut no_match_target = target.clone();
         no_match_target["archive_name"] = serde_json::json!("ProbeBrowser_{version}_{date}_9x.7z");
         let err = find_target_archive(&no_match_target, &dir)
@@ -573,7 +563,6 @@ mod tests {
         assert!(err.contains("ProbeBrowser_1.0.0.0_2026-07-01.7z"), "{err}");
         assert!(err.contains("Other_1.0.0.0_2026-07-01.7z"), "{err}");
 
-        // Empty assets dir: the error lists "Present: (none)".
         let empty_dir =
             std::env::temp_dir().join(format!("pb-verify-locate-empty-{}", std::process::id()));
         let empty_assets = empty_dir.join("build").join("assets");
@@ -597,7 +586,6 @@ mod tests {
             "archive_name": "ProbeBrowser_{version}_{date}.7z",
         });
         let pattern = crate::release::archive_name_regex_text(&target).unwrap();
-        // The Python golden compiled: ^ProbeBrowser_\d+(?:\.\d+)+_\d{4}-\d{2}-\d{2}\.7z$
         assert!(pattern.contains(r"\d+(?:\.\d+)+"), "{pattern}");
         assert!(pattern.contains(r"\d{4}-\d{2}-\d{2}"), "{pattern}");
         remove_path(&dir);
@@ -612,9 +600,7 @@ mod tests {
         std::fs::write(app.join("chrome.exe~"), b"x").unwrap();
         std::fs::write(root.join("unrelated~"), b"x").unwrap();
         let exe = app.join("chrome.exe");
-        // The exact <exe>~ path exists -> error.
         assert!(assert_no_setdll_backup(&root, &exe).is_err());
-        // Removing it, the unrelated *~ elsewhere must NOT trip the guard.
         std::fs::remove_file(app.join("chrome.exe~")).unwrap();
         assert!(assert_no_setdll_backup(&root, &exe).is_ok());
         remove_path(&dir);
@@ -662,7 +648,6 @@ mod tests {
         std::fs::write(dir.join("sub").join("f.txt"), b"x").unwrap();
         assert!(cleanup(&dir, 4, Duration::from_millis(10)));
         assert!(!dir.exists());
-        // Missing path: immediate success.
         assert!(cleanup(&dir, 4, Duration::from_millis(10)));
     }
 }

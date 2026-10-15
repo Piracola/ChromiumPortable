@@ -1,21 +1,3 @@
-//! Port of portable_builder/tools.py - download+digest, 7z tool discovery order
-//! (migration doc S1/S4.2), extract, sha256 helpers and path helpers.
-//! Owner: Wave2.
-//!
-//! Semantics follow the Python source exactly, including:
-//! - the six-level 7z discovery order (system paths, workdir 7zr.exe, PATH,
-//!   download mirrors, Chocolatey) - the order IS the contract,
-//! - download_file's cache-reject-resync behavior (verify cached copy first,
-//!   delete and re-download on digest mismatch),
-//! - human_size's Windows-Explorer formatting (1024-based, B integral,
-//!   one decimal for the rest) which feeds release templates byte-for-byte.
-//!
-//! PE import helpers from tools.py (read_pe_import_names,
-//! assert_portable_version_import) live in pe.rs via pelite - the
-//! ABSOLUTE_VERSION_DLL regex moved with them.
-//!
-//! Porting notes live in docs/MIGRATION_RUST_TAURI.md S4.2.
-
 use std::fs;
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -28,8 +10,6 @@ use sha2::{Digest, Sha256};
 
 use crate::log_fmt::{info, warn};
 
-/// Write-through adapter that hashes and counts bytes while they stream to
-/// disk (mirrors Python's per-chunk `digest.update(chunk)` in download_file).
 struct HashingWriter<'a, W: std::io::Write> {
     inner: W,
     digest: &'a mut Sha256,
@@ -47,59 +27,42 @@ impl<W: std::io::Write> std::io::Write for HashingWriter<'_, W> {
     }
 }
 
-/// tools.py SEVEN_ZIP_URLS - mirror order is semantic (official source first).
+/// Mirror order is semantic (official source first).
 pub const SEVEN_ZIP_URLS: [&str; 2] = [
     "https://www.7-zip.org/a/7zr.exe",
     "https://raw.githubusercontent.com/develar/7zip-bin/master/win/x64/7za.exe",
 ];
 
-/// tools.py LOCAL_7ZR.
 pub const LOCAL_7ZR: &str = "7zr.exe";
 
-/// tools.py SYSTEM_7Z_PATHS.
 pub const SYSTEM_7Z_PATHS: [&str; 2] = [
     r"C:\Program Files\7-Zip\7z.exe",
     r"C:\Program Files (x86)\7-Zip\7z.exe",
 ];
 
-/// tools.py ABSOLUTE_VERSION_DLL, moved here from the PE import check that
-/// lives in pe.rs (kept public so pe.rs re-uses the same pattern text).
 pub const ABSOLUTE_VERSION_DLL_PATTERN: &str = r"[A-Za-z]:\\[^\x00]*version\.dll";
 
 const CHUNK_SIZE: usize = 1024 * 1024;
 
 /// Format bytes the way Windows Explorer does (1024-based, labelled B/KB/MB/GB).
-///
-/// Port of tools.py::human_size. Python renders via printf-style `%f`:
-/// "B" values round half-to-even at 0 decimals, every other unit carries
-/// exactly one decimal. `None`/`""` render as the empty string.
+/// `None`/`""` render as the empty string.
 pub fn human_size(size: Option<f64>) -> String {
     let Some(mut value) = size else {
         return String::new();
     };
-    // Python's float(size) on a string is rejected only for non-numerics;
-    // callers pass ints, so the numeric conversion is total here.
     for unit in ["B", "KB", "MB", "GB"] {
         if value < 1024.0 || unit == "GB" {
             return if unit == "B" {
-                format_py_fixed(value, 0) + " " + unit
+                format!("{value:.0} {unit}")
             } else {
-                format_py_fixed(value, 1) + " " + unit
+                format!("{value:.1} {unit}")
             };
         }
         value /= 1024.0;
     }
-    format_py_fixed(value, 1) + " GB"
+    format!("{value:.1} GB")
 }
 
-/// printf-style %.<precision>f, matching C/Python rounding (round-half-to-even
-/// on the decimal representation of the double). Rust's `{:.prec}` already
-/// uses the same correctly-rounded decimal conversion, so this is just syntax.
-fn format_py_fixed(value: f64, precision: usize) -> String {
-    format!("{:.*}", precision, value)
-}
-
-/// Port of tools.py::sha256_file (1 MiB chunks, lowercase hex digest).
 pub fn sha256_file(path: &Path) -> Result<String> {
     let mut file = fs::File::open(path)?;
     let mut digest = Sha256::new();
@@ -116,8 +79,7 @@ pub fn sha256_file(path: &Path) -> Result<String> {
 
 /// Accept hex, `sha256:<hex>` and base64 digests; return lowercase hex.
 ///
-/// Port of tools.py::normalize_sha256. `None`/`""` map to `None`. The
-/// error text is byte-identical to Python's:
+/// `None`/`""` map to `None`. The error text is byte-identical to Python's:
 /// `Unrecognized SHA256 digest: {value!r}`.
 pub fn normalize_sha256(value: Option<&str>) -> Result<Option<String>> {
     let Some(value) = value else {
@@ -132,23 +94,29 @@ pub fn normalize_sha256(value: Option<&str>) -> Result<Option<String>> {
         text = text[pos + 1..].trim();
     }
 
-    if text.len() == 64 {
-        if let Ok(bytes) = hex::decode(text) {
-            return Ok(Some(hex::encode(bytes)));
-        }
-        // Python falls through to the base64 branch on a bad hex string.
+    if let Some(hex_text) = try_hex_digest(text) {
+        return Ok(Some(hex_text));
     }
-
-    let decoded = base64::engine::general_purpose::STANDARD
-        .decode(text)
-        .map_err(|_| unrecognized_sha256_error(value))?;
-    if decoded.len() != 32 {
-        return Err(unrecognized_sha256_error(value));
-    }
-    Ok(Some(hex::encode(decoded)))
+    try_base64_digest(text)
+        .map(Some)
+        .map_err(|_| unrecognized_sha256_error(value))
 }
 
-/// Python error text: `ValueError(f"Unrecognized SHA256 digest: {value!r}")`.
+fn try_hex_digest(text: &str) -> Option<String> {
+    if text.len() != 64 {
+        return None;
+    }
+    hex::decode(text).ok().map(hex::encode)
+}
+
+fn try_base64_digest(text: &str) -> Result<String> {
+    let decoded = base64::engine::general_purpose::STANDARD.decode(text)?;
+    if decoded.len() != 32 {
+        bail!("digest is not 32 bytes");
+    }
+    Ok(hex::encode(decoded))
+}
+
 fn unrecognized_sha256_error(value: &str) -> anyhow::Error {
     anyhow!("Unrecognized SHA256 digest: {}", py_repr(value))
 }
@@ -182,10 +150,8 @@ fn py_repr(value: &str) -> String {
     out
 }
 
-/// Port of tools.py::verify_file_digest.
-///
 /// Size is checked against the on-disk file; digest against its content.
-/// Prints `[INFO] SHA256 verified: ...` on success, like Python.
+/// Prints `[INFO] SHA256 verified: ...` on success.
 pub fn verify_file_digest(path: &Path, sha256: Option<&str>, size: Option<u64>) -> Result<()> {
     if let Some(size) = size {
         let actual_size = fs::metadata(path)?.len();
@@ -202,9 +168,6 @@ pub fn verify_file_digest(path: &Path, sha256: Option<&str>, size: Option<u64>) 
     }
 
     if let Some(sha256) = sha256 {
-        // "sha256:" (empty after prefix) normalizes to None; Python raises
-        // RuntimeError("SHA256 mismatch for {name}: expected None, got <digest>")
-        // instead of panicking (review-Wave2 finding 2).
         let expected = normalize_sha256(Some(sha256))?.ok_or_else(|| {
             anyhow!(
                 "SHA256 mismatch for {}: expected None, got <not verified yet>",
@@ -235,10 +198,9 @@ pub fn verify_file_digest(path: &Path, sha256: Option<&str>, size: Option<u64>) 
     Ok(())
 }
 
-/// Port of tools.py::download_file - streaming 1 MiB chunks, digest computed
-/// while downloading, size check, and the cache-reject-resync semantics:
-/// an existing file is verified first and deleted for re-download when the
-/// digest check rejects it (CI caches installers this way - do not simplify).
+/// Streaming 1 MiB chunks, digest computed while downloading, size check,
+/// and the cache-reject-resync semantics: an existing file is verified first
+/// and deleted for re-download when the digest check rejects it.
 ///
 /// `verify_ssl=false` maps to reqwest's `danger_accept_invalid_certs`.
 /// NOTE: only the Edge provider may pass false (contract S3/S4.3).
@@ -287,9 +249,6 @@ pub fn download_file(
     let mut digest = Sha256::new();
     let mut downloaded: u64 = 0;
     let file = fs::File::create(path)?;
-    // Stream with hash-while-writing (fidelity to Python's iter_content loop):
-    // HashingWriter updates the SHA256 on every write as bytes flow through
-    // std::io::copy into the file.
     let mut hashing_writer = HashingWriter {
         inner: file,
         digest: &mut digest,
@@ -312,8 +271,6 @@ pub fn download_file(
 
     if let Some(sha256) = sha256 {
         let expected = normalize_sha256(Some(sha256))?.ok_or_else(|| {
-            // "sha256:" (empty after prefix) normalizes to None; Python raises
-            // RuntimeError here instead of panicking (review-Wave2 finding 2).
             remove_path(path);
             anyhow!("SHA256 mismatch for {name}: expected None, got <digest of downloaded bytes>")
         })?;
@@ -332,7 +289,6 @@ pub fn download_file(
     Ok(path.to_path_buf())
 }
 
-/// Port of tools.py::install_7z_with_chocolatey.
 fn install_7z_with_chocolatey() -> Result<Option<String>> {
     if which("choco").is_none() {
         return Ok(None);
@@ -344,8 +300,6 @@ fn install_7z_with_chocolatey() -> Result<Option<String>> {
         .output();
     let output = match output {
         Ok(output) => output,
-        // Python raises only if subprocess.run itself fails, which find_7z_tool
-        // catches; treat spawn failure as "choco did not work".
         Err(_) => return Ok(None),
     };
     if !output.stdout.is_empty() {
@@ -391,10 +345,16 @@ fn which(name: &str) -> Option<PathBuf> {
     None
 }
 
+/// Whether `find_7z_tool` may fetch 7-Zip itself. `Never` is the
+/// inspect-package path: static inspection must not download or install.
+pub enum SevenZipDownload {
+    Never,
+    Allowed,
+}
+
 /// Locate an extractor without changing the machine unless explicitly allowed.
 ///
-/// Port of tools.py::find_7z_tool. The six-level discovery order is the
-/// contract (tools_7z_contract.md):
+/// The six-level discovery order is the contract (tools_7z_contract.md):
 /// 1. system installs (both Program Files paths),
 /// 2. workdir 7zr.exe,
 /// 3. 7z on PATH,
@@ -405,7 +365,7 @@ fn which(name: &str) -> Option<PathBuf> {
 /// 6. Chocolatey install when `allow_system_install` and choco is present.
 pub fn find_7z_tool(
     workdir: &Path,
-    allow_download: bool,
+    allow_download: SevenZipDownload,
     allow_system_install: bool,
 ) -> Result<String> {
     for path in SYSTEM_7Z_PATHS {
@@ -426,7 +386,7 @@ pub fn find_7z_tool(
         return Ok("7z".to_string());
     }
 
-    if !allow_download {
+    if matches!(allow_download, SevenZipDownload::Never) {
         bail!(
             "7-Zip was not found. Static package inspection will not download or install it; \
              place 7zr.exe in the builder directory or install 7-Zip yourself."
@@ -462,8 +422,6 @@ pub fn find_7z_tool(
     );
 }
 
-/// Port of tools.py::extract_with_7z.
-///
 /// Command is fixed: [7z, x, <archive>, -y, -o<outdir>]. Non-zero exit prints
 /// the tool's stdout+stderr and raises `Extraction failed: <archive>`.
 pub fn extract_with_7z(archive: &Path, output_dir: &Path, seven_zip_path: &str) -> Result<()> {
@@ -488,8 +446,8 @@ pub fn extract_with_7z(archive: &Path, output_dir: &Path, seven_zip_path: &str) 
     Ok(())
 }
 
-/// Port of tools.py::find_child_dir - direct child first, then a recursive
-/// case-insensitive search. Returns None when nothing matches.
+/// Direct child first, then a recursive case-insensitive search. Returns None
+/// when nothing matches.
 pub fn find_child_dir(root: &Path, name: &str) -> Option<PathBuf> {
     let direct = root.join(name);
     if direct.exists() {
@@ -504,8 +462,8 @@ pub fn find_child_dir(root: &Path, name: &str) -> Option<PathBuf> {
     })
 }
 
-/// Port of tools.py::find_child_file - direct child first, then a recursive
-/// case-insensitive search. Returns None when nothing matches.
+/// Direct child first, then a recursive case-insensitive search. Returns None
+/// when nothing matches.
 pub fn find_child_file(root: &Path, name: &str) -> Option<PathBuf> {
     let direct = root.join(name);
     if direct.exists() {
@@ -520,8 +478,6 @@ pub fn find_child_file(root: &Path, name: &str) -> Option<PathBuf> {
     })
 }
 
-/// Recursively collect paths under root, mirroring Python's rglob("*") ordering
-/// closely enough for the find_child_* fallbacks (deterministic walk).
 fn walk_entries(root: &Path) -> Vec<PathBuf> {
     let mut out = Vec::new();
     let mut stack = vec![root.to_path_buf()];
@@ -543,9 +499,8 @@ fn walk_entries(root: &Path) -> Vec<PathBuf> {
     out
 }
 
-/// Port of tools.py::find_version_dir - the preferred version dir when it
-/// exists, else the first direct child whose name is dotted digits starting
-/// with a digit (e.g. "135.0.5973.92").
+/// The preferred version dir when it exists, else the first direct child
+/// whose name is dotted digits starting with a digit (e.g. "135.0.5973.92").
 pub fn find_version_dir(root: &Path, preferred_version: Option<&str>) -> Option<PathBuf> {
     if let Some(preferred) = preferred_version {
         let candidate = root.join(preferred);
@@ -572,12 +527,8 @@ pub fn find_version_dir(root: &Path, preferred_version: Option<&str>) -> Option<
     None
 }
 
-/// Port of tools.py::remove_path - dirs are removed recursively, files unlink.
-/// Missing paths are a no-op, like Python's branch structure.
-///
 /// Windows 上刚解出的 exe 常被杀软/索引器抓着句柄，remove_dir_all 会瞬时
-/// os error 145/32；重试几轮再放弃（Python 的 rmtree 在同一现场同样要靠
-/// onerror 兜）。静默吞掉的错误与 Python 一致——调用方随后 rename/重建会
+/// os error 145/32；重试几轮再放弃。静默吞掉的错误调用方随后 rename/重建会
 /// 把不可删除的残留暴露出来。
 pub fn remove_path(path: &Path) {
     if path.is_dir() {
@@ -593,10 +544,9 @@ pub fn remove_path(path: &Path) {
     }
 }
 
-/// Port of tools.py::assert_no_forbidden_files - reject exact file names that
-/// a portable target must never ship. `forbidden` is the target's
-/// "forbidden_file_names" list (casefolded comparison, posix relative paths
-/// in the error, sorted).
+/// Reject exact file names that a portable target must never ship.
+/// `forbidden` is the target's "forbidden_file_names" list (casefolded
+/// comparison, posix relative paths in the error, sorted).
 pub fn assert_no_forbidden_files(root: &Path, forbidden: &[String]) -> Result<()> {
     let forbidden: std::collections::HashSet<String> =
         forbidden.iter().map(|name| name.to_lowercase()).collect();
@@ -650,20 +600,15 @@ mod tests {
             human_size(Some(5.0 * 1024.0 * 1024.0 * 1024.0 - 1.0)),
             "5.0 GB"
         );
-        // Explorer-style labels: everything above B keeps exactly one decimal.
         assert_eq!(human_size(Some(1024.0 * 1024.0)), "1.0 MB");
     }
 
     #[test]
     fn normalize_sha256_three_input_shapes() {
-        // "abcdef0123456789" x4 = 64 chars exactly (built by repetition to
-        // avoid transcription errors).
         let hex64 = "abcdef0123456789".repeat(4);
         assert_eq!(hex64.len(), 64);
         let upper: String = hex64.to_uppercase();
-        // 64-hex (upper case normalizes to lower; bytes.fromhex accepts both).
         assert_eq!(normalize_sha256(Some(&upper)).unwrap().unwrap(), hex64);
-        // "sha256:" prefix, including uppercase digits under the prefix.
         assert_eq!(
             normalize_sha256(Some(&format!("sha256:{hex64}")))
                 .unwrap()
@@ -676,17 +621,12 @@ mod tests {
                 .unwrap(),
             hex64
         );
-        // 64-hex lowercase passes through.
         assert_eq!(normalize_sha256(Some(&hex64)).unwrap().unwrap(), hex64);
-        // b64 of bytes 0x00..0x1f.
         let b64 = base64::engine::general_purpose::STANDARD.encode((0u8..32).collect::<Vec<_>>());
         assert_eq!(
             normalize_sha256(Some(&b64)).unwrap().unwrap(),
             hex::encode((0u8..32).collect::<Vec<_>>())
         );
-        // Empty / absent -> None. NOTE: only falsy inputs (None, "") map to
-        // None - whitespace-only goes the b64 route and errors, like Python
-        // (b64decode("".strip()) = b"", len != 32 => ValueError).
         assert_eq!(normalize_sha256(None).unwrap(), None);
         assert_eq!(normalize_sha256(Some("")).unwrap(), None);
         let err = normalize_sha256(Some("   ")).unwrap_err().to_string();
@@ -699,18 +639,14 @@ mod tests {
             .unwrap_err()
             .to_string();
         assert_eq!(err, "Unrecognized SHA256 digest: 'not-a-digest'");
-        // 32-bit hex is not 64 chars and not valid base32B -> same error.
         let err = normalize_sha256(Some("abcdef")).unwrap_err().to_string();
         assert_eq!(err, "Unrecognized SHA256 digest: 'abcdef'");
-        // base64 of 31 bytes has the wrong length -> same error text.
         let b64 = base64::engine::general_purpose::STANDARD.encode([0u8; 31]);
         let err = normalize_sha256(Some(&b64)).unwrap_err().to_string();
         assert_eq!(
             err,
             "Unrecognized SHA256 digest: '<b64>'".replace("<b64>", &b64)
         );
-        // !r escaping: repr switches to double quotes when the string holds '
-        // and no " (Python repr quote-selection rule).
         let err = normalize_sha256(Some("we'ird")).unwrap_err().to_string();
         assert_eq!(err, "Unrecognized SHA256 digest: \"we'ird\"");
         let err = normalize_sha256(Some("say \"hi\""))
@@ -731,8 +667,6 @@ mod tests {
             digest,
             "f760459c08a89a1221abf8cc1a84d8a9af6af826fe173e94bbc51ffe9d83e2b9"
         );
-        // Cross-check against a second, independent implementation: digest the
-        // same bytes in memory.
         use sha2::Digest as _;
         let mut d = Sha256::new();
         d.update(vec![0x61u8; 5 * 1024 * 1024 + 17]);
@@ -742,8 +676,6 @@ mod tests {
 
     #[test]
     fn download_and_cache_reject_resync_flow() {
-        // Serve a tiny "installer" from a local HTTP server to exercise the
-        // full download_file path (including cache rejection) without network.
         use std::io::{Read as _, Write as _};
         let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
         let port = listener.local_addr().unwrap().port();
@@ -771,7 +703,6 @@ mod tests {
         let good = hex::encode(d.finalize());
         let bad = "00".repeat(32);
 
-        // 1. fresh download with correct digest.
         download_file(
             &format!("http://127.0.0.1:{port}/x"),
             &path,
@@ -785,7 +716,6 @@ mod tests {
         assert_eq!(fs::read(&path).unwrap(), payload);
         server.join().unwrap();
 
-        // 2. cached hit: skip_existing verifies and skips.
         let listener2 = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
         let port2 = listener2.local_addr().unwrap().port();
         let server2 = std::thread::spawn(move || {
@@ -814,7 +744,6 @@ mod tests {
         .unwrap();
         assert_eq!(fs::read(&path).unwrap(), payload);
 
-        // 3. cache rejected (wrong digest on disk) -> resync re-downloads.
         fs::write(&path, b"tampered").unwrap();
         download_file(
             &format!("http://127.0.0.1:{port2}/x"),
@@ -828,7 +757,6 @@ mod tests {
         .unwrap();
         assert_eq!(fs::read(&path).unwrap(), payload);
 
-        // 4. wrong digest -> file deleted + error.
         let res = download_file(
             &format!("http://127.0.0.1:{port2}/x"),
             &path,
@@ -842,7 +770,6 @@ mod tests {
         assert!(!path.exists());
         server2.join().unwrap();
 
-        // 5. size mismatch -> file deleted + exact Python error text.
         let listener3 = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
         let port3 = listener3.local_addr().unwrap().port();
         let server3 = std::thread::spawn(move || {
@@ -894,11 +821,10 @@ mod tests {
         fs::create_dir_all(&dir).unwrap();
         let local = dir.join("7zr.exe");
         fs::write(&local, b"stub").unwrap();
-        let found = find_7z_tool(&dir, false, false).unwrap();
+        let found = find_7z_tool(&dir, SevenZipDownload::Never, false).unwrap();
         let found_path = Path::new(&found);
         let system_win = Path::new(crate::tools::SYSTEM_7Z_PATHS[0]);
         let host_system = found_path == system_win || {
-            // case-insensitive compare on the first system candidate path
             found_path
                 .to_string_lossy()
                 .eq_ignore_ascii_case(&system_win.to_string_lossy())
@@ -912,10 +838,8 @@ mod tests {
 
     #[test]
     fn find_7z_tool_no_download_errors_like_python() {
-        // allow_download=false with no tool present raises the exact message.
         let empty = std::env::temp_dir().join("pb-tools-7z-none");
         fs::create_dir_all(&empty).unwrap();
-        // Remove any local 7zr.exe first.
         let local = empty.join("7zr.exe");
         fs::remove_file(&local).ok();
 
@@ -924,7 +848,9 @@ mod tests {
         let host_has_tool =
             SYSTEM_7Z_PATHS.iter().any(|p| Path::new(p).exists()) || which("7z").is_some();
         if !host_has_tool {
-            let err = find_7z_tool(&empty, false, false).unwrap_err().to_string();
+            let err = find_7z_tool(&empty, SevenZipDownload::Never, false)
+                .unwrap_err()
+                .to_string();
             assert!(
                 err.starts_with("7-Zip was not found. Static package inspection will not download or install it;"),
                 "unexpected: {err}"
@@ -967,8 +893,6 @@ mod tests {
 
         assert_eq!(find_version_dir(&dir, None).unwrap(), v);
         assert_eq!(find_version_dir(&dir, Some("135.0.5973.92")).unwrap(), v);
-        // Python: preferred absent -> falls through to the dotted-digit scan,
-        // which still finds "135.0.5973.92" (the fallback is not skipped).
         assert_eq!(find_version_dir(&dir, Some("999.0.0.0")).unwrap(), v);
         fs::remove_dir_all(&dir).ok();
     }

@@ -1,12 +1,7 @@
-/* 渐进增强脚本。
-   页面内容全部由 tools/generate.py 预渲染成静态 HTML，这里只负责两件交互：
-   深色模式切换、按浏览器筛选下载卡片。禁用 JavaScript 时页面依然完整可用。*/
-
 (function () {
   var root = document.documentElement;
   var STORAGE_KEY = "cp-theme";
 
-  /* ---- 深色模式 ---- */
   var toggle = document.querySelector("[data-theme-toggle]");
   if (toggle) {
     var prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
@@ -30,7 +25,6 @@
       try {
         localStorage.setItem(STORAGE_KEY, next);
       } catch (error) {
-        /* 隐私模式下 localStorage 可能不可写，忽略即可 */
       }
       syncLabel();
     });
@@ -39,7 +33,6 @@
     syncLabel();
   }
 
-  /* ---- 下载卡片筛选 ---- */
   var filters = Array.prototype.slice.call(document.querySelectorAll("[data-filter]"));
   var cards = Array.prototype.slice.call(document.querySelectorAll(".build-card[data-family]"));
   if (!filters.length || !cards.length) {

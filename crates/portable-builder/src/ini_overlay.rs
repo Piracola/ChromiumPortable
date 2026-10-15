@@ -1,7 +1,3 @@
-//! Port of portable_builder/ini_overlay.py - three-layer chrome++.ini merge
-//! (baseline setdll/chrome++.ini -> global chrome++.defaults.ini -> child repo
-//! chrome++/chrome++.override.ini). Owner: Wave1-C.
-//!
 //! Contract: docs/MIGRATION_RUST_TAURI.md S4.4 - line-by-line merge preserving
 //! comments and ordering, encoding probe order UTF-16 -> UTF-8-SIG -> UTF-8,
 //! write back in the detected encoding, overriding a key the baseline does not
@@ -33,9 +29,6 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
-/// Errors mirroring the Python exceptions of ini_overlay.py (OSError ->
-/// [IniOverlayError::Io], ValueError -> Undecodable / NotAssignment / EmptyKey,
-/// KeyError -> UnknownKeys).
 #[derive(Debug, thiserror::Error)]
 pub enum IniOverlayError {
     #[error(transparent)]
@@ -50,8 +43,7 @@ pub enum IniOverlayError {
     UnknownKeys { unknown: String },
 }
 
-/// The three probe encodings of ini_overlay.py:
-/// ENCODINGS = ("utf-16", "utf-8-sig", "utf-8"). [IniEncoding::Utf16] mirrors
+/// [IniEncoding::Utf16] mirrors
 /// Python's utf-16 codec (BOM selects the endianness, no BOM decodes as
 /// little-endian); [IniEncoding::Utf8Sig] strips/adds the UTF-8 BOM.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -73,8 +65,7 @@ impl IniEncoding {
         }
     }
 
-    /// Inverse of [IniEncoding::name] (Python passes encoding names around as
-    /// strings).
+    /// Inverse of [IniEncoding::name].
     pub fn from_name(name: &str) -> Option<Self> {
         match name {
             "utf-16" => Some(Self::Utf16),
@@ -128,7 +119,6 @@ impl std::fmt::Display for IniEncoding {
     }
 }
 
-/// Probe order of ini_overlay.py: ENCODINGS = ("utf-16", "utf-8-sig", "utf-8").
 pub const ENCODING_PROBE_ORDER: [IniEncoding; 3] =
     [IniEncoding::Utf16, IniEncoding::Utf8Sig, IniEncoding::Utf8];
 
@@ -218,8 +208,7 @@ fn py_splitlines(text: &str) -> Vec<&str> {
     lines
 }
 
-/// Port of ini_overlay.py:is_assignment - blank lines, comments (";"/"#", the
-/// module COMMENT_PREFIXES) and [section] headers are not assignments;
+/// Blank lines, comments (";"/"#") and [section] headers are not assignments;
 /// everything else containing "=" is.
 pub fn is_assignment(line: &str) -> bool {
     let stripped = py_trim(line);
@@ -229,7 +218,7 @@ pub fn is_assignment(line: &str) -> bool {
     stripped.contains('=')
 }
 
-/// Port of ini_overlay.py:parse_settings - (lowercase_key -> value) for every
+/// (lowercase_key -> value) for every
 /// assignment, ignoring comments. Flat map across sections (key names are
 /// unique across all sections per the module docstring). Values are trimmed and
 /// split on the FIRST "=" only (str.partition); inline comments are NOT
@@ -251,14 +240,14 @@ pub fn parse_settings(text: &str) -> BTreeMap<String, String> {
 }
 
 /// One parsed override: the key exactly as declared in the override file plus
-/// its trimmed value. Python keeps this as a (declared_key, value) tuple.
+/// its trimmed value.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Override {
     pub declared_key: String,
     pub value: String,
 }
 
-/// Port of ini_overlay.py:parse_overrides - (lowercase_key, Override) pairs
+/// (lowercase_key, Override) pairs
 /// preserving the declared spelling. Re-declaring the same (case-insensitive)
 /// key replaces the earlier entry in place, matching Python dict semantics
 /// (first insertion position, last value). A non-assignment line without "=",
@@ -293,7 +282,7 @@ pub fn parse_overrides(text: &str) -> Result<Vec<(String, Override)>, IniOverlay
     Ok(overrides)
 }
 
-/// Port of ini_overlay.py:merge_ini - apply overrides onto base_text in place,
+/// Apply overrides onto base_text in place,
 /// keeping comments and order. Each baseline assignment whose key matches a
 /// remaining override is rewritten as
 /// <original indent><declared_key>=<value>; application (and the returned
@@ -346,8 +335,7 @@ pub fn merge_ini(
     Ok((format!("{}\n", lines.join("\n")), applied))
 }
 
-/// Decode raw ini bytes with the Python probe order; [Option::None] stands for
-/// Python ValueError("Unable to decode ini file: ...").
+/// [Option::None] marks a failed probe (the caller falls through / errors).
 pub fn decode_ini_bytes(data: &[u8]) -> Option<(String, IniEncoding)> {
     for encoding in ENCODING_PROBE_ORDER {
         if let Some(text) = encoding.decode(data) {
@@ -357,7 +345,7 @@ pub fn decode_ini_bytes(data: &[u8]) -> Option<(String, IniEncoding)> {
     None
 }
 
-/// Port of ini_overlay.py:read_ini_text - (text, encoding). Upstream ships
+/// (text, encoding). Upstream ships
 /// UTF-16LE with a BOM, so real files decode as [IniEncoding::Utf16].
 pub fn read_ini_text(path: impl AsRef<Path>) -> Result<(String, IniEncoding), IniOverlayError> {
     let path = path.as_ref();
@@ -365,7 +353,7 @@ pub fn read_ini_text(path: impl AsRef<Path>) -> Result<(String, IniEncoding), In
     decode_ini_bytes(&data).ok_or_else(|| IniOverlayError::Undecodable(path.display().to_string()))
 }
 
-/// Port of ini_overlay.py:write_ini_text - writes back in the given (as
+/// Writes back in the given (as
 /// detected by [read_ini_text]) encoding with newline="\r\n" translation; see
 /// [IniEncoding::encode]. Python defaults to encoding="utf-16"; [IniEncoding]
 /// implements [Default] accordingly.
@@ -404,7 +392,6 @@ mod tests {
 
     #[test]
     fn utf16_roundtrip() {
-        // Write in the detected upstream encoding and read back faithfully.
         let text = "; comment\r\n[general]\r\ndata_dir=%app%\\..\\Data\r\nlone\rcarriage\n";
         let path = temp_ini("utf16-roundtrip");
         write_ini_text(&path, text, IniEncoding::Utf16).unwrap();
@@ -448,7 +435,7 @@ mod tests {
             vec![0xFF, 0xFE, 0xFF, 0xFE, 0x78, 0x00]
         );
 
-        // Odd-length bytes fail the utf-16 probe (UnicodeDecodeError) and are
+        // Odd-length bytes fail the utf-16 probe and are
         // picked up by utf-8-sig instead.
         let path = temp_ini("utf16-odd-fallback");
         fs::write(&path, b"abc").unwrap();
@@ -460,9 +447,6 @@ mod tests {
 
     #[test]
     fn utf8_sig_roundtrip() {
-        // Odd UTF-8 byte length so the utf-16 probe fails first (even-length ASCII
-        // decodes as UTF-16 garbage without error in Python too: b'ab'.decode(
-        // 'utf-16') == '\u{6261}').
         let text = "a\r\n";
         let path = temp_ini("utf8sig-roundtrip");
         write_ini_text(&path, text, IniEncoding::Utf8Sig).unwrap();
@@ -503,9 +487,6 @@ mod tests {
 
     #[test]
     fn merge_preserves_comment_lines_and_order() {
-        // Hand-traced from the Python algorithm: comments, blank lines and
-        // section headers pass through untouched; assignments are rewritten in
-        // place; output ends with exactly one "\n" per line.
         let baseline =
             "; header comment\n[general]\ndata_dir=default\n# hash comment\n\n[tabs]\nwheel_tab=1\n";
         let overrides_text = "data_dir=%app%\\..\\Data\nwheel_tab=0\n";
@@ -523,7 +504,7 @@ mod tests {
         // Baseline key in ANY case matches; the value runs to end of line (the
         // first "=" splits, so "=" inside values survives); the baseline line
         // indentation is kept; the output line uses the override declared
-        // spelling. Traced to the Python output exactly.
+        // spelling.
         let baseline = "[general]\n  COMMAND_LINE = --flag=1 --x=2\n\nkeep_last_tab=1\n";
         let overrides_text = "command_line=--a=1 --b=2\nkeep_last_tab = 0\n";
         let (merged, applied) =
@@ -553,8 +534,7 @@ mod tests {
         )
         .expect_err("unknown override keys must fail the merge");
         // The empty-value override "missing_one=" parses fine but is unknown to
-        // the baseline; remaining keys are listed in first-declaration order,
-        // with the exact Python message.
+        // the baseline; remaining keys are listed in first-declaration order.
         let message = err.to_string();
         let IniOverlayError::UnknownKeys { unknown } = err else {
             unreachable!()
@@ -568,12 +548,10 @@ mod tests {
 
     #[test]
     fn parse_overrides_errors() {
-        // Python: ValueError("Override line is not a key=value assignment: ...")
         assert!(matches!(
             parse_overrides("good=1\nnot_an_assignment\n"),
             Err(IniOverlayError::NotAssignment(_))
         ));
-        // Python: ValueError("Override line has an empty key: ...")
         assert!(matches!(
             parse_overrides("=value\n"),
             Err(IniOverlayError::EmptyKey(_))
@@ -597,8 +575,6 @@ mod tests {
         assert_eq!(merged, "a=z\n[b]\nc=y\n\n[sections]\nb=x\n");
         assert_eq!(applied, vec!["a=z", "c=y", "b=x"]);
 
-        // Re-declared override key: last value wins, single application (Python
-        // dict semantics: first position, last value).
         let (merged, applied) =
             merge_ini("k=1\n", &parse_overrides("k=first\nk=last\n").unwrap()).unwrap();
         assert_eq!(merged, "k=last\n");
@@ -613,7 +589,7 @@ mod tests {
         let bytes = IniEncoding::Utf8.encode("a\r\nb\nc\rd");
         assert_eq!(&bytes[..], &b"a\r\r\nb\r\nc\rd"[..]);
 
-        // merge output joins with "\n" (Python "\n".join); the write path
+        // merge output joins with "\n"; the write path
         // re-materializes CRLF, so merged fixture files stay CRLF on disk.
         let (merged, _) = merge_ini("a=1\r\nb=2\r\n", &parse_overrides("b=9\n").unwrap()).unwrap();
         assert_eq!(merged, "a=1\nb=9\n");
@@ -628,10 +604,6 @@ mod tests {
 
     #[test]
     fn real_fixtures_merge_and_reencode() {
-        // Real repo fixtures: setdll/chrome++.ini (baseline, UTF-16LE BOM) and
-        // setdll/chrome++.defaults.ini (global defaults layer, already in
-        // override format). No chrome++.override.ini exists in-tree, so the
-        // defaults file plays the override role here.
         let baseline_bytes = read_fixture_bytes("setdll/chrome++.ini");
         let defaults_bytes = read_fixture_bytes("setdll/chrome++.defaults.ini");
 
@@ -685,7 +657,7 @@ mod tests {
         assert_eq!(baseline_lines[148], "open_url_new_tab=0");
 
         // No-op merge: the merged text is the baseline with line endings
-        // normalized to "\n" (Python "\n".join), and writing it back with the
+        // normalized to "\n", and writing it back with the
         // detected encoding reproduces the ORIGINAL BYTES byte-exactly.
         let (noop, applied) = merge_ini(&baseline_text, &[]).unwrap();
         assert!(applied.is_empty());

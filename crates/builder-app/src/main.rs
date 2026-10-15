@@ -1,26 +1,3 @@
-//! ChromiumPortableBuilder —— 图形构建器命令面（2026-10 重写版）。
-//!
-//! 架构一句话：GUI 逻辑全部长在这个 crate 里，引擎 crate 保持纯 CLI。
-//! 前端 `ui/`（无构建步骤的静态资产）通过 Tauri invoke 调这里的命令；
-//! 所有引擎工作都以子进程方式调用同目录的 `portable-builder.exe` 完成，
-//! 命令序列与手敲 CLI 完全一致（`--workdir` 在前，子命令在后）。
-//! 子进程的 stdout/stderr 逐行进 mpsc，由泵线程每 80ms 批量 emit 一次
-//! `app-event`（逐行推会把 IPC 打满，节流是刻意的）；同一批行里出现的
-//! `KEY=value` 是引擎的跨步骤事实（CI 里由 GITHUB_ENV 落盘），这里现场捕获、
-//! 喂给后续步骤——archive 拿不到 BUILT_VERSION 就会压出没有版本号的包名。
-//!
-//! 命令面（7 个）：
-//! - `app_snapshot`  工作目录 + installers 清单 + 目录表 targets + 引擎在不在
-//! - `app_workdir`   设置工作目录（必须已存在）并重新快照
-//! - `app_plan`      按当前选择算出将要执行的引擎命令（纯预览，无副作用）
-//! - `app_start`     启动执行链；同时只允许一个任务
-//! - `app_cancel`    取消当前任务（杀引擎子进程）
-//! - `app_open`      资源管理器打开 工作目录 / installers / build\release / build\assets
-//! - `app_save_log`  原生另存为对话框 + 写日志文本
-//!
-//! 计划只有一个事实来源：`build_plan()` 同时服务预览与执行，
-//! 前端展示的步骤与真正会跑的命令永远一致。
-
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use serde::{Deserialize, Serialize};
@@ -45,10 +22,6 @@ const ENGINE_EXE: &str = "portable-builder.exe";
 const EVENT: &str = "app-event";
 const PUMP: Duration = Duration::from_millis(80);
 const INSTALLER_EXTS: [&str; 6] = ["exe", "msi", "7z", "zip", "rar", "cab"];
-
-// ---------------------------------------------------------------------------
-// 数据形状（全部 camelCase，与前端字段一一对应）
-// ---------------------------------------------------------------------------
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -140,7 +113,6 @@ impl Default for PlanRequest {
 // 共享状态
 // ---------------------------------------------------------------------------
 
-/// 一次运行中的任务句柄：cancel 标志 + 可被杀的当前子进程。
 struct JobHandle {
     cancel: AtomicBool,
     child: Mutex<Option<Child>>,
@@ -177,7 +149,6 @@ impl Shared {
     fn set_workdir(&self, path: PathBuf) {
         *self.workdir.lock().unwrap() = path;
     }
-    /// 置取消标志并杀当前子进程；返回之前是否有任务。
     fn cancel_job(&self) -> bool {
         let handle = {
             let mut slot = self.job.lock().unwrap();
@@ -201,11 +172,6 @@ impl Shared {
     }
 }
 
-// ---------------------------------------------------------------------------
-// 引擎与目录
-// ---------------------------------------------------------------------------
-
-/// 引擎可执行文件：优先 builder-app.exe 同目录，退回 PATH 上的裸名。
 fn engine_exe() -> PathBuf {
     if let Ok(dir) = std::env::current_exe() {
         let candidate = dir.parent().unwrap_or(Path::new(".")).join(ENGINE_EXE);
@@ -219,16 +185,12 @@ fn engine_exe() -> PathBuf {
 fn engine_found() -> bool {
     match engine_exe() {
         p if p.is_absolute() => p.is_file(),
-        // 裸名：交给 PATH。Windows 下不做昂贵探测，直接假定可用；
-        // spawn 失败会以 err 行进日志，用户能看到。
         _ => true,
     }
 }
 
 fn catalog_path(workdir: &Path) -> Option<PathBuf> {
     let mut candidates = Vec::new();
-    // 开发态 exe 在 target\debug\ 下，catalog 在仓库根：沿父目录向上找几层
-    // （与引擎的资源探测同一思路）；发布态 exe 旁就有 catalog，第一跳即中。
     if let Ok(dir) = std::env::current_exe() {
         let mut dir = dir.parent().map(Path::to_path_buf);
         for _ in 0..6 {
@@ -274,7 +236,6 @@ fn load_targets(workdir: &Path) -> Vec<TargetEntry> {
             });
         }
     }
-    // 产品线在前，其余按 label 排序。
     out.sort_by(|a, b| {
         b.product
             .cmp(&a.product)
@@ -319,7 +280,6 @@ fn snapshot(workdir: &Path) -> Snapshot {
     }
 }
 
-/// 相对路径一律相对工作目录（与旧 gui_plan.resolve_input 一致）。
 fn resolve_input(workdir: &Path, raw: &str) -> PathBuf {
     let path = Path::new(raw);
     if path.is_absolute() {
@@ -329,7 +289,6 @@ fn resolve_input(workdir: &Path, raw: &str) -> PathBuf {
     }
 }
 
-/// 展示用：给含空格的参数补引号。
 fn quote_arg(arg: &str) -> String {
     if arg.is_empty() || arg.chars().any(|c| c.is_whitespace()) {
         format!("\"{arg}\"")
@@ -338,13 +297,6 @@ fn quote_arg(arg: &str) -> String {
     }
 }
 
-// ---------------------------------------------------------------------------
-// 计划：与 CLI 契约一字不差（旧 gui/plan.rs 的行为基线）
-// ---------------------------------------------------------------------------
-
-/// 仓库根（catalog 的上一级）。引擎的资源探测按 §6.5 分五级，但开发态
-/// exe 在 `target\debug`、catalog 在仓库根，它自己猜不到；GUI 已经解析出来了，
-/// 就显式交给它，等价于一级探测（`--builder-dir`）。
 fn builder_dir(workdir: &Path) -> Option<PathBuf> {
     let catalog = catalog_path(workdir)?;
     Some(catalog.parent()?.parent()?.to_path_buf())
@@ -609,10 +561,6 @@ fn plan_tool(
     Ok(Plan::steps(vec![step]))
 }
 
-// ---------------------------------------------------------------------------
-// 执行链：spawn → 读管道 → 泵线程 80ms 批量 emit
-// ---------------------------------------------------------------------------
-
 fn spawn_reader<R: std::io::Read + Send + 'static>(stream: Option<R>, tx: mpsc::Sender<String>) {
     let Some(stream) = stream else { return };
     thread::spawn(move || {
@@ -678,7 +626,6 @@ fn pump_lines(app: AppHandle, rx: mpsc::Receiver<String>, facts: Facts) {
     }
 }
 
-/// 跑单步：返回退出码。cancel 通过杀子进程让 wait 封闭。
 fn run_step(
     handle: &JobHandle,
     step: &Step,
@@ -689,7 +636,6 @@ fn run_step(
     let mut cmd = Command::new(engine_exe());
     cmd.args(&step.args).current_dir(workdir);
     {
-        // 前面步骤攒下的事实在这一步生效（等价于 CI 里 GITHUB_ENV 的继承）。
         let facts = facts.lock().unwrap();
         for (key, value) in facts.iter() {
             cmd.env(key, value);
@@ -752,7 +698,6 @@ fn run_plan(
     let mut completed = 0usize;
     let mut last_code = 0i32;
     let mut failed = false;
-    // 事实按任务清空：上一次构建的版本号绝不允许漏进这一次。
     let facts: Facts = Arc::new(Mutex::new(HashMap::new()));
 
     for (index, step) in plan.steps.iter().enumerate() {
@@ -858,7 +803,6 @@ fn app_open(shared: State<'_, Arc<Shared>>, kind: String) -> Result<(), String> 
     let workdir = shared.workdir();
     let target = match kind.as_str() {
         "workdir" => Some(workdir.clone()),
-        // installers 目录允许顺手创建（旧 GUI 的「新建」按钮）。
         "installers" => {
             let dir = workdir.join("installers");
             let _ = fs::create_dir_all(&dir);
@@ -903,8 +847,6 @@ fn app_save_log(app: AppHandle, text: String) -> Result<Option<String>, String> 
     }
 }
 
-/// 不引 chrono：本地时间的 YYYYMMDD-HHMMSS 用标准库足够。
-/// std 没有本地时区，用 UTC 秒拼文件名——精确到秒防冲突即可。
 fn chrono_like_now() -> String {
     let secs = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -927,10 +869,6 @@ fn chrono_like_now() -> String {
     format!("{y:04}{mth:02}{d:02}-{h:02}{m:02}{s:02}")
 }
 
-// ---------------------------------------------------------------------------
-// 装配
-// ---------------------------------------------------------------------------
-
 fn main() {
     let shared = Arc::new(Shared::new());
     tauri::Builder::default()
@@ -947,7 +885,6 @@ fn main() {
             app_save_log
         ])
         .setup(move |app| {
-            // 任务运行时关窗：拦下 → 原生确认 → 确认则杀任务再关。
             let handle = app.handle().clone();
             let shared_for_close = Arc::clone(&shared);
             if let Some(win) = app.get_webview_window("main") {
@@ -999,7 +936,6 @@ mod tests {
         let mut facts = HashMap::new();
         collect_facts("BUILT_VERSION=155.0.8059.40", &mut facts);
         collect_facts("OUTPUT_DIR=Chrome", &mut facts);
-        // 日志行、7-Zip 输出、裸值行都不算事实。
         collect_facts(
             "[INFO] Applied 4 override(s): open_url_new_tab=1",
             &mut facts,

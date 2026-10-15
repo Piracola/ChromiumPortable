@@ -1,19 +1,3 @@
-//! Port of portable_builder/discovery.py - auto layout static analysis.
-//! Owner: Wave3-A (contract: _migration/pe-golden/discovery_scoring_contract.md
-//! and its addendum; goldens discovery_reference.json + discovery/*.json).
-//!
-//! Semantics follow the Python source exactly:
-//! - the 14-item scoring table (scores are behavior, not tunables),
-//! - reasons are Chinese strings compared byte-for-byte by the golden gates,
-//! - sort key (-score, path part count, name.casefold()); the walker sorts
-//!   entries deterministically (contract note: same-score same-name ties must
-//!   be stable before the part-count key),
-//! - select_browser_candidate: minimum_score=80 + chromium evidence required,
-//!   ambiguity_margin=15 protection with exact Python error texts,
-//! - extract_package_layers: max_depth=4, max_archives=16, brave_omaha first
-//!   layer via the brave_bundle port, nested candidates sorted (priority,
-//!   parts, name.casefold()) and probed with a 7z list.
-
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -26,17 +10,14 @@ use crate::log_fmt::info;
 use crate::pe::{read_pe_import_names, read_pe_machine, read_version_info};
 use crate::tools::{extract_with_7z, remove_path};
 
-/// discovery.py VERSION_DIR: ^\d+(?:\.\d+){1,5}$
 fn version_dir_matches(name: &str) -> bool {
     static VERSION_DIR: std::sync::LazyLock<Regex> =
         std::sync::LazyLock::new(|| Regex::new(r"^\d+(?:\.\d+){1,5}$").expect("static regex"));
     VERSION_DIR.is_match(name)
 }
 
-/// discovery.py ARCHIVE_SUFFIXES (casefolded).
 const ARCHIVE_SUFFIXES: [&str; 5] = [".7z", ".zip", ".rar", ".cab", ".msi"];
 
-/// discovery.py KNOWN_BROWSER_EXES (casefolded members).
 const KNOWN_BROWSER_EXES: [&str; 9] = [
     "360chromex.exe",
     "brave.exe",
@@ -49,7 +30,6 @@ const KNOWN_BROWSER_EXES: [&str; 9] = [
     "vivaldi.exe",
 ];
 
-/// discovery.py REJECT_NAME_TOKENS.
 const REJECT_NAME_TOKENS: [&str; 20] = [
     "broker",
     "crash",
@@ -73,10 +53,8 @@ const REJECT_NAME_TOKENS: [&str; 20] = [
     "wireguard",
 ];
 
-/// discovery.py REJECT_PATH_TOKENS.
 const REJECT_PATH_TOKENS: [&str; 3] = ["installer", "update", "win_clang_x86"];
 
-/// discovery.py CHROMIUM_MARKERS.
 const CHROMIUM_MARKERS: [&str; 6] = [
     "chrome.dll",
     "chrome_elf.dll",
@@ -86,7 +64,6 @@ const CHROMIUM_MARKERS: [&str; 6] = [
     "vivaldi_elf.dll",
 ];
 
-/// discovery.py::_is_pe - two leading MZ bytes.
 fn is_pe(path: &Path) -> bool {
     use std::io::Read;
     let Ok(mut file) = std::fs::File::open(path) else {
@@ -96,7 +73,6 @@ fn is_pe(path: &Path) -> bool {
     file.read_exact(&mut magic).is_ok() && &magic == b"MZ"
 }
 
-/// discovery.py::_safe_name - [^A-Za-z0-9._-]+ -> "_", truncated to 80 chars.
 fn safe_name(path: &Path) -> String {
     let name = path
         .file_name()
@@ -113,7 +89,6 @@ fn safe_name(path: &Path) -> String {
     out.chars().take(80).collect()
 }
 
-/// discovery.py::_is_brave_metainstaller - PE + version-info fingerprint.
 fn is_brave_metainstaller(path: &Path) -> bool {
     if !is_pe(path) {
         return false;
@@ -131,7 +106,6 @@ fn is_brave_metainstaller(path: &Path) -> bool {
     product.contains("brave") && product.contains("update") && original.contains("updatesetup")
 }
 
-/// discovery.py::_seven_zip_can_open - `7z l` must exit 0 and print "Type =".
 fn seven_zip_can_open(path: &Path, seven_zip: &str) -> bool {
     let Ok(output) = Command::new(seven_zip).arg("l").arg(path).output() else {
         return false;
@@ -139,10 +113,6 @@ fn seven_zip_can_open(path: &Path, seven_zip: &str) -> bool {
     output.status.success() && String::from_utf8_lossy(&output.stdout).contains("Type =")
 }
 
-/// discovery.py::_nested_archive_candidates. Priority tiers: 0 chrome.7z-style
-/// well-known names, 1 other archives, 2 installer/setup/package PEs whose
-/// description says installer/setup. Probed in sorted order; only archives
-/// 7z can open are returned.
 fn nested_archive_candidates(root: &Path, seven_zip: &str) -> Vec<PathBuf> {
     let mut likely: Vec<(u8, PathBuf)> = Vec::new();
     for path in walk_files_sorted(root) {
@@ -200,7 +170,6 @@ fn nested_archive_candidates(root: &Path, seven_zip: &str) -> Vec<PathBuf> {
         }
     }
 
-    // sorted(likely, key=(priority, len(parts), name.casefold())).
     likely.sort_by(|a, b| {
         a.0.cmp(&b.0)
             .then_with(|| a.1.components().count().cmp(&b.1.components().count()))
@@ -220,7 +189,6 @@ fn nested_archive_candidates(root: &Path, seven_zip: &str) -> Vec<PathBuf> {
     opened
 }
 
-/// discovery.py::_direct_names - casefolded direct-child names.
 fn direct_names(directory: &Path) -> Vec<String> {
     let Ok(read_dir) = std::fs::read_dir(directory) else {
         return Vec::new();
@@ -234,7 +202,6 @@ fn direct_names(directory: &Path) -> Vec<String> {
     names
 }
 
-/// discovery.py::_numeric_children - direct child dirs matching VERSION_DIR.
 fn numeric_children(directory: &Path) -> Vec<PathBuf> {
     let Ok(read_dir) = std::fs::read_dir(directory) else {
         return Vec::new();
@@ -254,7 +221,7 @@ fn numeric_children(directory: &Path) -> Vec<PathBuf> {
     children
 }
 
-/// One scored candidate (discovery.py _score_candidate return dict).
+/// One scored candidate.
 #[derive(Debug, Clone)]
 pub struct Candidate {
     pub path: PathBuf,
@@ -267,8 +234,6 @@ pub struct Candidate {
     pub has_chromium_evidence: bool,
 }
 
-/// discovery.py::_score_candidate. read_pe_machine failure => None
-/// (the candidate disappears entirely, it does not score 0).
 fn score_candidate(path: &Path, desired_arch: &str) -> Option<Candidate> {
     let name = path
         .file_name()
@@ -311,7 +276,6 @@ fn score_candidate(path: &Path, desired_arch: &str) -> Option<Candidate> {
         score -= 180;
         reasons.push("文件名像安装器、更新器或辅助程序".to_string());
     }
-    // path.parent.parts[-3:]: the last (up to) 3 components of the parent.
     let parent = path.parent().unwrap_or(Path::new(""));
     let parent_parts: Vec<String> = parent
         .components()
@@ -450,9 +414,6 @@ fn score_candidate(path: &Path, desired_arch: &str) -> Option<Candidate> {
     })
 }
 
-/// Deterministic recursive file walk (every dir level sorted; the Python
-/// walker relies on rglob order only for tie stability, and the final sort
-/// key covers the rest).
 fn walk_files_sorted(root: &Path) -> Vec<PathBuf> {
     let mut out = Vec::new();
     let mut stack = vec![root.to_path_buf()];
@@ -473,7 +434,6 @@ fn walk_files_sorted(root: &Path) -> Vec<PathBuf> {
     out
 }
 
-/// discovery.py::find_browser_candidates.
 pub fn find_browser_candidates(root: &Path, desired_arch: &str) -> Vec<Candidate> {
     let mut candidates: Vec<Candidate> = Vec::new();
     for path in walk_files_sorted(root) {
@@ -492,7 +452,6 @@ pub fn find_browser_candidates(root: &Path, desired_arch: &str) -> Vec<Candidate
     candidates
 }
 
-/// The shared sort key: (-score, len(path.parts), name.casefold()).
 pub(crate) fn sort_candidates(candidates: &mut [Candidate]) {
     candidates.sort_by(|a, b| {
         b.score
@@ -516,8 +475,6 @@ pub(crate) fn sort_candidates(candidates: &mut [Candidate]) {
     });
 }
 
-/// discovery.py::select_browser_candidate - 80-score + evidence gate, then
-/// the 15-point ambiguity protection. Error texts are Python's, verbatim.
 pub fn select_browser_candidate(
     candidates: &[Candidate],
     minimum_score: i32,
@@ -557,7 +514,6 @@ fn file_name_of(path: &Path) -> String {
         .unwrap_or_default()
 }
 
-/// One extraction layer (discovery.py extract_package_layers dict).
 #[derive(Debug, Clone)]
 pub struct Layer {
     pub source: PathBuf,
@@ -566,16 +522,10 @@ pub struct Layer {
     pub kind: String,
 }
 
-/// discovery.py::extract_package_layers. Directory input is used as-is
-/// (kind=directory); anything else is removed first, then extracted layer by
-/// layer (brave_omaha or archive first layer, nested archives queued).
 pub fn extract_package_layers(
     package_path: &Path,
     extraction_root: &Path,
     seven_zip: Option<&str>,
-    // Python threads desired_arch through extract_package_layers but never
-    // reads it there; keep the parameter for signature parity.
-    _desired_arch: &str,
     max_depth: usize,
     max_archives: usize,
 ) -> Result<Vec<Layer>> {
@@ -657,7 +607,6 @@ pub fn extract_package_layers(
     Ok(layers)
 }
 
-/// discovery.py::_infer_version_dir.
 fn infer_version_dir(app_root: &Path, executable: &Path, version: &str) -> PathBuf {
     let parent = executable.parent().unwrap_or(app_root);
     if parent
@@ -686,7 +635,6 @@ fn infer_version_dir(app_root: &Path, executable: &Path, version: &str) -> PathB
     app_root.to_path_buf()
 }
 
-/// discovery.py::analyze_package / analyze_extracted_app return shape.
 #[derive(Clone)]
 pub struct AnalyzeResult {
     pub package: PathBuf,
@@ -704,21 +652,13 @@ pub struct AnalyzeResult {
     pub layer_root: Option<PathBuf>,
 }
 
-/// discovery.py::analyze_package.
 pub fn analyze_package(
     package_path: &Path,
     extraction_root: &Path,
     seven_zip: Option<&str>,
     desired_arch: &str,
 ) -> Result<AnalyzeResult> {
-    let layers = extract_package_layers(
-        package_path,
-        extraction_root,
-        seven_zip,
-        desired_arch,
-        4,
-        16,
-    )?;
+    let layers = extract_package_layers(package_path, extraction_root, seven_zip, 4, 16)?;
     let mut candidates: Vec<Candidate> = Vec::new();
     for layer in &layers {
         for candidate in find_browser_candidates(&layer.root, desired_arch) {
@@ -763,7 +703,6 @@ pub fn analyze_package(
     })
 }
 
-/// discovery.py::analyze_extracted_app - same scorer, no layer concept.
 pub fn analyze_extracted_app(app_root: &Path, desired_arch: &str) -> Result<AnalyzeResult> {
     let mut candidates = find_browser_candidates(app_root, desired_arch);
     sort_candidates(&mut candidates);
@@ -795,8 +734,6 @@ pub fn analyze_extracted_app(app_root: &Path, desired_arch: &str) -> Result<Anal
     })
 }
 
-/// discovery.py::public_report - the --json contract shape. serde_json with
-/// preserve_order keeps the Python dict literal key order.
 pub fn public_report(result: &AnalyzeResult) -> serde_json::Value {
     let selected_display = match &result.layer_root {
         Some(layer_root) => result
@@ -849,8 +786,6 @@ pub fn public_report(result: &AnalyzeResult) -> serde_json::Value {
     })
 }
 
-/// discovery.py::print_report - human mode prints the five [OK] lines; JSON
-/// mode prints public_report like json.dumps(ensure_ascii=False, indent=2).
 pub fn print_report(result: &AnalyzeResult, as_json: bool) {
     let report = public_report(result);
     if as_json {
@@ -906,7 +841,6 @@ mod tests {
     }
 
     fn seven_zip_tool(repo: &Path) -> String {
-        // Repo-root 7zr.exe, no download (allow_download=false semantics).
         let local = repo.join("7zr.exe");
         assert!(local.is_file(), "7zr.exe missing from repo root");
         local.to_string_lossy().into_owned()
@@ -930,9 +864,6 @@ mod tests {
         .unwrap()
     }
 
-    /// Rewrite the machine-specific extraction root to the golden workdir
-    /// prefix ("_migration\pe-golden\tmp_inspect\<tag>") so package +
-    /// alternatives paths compare like-for-like.
     fn rewrite_paths(
         value: &serde_json::Value,
         actual_root: &str,
@@ -959,8 +890,6 @@ mod tests {
         }
     }
 
-    /// The five golden samples: inspect-package --json deep-equal, Chinese
-    /// reasons byte-for-byte (Gate 1).
     #[test]
     fn golden_discovery_samples_deep_equal() {
         let Some(repo) = repo_root() else { return };
@@ -990,8 +919,6 @@ mod tests {
             )
             .unwrap_or_else(|err| panic!("{tag}: {err}"));
             let mut report = public_report(&result);
-            // Python golden ran with a relative package argument
-            // ("bin\<sample>.exe"); mirror that in the report.
             if let Some(obj) = report.as_object_mut() {
                 obj.insert(
                     "package".to_string(),
@@ -1010,8 +937,6 @@ mod tests {
         }
     }
 
-    /// Gate 2: print_report human mode is byte-identical to
-    /// print_report_golden.json for opera + vivaldi.
     #[test]
     fn golden_print_report_bytes() {
         let Some(repo) = repo_root() else { return };
@@ -1024,8 +949,6 @@ mod tests {
             ("opera", "bin/Opera_135.0.5973.92_Setup_x64.exe"),
             ("vivaldi", "bin/Vivaldi.8.2.4133.52.x64.exe"),
         ] {
-            // Unique counter-based dirs mean no cross-test sharing even in
-            // parallel runs (7zr output files collide on shared paths).
             let dir = temp_extract_dir(&format!("{tag}-pr"));
             let seven_zip = seven_zip_tool(&repo);
             let result = analyze_package(
@@ -1072,13 +995,11 @@ mod tests {
 
     #[test]
     fn below_threshold_error_text_matches_python() {
-        // No candidates at all: exact error text.
         let err = select_browser_candidate(&[], 80, 15)
             .unwrap_err()
             .to_string();
         assert_eq!(err, "没有找到可信的浏览器主程序：没有 EXE 候选");
 
-        // A low-scoring candidate lists name + score (first 8 summary).
         let dir = std::env::temp_dir().join(format!("pb-discovery-low-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let candidate = Candidate {

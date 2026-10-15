@@ -12,11 +12,6 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SETDLL_DIR = REPO_ROOT / "setdll"
 UPSTREAM_API = "https://api.github.com/repos/Bush2021/chrome_plus/releases/latest"
-# chrome++.ini here is upstream's baseline and is overwritten wholesale on every
-# sync. Never add setdll/chrome++.defaults.ini to this list: it holds our own
-# cross-browser defaults and only survives because the sync ignores it. Per-browser
-# deviations live in each child repo's chrome++/chrome++.override.ini; the builder
-# merges baseline -> defaults -> override at build time.
 REQUIRED_FILES = ("version-x64.dll", "setdll-x64.exe", "README.md", "chrome++.ini")
 REBUILD_TRIGGER_FILES = {"version-x64.dll", "setdll-x64.exe"}
 

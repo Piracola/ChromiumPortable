@@ -1,5 +1,3 @@
-//! Port of portable_builder/providers/script.py. Owner: Wave2. See contract S4.3.
-//!
 //! This provider is the generic escape hatch for catalog entries with
 //! non-builtin upstreams (Helium/Brave/Vivaldi/Opera/Thorium/CSE): it runs a
 //! command and parses JSON out of stdout.
@@ -18,19 +16,15 @@
 //! - installer_path aliases to path; verify_ssl defaults True; file_name from
 //!   URL's last segment when absent; sha256 normalized eagerly (fail fast),
 //!   missing sha256 prints the WARN.
-//!
-//! [parse_json_output] is pure (injected text) - fixture replay without HTTP
-//! or subprocess.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{bail, Result};
-use serde_json::{json, Map, Value};
+use serde_json::{json, Value};
 
 use crate::tools::normalize_sha256;
 
-/// Port of script.py::parse_json_output - pure JSON extraction from stdout.
 pub fn parse_json_output(stdout: &str) -> Result<Value> {
     let text = stdout.trim();
     if text.is_empty() {
@@ -56,8 +50,6 @@ pub fn parse_json_output(stdout: &str) -> Result<Value> {
     bail!("Script provider stdout must contain a JSON object.")
 }
 
-/// shlex.split(command, posix=False) equivalent (Windows rules).
-///
 /// Python's posix=False lexer (verified against Python 3.14 on this host):
 /// - a quote character at WORDSTART starts a quoted token; the token RETAINS
 ///   both quotes and the CLOSING quote terminates the whole token
@@ -75,7 +67,6 @@ pub fn shlex_split_non_posix(command: &str) -> Result<Vec<String>> {
     for ch in command.chars() {
         match quote {
             Some(q) => {
-                // Inside a quoted token: closing quote ends the whole token.
                 if ch == q {
                     current.push(ch);
                     tokens.push(std::mem::take(&mut current));
@@ -87,7 +78,6 @@ pub fn shlex_split_non_posix(command: &str) -> Result<Vec<String>> {
             }
             None => match ch {
                 '"' | '\'' if !in_token => {
-                    // Quote at wordstart: quoted token begins (quote retained).
                     quote = Some(ch);
                     in_token = true;
                     current.push(ch);
@@ -99,7 +89,6 @@ pub fn shlex_split_non_posix(command: &str) -> Result<Vec<String>> {
                     }
                 }
                 c => {
-                    // Ordinary char (including mid-token quotes).
                     current.push(c);
                     in_token = true;
                 }
@@ -115,8 +104,8 @@ pub fn shlex_split_non_posix(command: &str) -> Result<Vec<String>> {
     Ok(tokens)
 }
 
-/// Port of script.py::get_package - run the command, parse JSON from stdout,
-/// apply the passthrough key semantics from the mod_contract.json tail.
+/// Run the command, parse JSON from stdout, apply the passthrough key
+/// semantics from the mod_contract.json tail.
 pub fn get_package(config: &Value) -> Result<Value> {
     let Some(command) = config.get("command").cloned() else {
         bail!("script provider requires 'command'");
@@ -165,7 +154,6 @@ pub fn get_package(config: &Value) -> Result<Value> {
         bail!("Script provider stdout must contain a JSON object.");
     };
 
-    // Required keys and their exact error texts.
     if !map.contains_key("version") {
         bail!("Script provider JSON requires 'version'.");
     }
@@ -176,18 +164,15 @@ pub fn get_package(config: &Value) -> Result<Value> {
         bail!("Script provider JSON requires one of 'url', 'installer_path', or 'path'.");
     }
 
-    // installer_path aliases into path when path is absent.
     if map.contains_key("installer_path") && !map.contains_key("path") {
         if let Some(v) = map.get("installer_path") {
             map.insert("path".to_string(), v.clone());
         }
     }
 
-    // verify_ssl passthrough defaults True.
     map.entry("verify_ssl".to_string())
         .or_insert_with(|| config.get("verify_ssl").cloned().unwrap_or(json!(true)));
 
-    // file_name from URL last segment when absent.
     if let Some(Value::String(url)) = map.get("url") {
         if !map.contains_key("file_name") {
             let derived = url
@@ -200,7 +185,6 @@ pub fn get_package(config: &Value) -> Result<Value> {
         }
     }
 
-    // Fail fast on an unusable digest instead of at download time.
     match map.get("sha256").and_then(Value::as_str) {
         Some(sha) if !sha.is_empty() => {
             normalize_sha256(Some(sha))?;
@@ -215,7 +199,6 @@ pub fn get_package(config: &Value) -> Result<Value> {
     Ok(Value::Object(map))
 }
 
-/// Python truthiness for the JSON scalars this provider deals with.
 fn truthy(value: &Value) -> bool {
     match value {
         Value::Null => false,
@@ -227,15 +210,14 @@ fn truthy(value: &Value) -> bool {
     }
 }
 
-/// Convenience for tests: build a JSON object map from a Value.
-#[allow(dead_code)]
-fn as_object(value: Value) -> Map<String, Value> {
-    value.as_object().cloned().unwrap_or_default()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::Map;
+
+    fn as_object(value: Value) -> Map<String, Value> {
+        value.as_object().cloned().unwrap_or_default()
+    }
 
     #[test]
     fn multiline_reverse_scan_finds_last_json_line() {
@@ -258,7 +240,6 @@ mod tests {
 
     #[test]
     fn reversed_scan_prefers_the_last_json_line() {
-        // Two JSON lines: the reversed scan must pick the LAST one.
         let stdout = "{\"version\": \"1.0.0.0\"}\n{\"version\": \"2.0.0.0\"}";
         let parsed = parse_json_output(stdout).unwrap();
         assert_eq!(parsed["version"], json!("2.0.0.0"));
@@ -282,9 +263,6 @@ mod tests {
 
     #[test]
     fn braces_in_text_do_not_confuse_the_scan() {
-        // Lines starting/ending with { } but not JSON fall through to the
-        // final error (Python would raise json.JSONDecodeError uncaught on
-        // such a line - the golden contract only exercises valid JSON lines).
         let stdout = "{not json}\n{\"version\": \"3.0.0.0\"}";
         let parsed = parse_json_output(stdout).unwrap();
         assert_eq!(parsed["version"], json!("3.0.0.0"));
@@ -292,14 +270,11 @@ mod tests {
 
     #[test]
     fn shlex_non_posix_matches_python() {
-        // Captured from Python 3.14 shlex.split(c, posix=False) on this host.
         let cases: Vec<(&str, Vec<&str>)> = vec![
             ("x#y", vec!["x#y"]),
             ("a b # comment here", vec!["a", "b", "#", "comment", "here"]),
             ("cmd --flag=#v", vec!["cmd", "--flag=#v"]),
-            // Quote at wordstart: closing quote ENDS the token, quotes retained.
             ("a \"b\"c d", vec!["a", "\"b\"", "c", "d"]),
-            // Quote mid-token is literal.
             ("ab\"cd\"ef gh", vec!["ab\"cd\"ef", "gh"]),
             (
                 "C:\\tools\\f.exe \"out dir\" arg2",
@@ -329,8 +304,6 @@ mod tests {
             "command": ["cmd", "/c", "echo", "placeholder"],
             "_workdir": ".",
         });
-        // Instead of spawning a real echo (platform-dependent), run the tail
-        // logic through the pure path: parse then transform.
         let data = parse_json_output(json_out).unwrap();
         let mut map = as_object(data);
         assert!(map.contains_key("version"));
@@ -353,14 +326,11 @@ mod tests {
         let pkg = Value::Object(map);
         assert_eq!(pkg["path"], json!("C:/local/op.exe"));
         assert_eq!(pkg["file_name"], json!("op.exe"));
-        assert_eq!(pkg["verify_ssl"], json!(true)); // passthrough default True
+        assert_eq!(pkg["verify_ssl"], json!(true));
     }
 
     #[test]
     fn get_package_missing_keys_error_texts() {
-        // A JSON payload missing 'version' => exact ValueError text, checked
-        // through the real subprocess path with a python one-liner (the repo's
-        // golden tooling already requires python, so it is a test dependency).
         let config = json!({
             "command": [
                 "python", "-c",
@@ -373,7 +343,6 @@ mod tests {
 
     #[test]
     fn get_package_missing_location_error_text() {
-        // JSON with version but no url/installer_path/path => exact text.
         let config = json!({
             "command": [
                 "python", "-c",
@@ -396,7 +365,6 @@ mod tests {
 
     #[test]
     fn sha256_fail_fast_on_unusable_digest() {
-        // An unusable sha256 in the JSON fails at resolve time, not download.
         let json_out =
             r#"{"version": "1.0.0.0", "url": "https://x/y.exe", "sha256": "not-a-digest"}"#;
         let data = parse_json_output(json_out).unwrap();

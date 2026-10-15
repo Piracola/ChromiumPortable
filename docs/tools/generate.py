@@ -2,22 +2,7 @@
 """从 data/site.json 生成整站静态页面（中英双语）。
 
 站点部署在 GitHub Pages（Deploy from a branch，目录 /docs），没有服务端构建步骤，
-因此生成结果必须提交进仓库。这个脚本是唯一的内容出口：页面结构、结构化数据、
-hreflang 与 sitemap 全部由 data/site.json 渲染。
-
-路径约定：
-  中文（默认）  /  /chrome/  /edge/  /helium/
-  英文          /en/  /en/chrome/  /en/edge/  /en/helium/
-
-用法（在 docs/ 下或任意目录执行均可）：
-
-    python tools/generate.py                  # 重新生成全部页面
-    python tools/generate.py --check          # 只校验产物是否与数据源一致
-    python tools/generate.py --fetch-releases # 先抓取各仓库最新 Release 再生成
-
---fetch-releases 会写入 data/releases.json（版本号、体积、发布日期、SHA256），
-生成时把这些信息烘焙进 HTML，让页面带上真实版本号，并作为 sitemap 的 lastmod。
-只用标准库，不依赖 requests。
+因此生成结果必须提交进仓库。
 """
 
 from __future__ import annotations
@@ -40,13 +25,7 @@ RELEASES_JSON = DATA / "releases.json"
 GITHUB_API = "https://api.github.com/repos/{owner}/{repo}/releases/latest"
 
 
-# --------------------------------------------------------------------------- #
-# 基础工具
-# --------------------------------------------------------------------------- #
-
-
 def esc(value: object) -> str:
-    """HTML 转义，用于所有插值。"""
     return html.escape(str(value), quote=True)
 
 
@@ -75,9 +54,7 @@ def indent(block: str, spaces: int) -> str:
     return "\n".join(pad + line if line.strip() else line for line in block.splitlines())
 
 
-# --------------------------------------------------------------------------- #
 # 多语言路径
-# --------------------------------------------------------------------------- #
 
 
 def locales(site: dict) -> list[dict]:
@@ -190,13 +167,11 @@ def all_pages(site: dict, code: str) -> list[dict]:
     return [merged_page(site, p, code) for p in site["pages"]]
 
 
-# --------------------------------------------------------------------------- #
 # Release 抓取
-# --------------------------------------------------------------------------- #
 
 
 def fetch_releases(site: dict) -> dict:
-    """抓取每个仓库的 latest release，并按 assetPattern 匹配到具体构建目标。"""
+    """按 assetPattern 匹配到具体构建目标。"""
     headers = {
         "Accept": "application/vnd.github+json",
         "User-Agent": "ChromiumPortable-docs-generator",
@@ -271,9 +246,7 @@ def fetch_releases(site: dict) -> dict:
     }
 
 
-# --------------------------------------------------------------------------- #
 # 页面片段
-# --------------------------------------------------------------------------- #
 
 
 def nav_html(site: dict, locale: dict, code: str, slug: str | None) -> str:
@@ -471,9 +444,7 @@ def sections_html(page: dict) -> str:
     return "\n\n".join(blocks)
 
 
-# --------------------------------------------------------------------------- #
 # 结构化数据
-# --------------------------------------------------------------------------- #
 
 
 def software_application(
@@ -603,9 +574,7 @@ def page_jsonld(site: dict, locale: dict, code: str, page: dict, builds: list[di
     }
 
 
-# --------------------------------------------------------------------------- #
 # 页面渲染
-# --------------------------------------------------------------------------- #
 
 
 def head_html(
@@ -950,9 +919,7 @@ def render_sitemap(site: dict, releases: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
-# --------------------------------------------------------------------------- #
 # 入口
-# --------------------------------------------------------------------------- #
 
 
 def build_outputs(site: dict, releases: dict) -> dict[Path, str]:

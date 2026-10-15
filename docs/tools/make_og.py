@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
 """生成 assets/og.png（1200×630 社交分享预览图）。
 
-分享到 IM、社交平台或出现在搜索结果卡片里时使用。og:image 不支持 SVG，
-所以这里用 Pillow 画一张位图并提交进仓库；内容基本不变，改动文案时重跑即可：
-
-    python -m pip install pillow
-    python tools/make_og.py
-
-依赖 Pillow 与系统中文字体，只在本地手动执行，不参与 CI 构建。
+og:image 不支持 SVG，所以这里用 Pillow 画一张位图并提交进仓库。
 """
 
 from __future__ import annotations
@@ -53,13 +47,11 @@ def main() -> int:
     image = Image.new("RGB", (WIDTH, HEIGHT), BG)
     draw = ImageDraw.Draw(image, "RGBA")
 
-    # 背景网格，和站点 body 的网格保持一致的呼吸感
     for x in range(0, WIDTH, 44):
         draw.line([(x, 0), (x, HEIGHT)], fill=GRID, width=1)
     for y in range(0, HEIGHT, 44):
         draw.line([(0, y), (WIDTH, y)], fill=GRID, width=1)
 
-    # 顶部品牌色条
     segment = WIDTH // len(BRANDS)
     for index, (_, color) in enumerate(BRANDS):
         draw.rectangle([index * segment, 0, (index + 1) * segment, 5], fill=color)
@@ -88,7 +80,6 @@ def main() -> int:
         fill=MUTED,
     )
 
-    # 底部品牌点 + 站点地址
     baseline = HEIGHT - PAD - 12
     cursor = PAD
     for name, color in BRANDS:

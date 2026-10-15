@@ -1,5 +1,3 @@
-//! Port of portable_builder/providers/direct.py. Owner: Wave2. See contract S4.3.
-//!
 //! Keys consumed: url, path/installer_path, version, version_regex, file_name,
 //! verify_ssl (default true), sha256, size. Exact rules (direct_script_contract.json):
 //! - url XOR path required, else `direct provider requires 'url' or 'path'`,
@@ -7,14 +5,10 @@
 //! - no version at all => "0.0.0.0",
 //! - file_name fallback chain: config file_name > URL last segment >
 //!   "browser-installer.exe".
-//!
-//! The pure resolver ([resolve]) is HTTP-free so tests replay configs directly;
-//! [get_package] is the JSON entry point used by the dispatch table.
 
 use anyhow::{bail, Result};
 use serde_json::{json, Value};
 
-/// Port of direct.py::get_package over a decoded JSON config.
 pub fn get_package(config: &Value) -> Result<Value> {
     resolve(DirectParams {
         url: str_field(config, "url"),
@@ -35,8 +29,6 @@ pub fn get_package(config: &Value) -> Result<Value> {
     })
 }
 
-/// Resolver inputs, grouped to keep the signature readable (mirrors the
-/// direct.py config keys consumed by get_package).
 pub struct DirectParams {
     pub url: Option<String>,
     pub path: Option<String>,
@@ -48,7 +40,6 @@ pub struct DirectParams {
     pub size: Option<u64>,
 }
 
-/// Pure resolver mirroring direct.py::get_package - testable without HTTP.
 pub fn resolve(params: DirectParams) -> Result<Value> {
     let DirectParams {
         url,
@@ -69,7 +60,6 @@ pub fn resolve(params: DirectParams) -> Result<Value> {
         if let (Some(pattern), Some(url)) = (version_regex.as_deref(), url.as_deref()) {
             if let Ok(re) = regex::Regex::new(pattern) {
                 if let Some(caps) = re.captures(url) {
-                    // Python re.search(...).group(1) - first capture group.
                     if let Some(m) = caps.get(1) {
                         version = Some(m.as_str().to_string());
                     }
@@ -106,13 +96,10 @@ pub fn resolve(params: DirectParams) -> Result<Value> {
     Ok(package)
 }
 
-/// Read an optional string field from a JSON config object.
 fn str_field(config: &Value, key: &str) -> Option<String> {
     config.get(key).and_then(Value::as_str).map(str::to_string)
 }
 
-/// Python's `config.get("path") or config.get("installer_path")` is truthy on
-/// any non-empty value; numeric paths are unusual but preserved.
 fn str_or_num_field(config: &Value, key: &str) -> Option<String> {
     match config.get(key) {
         Some(Value::String(s)) if !s.is_empty() => Some(s.clone()),
@@ -121,7 +108,6 @@ fn str_or_num_field(config: &Value, key: &str) -> Option<String> {
     }
 }
 
-/// Small helper mirroring Python truthiness for optional JSON scalars.
 trait ToStringValue {
     fn to_string_value(&self) -> String;
 }
@@ -139,7 +125,6 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    /// Test shorthand: resolve with defaults for the tail fields.
     fn resolve_short(
         url: Option<&str>,
         path: Option<&str>,
@@ -196,7 +181,6 @@ mod tests {
 
     #[test]
     fn file_name_fallback_chain() {
-        // config file_name wins over URL segment.
         let pkg = resolve_short(
             Some("https://example.invalid/op.exe"),
             None,
@@ -207,16 +191,11 @@ mod tests {
         .unwrap();
         assert_eq!(pkg["file_name"], json!("custom.exe"));
 
-        // No URL at all (path-based): terminal fallback.
         let pkg = resolve_short(None, Some("C:/installers/x.exe"), None, None, None).unwrap();
         assert_eq!(pkg["file_name"], json!("browser-installer.exe"));
         assert_eq!(pkg["path"], json!("C:/installers/x.exe"));
         assert!(pkg.get("url").is_none());
 
-        // Trailing-slash URL: Python's rstrip('/').split('/')[-1] yields the
-        // host segment ("example.invalid") - verified against Python 3.14;
-        // the "browser-installer.exe" terminal default only fires when there
-        // is no URL at all.
         let pkg = resolve_short(Some("https://example.invalid/"), None, None, None, None).unwrap();
         assert_eq!(pkg["file_name"], json!("example.invalid"));
     }

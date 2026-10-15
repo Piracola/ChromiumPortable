@@ -1,14 +1,6 @@
-//! Port of portable_builder/providers/google_omaha.py. Owner: Wave2. See contract S4.3.
-//!
 //! The XML POST body, channel appid/ap table and the `nextversion=""` field
 //! are frozen verbatim - the Omaha server is sensitive to those exact strings
 //! (migration doc S4.3).
-//!
-//! Decode is format-agnostic: [decode_response] accepts response TEXT
-//! (fixture replay - no network in tests). The tiny namespace-agnostic XML
-//! scanner mirrors xml.etree's `.find(".//tag")` / `.findall(".//tag")`
-//! behavior for the node set Omaha uses; quick-xml was deliberately not added
-//! (no new heavy deps, dependency lockfile discipline R9).
 //!
 //! Exact error texts (omaha_expected.json quirk_notes):
 //! - "No manifest found in Google Omaha response."
@@ -19,10 +11,9 @@
 use anyhow::{bail, Result};
 use serde_json::{json, Value};
 
-/// google_omaha.py DEFAULT_UPDATE_URL.
 pub const DEFAULT_UPDATE_URL: &str = "https://tools.google.com/service/update2";
 
-/// google_omaha.py CHANNELS - attribute strings are frozen byte-for-byte.
+/// CHANNELS attribute strings are frozen byte-for-byte (Omaha server contract).
 pub const CHANNELS: [(&str, &str, &str); 4] = [
     (
         "win_stable_x64",
@@ -46,10 +37,7 @@ pub const CHANNELS: [(&str, &str, &str); 4] = [
     ),
 ];
 
-/// Build the Omaha request body exactly as google_omaha.py::post_update does.
-///
-/// The f-string template is reproduced verbatim; only `{os_xml}` and
-/// `{app_xml}` are substituted.
+/// The request template is frozen byte-for-byte (Omaha server contract).
 pub fn build_request_body(os_xml: &str, app_xml: &str) -> String {
     format!(
         r#"<?xml version="1.0" encoding="UTF-8"?>
@@ -64,8 +52,6 @@ pub fn build_request_body(os_xml: &str, app_xml: &str) -> String {
     )
 }
 
-/// Port of google_omaha.py::post_update - POST the frozen XML body, return the
-/// response text. raise_for_status maps to error_for_status.
 pub fn post_update(update_url: &str, os_xml: &str, app_xml: &str) -> Result<String> {
     let body = build_request_body(os_xml, app_xml);
     let client = reqwest::blocking::Client::builder()
@@ -81,16 +67,11 @@ pub fn post_update(update_url: &str, os_xml: &str, app_xml: &str) -> Result<Stri
     Ok(response.text()?)
 }
 
-/// Minimal namespace-agnostic XML scan: find the first element with the given
-/// tag name anywhere in the document (Python `.find(".//tag")`), returning
-/// (attributes, inner-text-is-unused). Handles self-closing tags, quoted
-/// attributes with single or double quotes, comments and the XML declaration.
-fn find_element<'a>(text: &'a str, tag: &str) -> Option<XmlElem<'a>> {
+fn find_element(text: &str, tag: &str) -> Option<XmlElem> {
     let bytes = text.as_bytes();
     let mut pos = 0usize;
     while let Some(found) = text[pos..].find(&format!("<{tag}")) {
         let start = pos + found;
-        // Must not be part of a longer tag name (e.g. <packagex> vs <package>).
         let after = bytes.get(start + 1 + tag.len()).copied();
         if !matches!(
             after,
@@ -104,20 +85,16 @@ fn find_element<'a>(text: &'a str, tag: &str) -> Option<XmlElem<'a>> {
         let open = &text[start..=end];
         let self_closing = open.trim_end().ends_with("/>");
         let attrs = parse_attrs(open);
-        let inner = if self_closing {
-            ""
-        } else {
+        if !self_closing {
             let close = format!("</{tag}>");
-            let close_start = text[end + 1..].find(&close)? + end + 1;
-            &text[end + 1..close_start]
-        };
-        return Some(XmlElem { attrs, inner });
+            text[end + 1..].find(&close)?;
+        }
+        return Some(XmlElem { attrs });
     }
     None
 }
 
-/// All occurrences of an element anywhere in the document (.findall(".//tag")).
-fn find_elements<'a>(text: &'a str, tag: &str) -> Vec<XmlElem<'a>> {
+fn find_elements(text: &str, tag: &str) -> Vec<XmlElem> {
     let mut out = Vec::new();
     let mut pos = 0usize;
     while let Some(found) = text[pos..].find(&format!("<{tag}")) {
@@ -135,31 +112,17 @@ fn find_elements<'a>(text: &'a str, tag: &str) -> Vec<XmlElem<'a>> {
         };
         let end = start + end_rel;
         let open = &text[start..=end];
-        let self_closing = open.trim_end().ends_with("/>");
         let attrs = parse_attrs(open);
-        let inner = if self_closing {
-            ""
-        } else {
-            let close = format!("</{tag}>");
-            match text[end + 1..].find(&close) {
-                Some(rel) => &text[end + 1..rel + end + 1],
-                None => "",
-            }
-        };
-        out.push(XmlElem { attrs, inner });
+        out.push(XmlElem { attrs });
         pos = end + 1;
     }
     out
 }
 
-/// A located XML element: parsed attributes (inner text is not consumed by
-/// the Omaha decode paths, which read attributes only).
-struct XmlElem<'a> {
+struct XmlElem {
     attrs: Vec<(String, String)>,
-    #[allow(dead_code)]
-    inner: &'a str,
 }
-impl<'a> XmlElem<'a> {
+impl XmlElem {
     fn get(&self, name: &str) -> Option<&str> {
         self.attrs
             .iter()
@@ -168,13 +131,10 @@ impl<'a> XmlElem<'a> {
     }
 }
 
-/// Parse attribute pairs out of an open tag string, handling single/double
-/// quotes and XML entity escapes used by Omaha responses.
 fn parse_attrs(open_tag: &str) -> Vec<(String, String)> {
     let mut attrs = Vec::new();
     let bytes = open_tag.as_bytes();
     let mut i = 0usize;
-    // Skip "<tag" and any whitespace.
     while i < bytes.len() && bytes[i] != b'<' {
         i += 1;
     }
@@ -197,7 +157,6 @@ fn parse_attrs(open_tag: &str) -> Vec<(String, String)> {
         if i >= bytes.len() || bytes[i] == b'>' || bytes[i] == b'/' {
             break;
         }
-        // Attribute name.
         let name_start = i;
         while i < bytes.len() && bytes[i] != b'=' && !bytes[i].is_ascii_whitespace() {
             i += 1;
@@ -224,14 +183,13 @@ fn parse_attrs(open_tag: &str) -> Vec<(String, String)> {
         }
         let value = open_tag[value_start..i.min(open_tag.len())].to_string();
         if i < bytes.len() {
-            i += 1; // closing quote
+            i += 1;
         }
         attrs.push((name, xml_unescape(&value)));
     }
     attrs
 }
 
-/// Decode the XML entities that can appear in Omaha responses.
 fn xml_unescape(value: &str) -> String {
     value
         .replace("&lt;", "<")
@@ -241,7 +199,6 @@ fn xml_unescape(value: &str) -> String {
         .replace("&amp;", "&")
 }
 
-/// Decoded Omaha response (google_omaha.py::decode_response return shape).
 #[derive(Debug)]
 pub struct OmahaDecoded {
     pub version: Option<String>,
@@ -251,9 +208,6 @@ pub struct OmahaDecoded {
     pub size: Option<u64>,
 }
 
-/// Port of google_omaha.py::decode_response - pure text in, decoded fields out.
-/// URL construction is plain string concatenation (codebase + package name,
-/// NO slash normalization) and size must be all digits else None.
 pub fn decode_response(text: &str) -> Result<OmahaDecoded> {
     let manifest = find_element(text, "manifest")
         .ok_or_else(|| anyhow::anyhow!("No manifest found in Google Omaha response."))?;
@@ -271,7 +225,6 @@ pub fn decode_response(text: &str) -> Result<OmahaDecoded> {
         bail!("No download URL found in Google Omaha response.");
     }
 
-    // Python: int(size) if size and str(size).isdigit() else None
     let size = package
         .get("size")
         .filter(|s| !s.is_empty() && s.chars().all(|c| c.is_ascii_digit()))
@@ -286,9 +239,6 @@ pub fn decode_response(text: &str) -> Result<OmahaDecoded> {
     })
 }
 
-/// Port of google_omaha.py::get_package - the network path delegates to
-/// [post_update] + [decode_response]; preferred_hosts picks the first URL
-/// with a matching prefix (default: dl.google.com first, order preserved).
 pub fn get_package(config: &Value) -> Result<Value> {
     let channel = config
         .get("channel")
@@ -303,7 +253,6 @@ pub fn get_package(config: &Value) -> Result<Value> {
             break;
         }
     }
-    // channel_config.update(config.get("request", {})) - request overrides.
     if let Some(request) = config.get("request") {
         if let Some(os) = request.get("os").and_then(Value::as_str) {
             os_attr = Some(os.to_string());
@@ -313,8 +262,6 @@ pub fn get_package(config: &Value) -> Result<Value> {
         }
     }
 
-    // Python: `if not channel_config.get("os") or not channel_config.get("app")`
-    // - empty strings are falsy and trigger the KeyError.
     let (Some(os_attr), Some(app_attr)) = (os_attr, app_attr) else {
         bail!("Google Omaha channel '{channel}' is not configured.");
     };
@@ -354,8 +301,6 @@ pub fn get_package(config: &Value) -> Result<Value> {
         }
     }
 
-    // Python passes the raw digest through; normalize_sha256 runs at download
-    // time inside tools.py::download_file (eager fail-fast is script.py only).
     Ok(json!({
         "version": data.version,
         "url": download_url,
@@ -400,8 +345,6 @@ mod tests {
 
     #[test]
     fn preferred_host_prefix_match_picks_dl_google() {
-        // get_package's URL selection over the injected response text (the
-        // same first-match loop get_package runs after decode).
         let decoded = decode_response(SAMPLE_XML).unwrap();
         let preferred = ["https://dl.google.com".to_string()];
         let mut download_url = decoded.urls[0].clone();
@@ -415,7 +358,6 @@ mod tests {
             download_url,
             "https://dl.google.com/release2/chrome/83.0.4103.116_chrome_installer.exe"
         );
-        // No preferred host matches => first URL stays selected.
         let preferred_none = ["https://nowhere.invalid".to_string()];
         let mut download_url = decoded.urls[0].clone();
         for candidate in &decoded.urls {
@@ -432,7 +374,6 @@ mod tests {
 
     #[test]
     fn url_concat_no_slash_normalization() {
-        // quirk: codebase + package_name plain concat, no slash fixing.
         let xml = r#"<response protocol="3.1"><app appid="{X}" status="ok"><updatecheck status="ok">
 <manifest version="1.0"><packages><package name="inst.exe" hash_sha256="abc" size="1" required="true"/></packages></manifest>
 <urls><url codebase="https://host/path"/></urls></updatecheck></app></response>"#;
@@ -488,11 +429,6 @@ mod tests {
 
     #[test]
     fn request_overrides_channel_attributes() {
-        // channel_config.update(config.get("request", {})) semantics: an
-        // explicit request wins over the channel table. Offline fixture: a
-        // local listener answers 200 with a non-Omaha body, so the flow
-        // reaches decode_response and fails with the manifest error - proving
-        // the request override did NOT trip "channel not configured".
         let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
         let port = listener.local_addr().unwrap().port();
         let server = std::thread::spawn(move || {
@@ -519,7 +455,6 @@ mod tests {
         server.join().unwrap();
         assert_eq!(err, "No manifest found in Google Omaha response.");
 
-        // Empty os/app override (Python falsy strings) => exact KeyError text.
         let config = json!({ "channel": "win_stable_x64", "request": { "os": "", "app": "" } });
         let err = get_package(&config).unwrap_err().to_string();
         assert!(err.contains("is not configured"), "unexpected: {err}");
@@ -537,7 +472,6 @@ mod tests {
         assert!(body.contains("    <updatecheck/>"));
         assert!(body.contains("    <data name=\"install\" index=\"empty\"/>"));
         assert!(body.ends_with("</request>"));
-        // nextversion="" preserved verbatim.
         assert!(body.contains("nextversion=\"\""));
     }
 }

@@ -2,30 +2,13 @@
 //! Releases page. Replaces child-repo script providers whose upstream
 //! publishes on GitHub (Helium today; catalog browsers like Brave follow).
 //!
-//! Semantics ported from Helium_Portable/scripts/helium_package.py so the
-//! switch is behavior-preserving:
-//! - channel "stable" = first non-prerelease release; "prerelease" = first
-//!   prerelease; "latest" = /releases/latest (both kinds).
-//! - asset_pattern is an anchored regex over asset names with a named
-//!   `version` group (helium_package.py::find_asset used the same shape).
-//! - version comes from the release tag (leading "v" stripped) and falls
-//!   back to the asset's captured version — tag_version or asset_version in
-//!   the script's main().
-//! - an asset without a `digest` is rejected when require_digest (default
-//!   true): the script refused to publish an unverifiable download.
-//! - GitHub reports digests as "sha256:<hex>"; the hex half is passed
-//!   through (normalize_sha256 accepts both shapes at download time).
-//!
-//! [pick_release] / [pick_asset] / [expected_hex_digest] are pure and
-//! fixture-replayable without HTTP; [get_package] is the dispatch entry.
 
 use anyhow::{bail, Result};
 use serde_json::{json, Value};
 
 use crate::release::github_headers;
 
-/// helium_package.py::expected_hex_digest — GitHub asset digests arrive as
-/// "sha256:<hex>"; lowercase the hex half.
+/// GitHub asset digests arrive as "sha256:<hex>"; lowercase the hex half.
 pub fn expected_hex_digest(value: Option<&str>) -> Option<String> {
     let text = value?.trim();
     if text.is_empty() {
@@ -37,8 +20,6 @@ pub fn expected_hex_digest(value: Option<&str>) -> Option<String> {
     }
 }
 
-/// helium_package.py::select_release — first release whose prerelease flag
-/// matches the channel; "latest" takes the API's own latest shortcut.
 fn pick_release<'a>(releases: &'a [Value], channel: &str) -> Result<&'a Value> {
     match channel {
         "latest" => releases.first().ok_or_else(|| {
@@ -57,11 +38,8 @@ fn pick_release<'a>(releases: &'a [Value], channel: &str) -> Result<&'a Value> {
     }
 }
 
-/// helium_package.py::find_asset — anchored match with a named version group.
 pub fn pick_asset<'a>(release: &'a Value, pattern: &str) -> Result<(String, &'a Value)> {
-    let re = regex::Regex::new(pattern)?;
-    let anchor = format!("^(?:{pattern})$");
-    let anchored = regex::Regex::new(&anchor)?;
+    let anchored = regex::Regex::new(&format!("^(?:{pattern})$"))?;
     for asset in release
         .get("assets")
         .and_then(Value::as_array)
@@ -79,7 +57,6 @@ pub fn pick_asset<'a>(release: &'a Value, pattern: &str) -> Result<(String, &'a 
             }
         }
     }
-    let _ = re;
     bail!(
         "No asset matching '{pattern}' found in release {}.",
         release
@@ -115,7 +92,6 @@ pub fn get_package(config: &Value) -> Result<Value> {
 
     let releases = list_releases(&repo, &channel, verify_ssl)?;
 
-    // The pick is split out so tests replay release JSON directly.
     let release = pick_release(&releases, &channel)?;
     let (asset_version, asset) = pick_asset(release, &pattern)?;
 
@@ -173,8 +149,8 @@ pub fn get_package(config: &Value) -> Result<Value> {
     }))
 }
 
-/// helium_package.py::list_releases — /releases?per_page=20 for stable/
-/// prerelease; /releases/latest for the latest channel (both kinds allowed).
+/// /releases?per_page=20 for stable/prerelease; /releases/latest for the
+/// latest channel (both kinds allowed).
 fn list_releases(repo: &str, channel: &str, verify_ssl: bool) -> Result<Vec<Value>> {
     let client = reqwest::blocking::Client::builder()
         .user_agent(crate::release::DEFAULT_USER_AGENT)
@@ -227,7 +203,6 @@ mod tests {
 
     #[test]
     fn digest_shapes_are_normalized() {
-        // helium_package.py::expected_hex_digest semantics.
         assert_eq!(
             expected_hex_digest(Some("sha256:ABCD1234")),
             Some("abcd1234".to_string())
@@ -290,12 +265,8 @@ mod tests {
         .unwrap();
         assert_eq!(asset_version, "0.19.2.1");
         assert!(asset.get("browser_download_url").is_some());
-        // get_package's network path is exercised against the real upstream
-        // in CI; offline tests cover the pure pick/normalize/error layers.
     }
 
-    /// Tag version wins over the asset's captured version (version_source
-    /// default "tag", leading "v" stripped) — script main() semantics.
     #[test]
     fn version_prefers_tag_and_strips_v() {
         let release = helium_release(
@@ -322,8 +293,6 @@ mod tests {
         let release = helium_release(false, "0.19.2.1", "helium_0.19.2.1_x64-windows.zip", None);
         let err = pick_asset(&release, r"helium_(?P<version>[\d.]+)_x64-windows\.zip");
         assert!(err.is_ok(), "pick_asset itself does not check digests");
-        // The digest gate lives in get_package; exercise it via a synthetic
-        // asset walk is covered by require_digest logic + expected_hex_digest.
     }
 
     #[test]

@@ -1,15 +1,3 @@
-//! Port of portable_builder/pe.py via pelite - machine type, import names,
-//! resources walker and VS_VERSIONINFO (cross-platform: pure static parsing, no
-//! Win32 version.dll). Owner: Wave2-B (brief _migration/wave2-briefs/brief-b2-pe.md).
-//!
-//! Python sources ported here:
-//! - pe.py::read_pe_machine, iter_pe_resources, read_version_info (the Win32
-//!   version.dll path is replaced by pelite's resource tree + version_info).
-//! - tools.py::read_pe_import_names (DLL name strings in table order, lenient
-//!   about descriptors whose name cannot be mapped) and tools.py's
-//!   ABSOLUTE_VERSION_DLL regex, used by assert_portable_version_import per
-//!   docs/MIGRATION_RUST_TAURI.md S4.2.
-//!
 //! Error texts are pe.py's RuntimeErrors, verbatim:
 //! "Not a PE image (missing MZ signature)." /
 //! "Not a PE image (missing PE signature)." /
@@ -24,16 +12,14 @@ use std::path::Path;
 use anyhow::Result;
 use pelite::image::{IMAGE_DIRECTORY_ENTRY_IMPORT, IMAGE_DIRECTORY_ENTRY_RESOURCE};
 
-/// Machine names from pe.py (MACHINE_NAMES).
 const MACHINE_X86: u16 = 0x014C;
 const MACHINE_X64: u16 = 0x8664;
 const MACHINE_ARM64: u16 = 0xAA64;
 
-/// Synthetic translation fallback chain from pe.py::read_version_info.
 const FALLBACK_TRANSLATIONS: [(u16, u16); 3] =
     [(0x0409, 0x04B0), (0x0409, 0x04E4), (0x0804, 0x04B0)];
 
-/// The six VS_VERSIONINFO fields read by pe.py::read_version_info.
+/// The six VS_VERSIONINFO fields.
 const VERSION_FIELDS: [&str; 6] = [
     "CompanyName",
     "FileDescription",
@@ -43,18 +29,10 @@ const VERSION_FIELDS: [&str; 6] = [
     "ProductVersion",
 ];
 
-/// pe.py's _pe_layout result: machine + optional-header magic. The section
-/// table and data directories are validated (bounds-checked exactly like the
-/// Python loop) but only needed by pelite afterwards, so they are not kept.
-struct PeLayout {
-    #[allow(dead_code)]
-    machine: u16,
-    #[allow(dead_code)]
-    optional_magic: u16,
-}
-
-/// Port of pe.py::_pe_layout. Raises the exact Python error texts.
-fn pe_layout(data: &[u8]) -> Result<PeLayout> {
+/// Raises the exact Python error texts. The machine/optional-magic reads and
+/// the section-table walk validate bounds exactly like pe.py; pelite re-parses
+/// the validated bytes afterwards, so nothing is returned.
+fn pe_layout(data: &[u8]) -> Result<()> {
     if data.len() < 0x40 || data.get(..2) != Some(b"MZ".as_slice()) {
         anyhow::bail!("Not a PE image (missing MZ signature).");
     }
@@ -76,7 +54,6 @@ fn pe_layout(data: &[u8]) -> Result<PeLayout> {
             .map(|s| u32::from_le_bytes([s[0], s[1], s[2], s[3]]))
             .ok_or_else(|| anyhow::anyhow!("Not a PE image (missing PE signature)."))
     };
-    let machine = read_u16(coff)?;
     let section_count = read_u16(coff + 2)?;
     let optional_size = read_u16(coff + 16)?;
     let optional = coff + 20;
@@ -106,10 +83,7 @@ fn pe_layout(data: &[u8]) -> Result<PeLayout> {
             read_u32(entry + probe)?;
         }
     }
-    Ok(PeLayout {
-        machine,
-        optional_magic,
-    })
+    Ok(())
 }
 
 /// Wrapper type alias: pelite's format-agnostic file handle (pe32 + pe64).
@@ -122,7 +96,6 @@ fn parse_pe(data: &[u8]) -> Result<PeFile<'_>> {
         .map_err(|err| anyhow::anyhow!("Not a PE image (missing PE signature). {err}"))
 }
 
-/// Port of pe.py::read_pe_machine.
 pub fn read_pe_machine(path: &Path) -> Result<String> {
     let data = std::fs::read(path)?;
     let file = parse_pe(&data)?;
@@ -135,15 +108,12 @@ pub fn read_pe_machine(path: &Path) -> Result<String> {
     })
 }
 
-/// Port of tools.py::read_pe_import_names - the DLL name strings from the PE
-/// import directory, in table order. The Python function also returns the host
-/// section name; no Rust caller needs it, so only the names come back.
+/// The DLL name strings from the PE import directory, in table order.
 pub fn read_pe_import_names(path: &Path) -> Result<Vec<String>> {
     Ok(read_pe_import_names_with_section(path)?.0)
 }
 
-/// tools.py::read_pe_import_names full return: (names, host section name).
-/// Used by assert_portable_version_import, whose INFO line names the section.
+/// Full return: (names, host section name), for the INFO line naming it.
 fn read_pe_import_names_with_section(path: &Path) -> Result<(Vec<String>, Option<String>)> {
     let data = std::fs::read(path)?;
     let file = parse_pe(&data)?;
@@ -212,27 +182,23 @@ fn section_for_rva(file: &PeFile<'_>, rva: u32) -> Option<String> {
     None
 }
 
-/// tools.py ABSOLUTE_VERSION_DLL: case-insensitive byte regex matching
-/// rb"[A-Za-z]:\\[^\\x00]*version\\.dll" over the raw file bytes.
+/// Case-insensitive byte regex matching rb"[A-Za-z]:\\[^\\x00]*version\\.dll" over the raw file bytes.
 static ABSOLUTE_VERSION_DLL: std::sync::LazyLock<regex::bytes::Regex> =
     std::sync::LazyLock::new(|| {
         regex::bytes::Regex::new(r#"(?i)[A-Za-z]:\\[^\x00]*version\.dll"#)
             .expect("ABSOLUTE_VERSION_DLL regex is static and valid")
     });
 
-/// Port of tools.py::assert_portable_version_import (default dll_name).
-///
 /// The browser executable must load our injected, relatively-referenced
 /// version.dll FIRST (setdll/Detours prepends it so the loader resolves it
 /// before Chromium's system VERSION.dll), the first import must carry no
 /// drive or leading slash, and the raw file must contain no absolute
 /// `[A-Za-z]:\\...version.dll` string (absolute path = injection failed).
-/// Returns the import name list like the Python function.
 pub fn assert_portable_version_import(path: &Path) -> Result<Vec<String>> {
     assert_portable_version_import_named(path, "version.dll")
 }
 
-/// Port of tools.py::assert_portable_version_import with explicit dll_name.
+/// Explicit dll_name variant.
 pub fn assert_portable_version_import_named(path: &Path, dll_name: &str) -> Result<Vec<String>> {
     // Python formats Path objects via f"{path}"; Path has no Display in Rust.
     let path_str = path.display();
@@ -247,8 +213,6 @@ pub fn assert_portable_version_import_named(path: &Path, dll_name: &str) -> Resu
     }
 
     let first = &imports[0];
-    // PureWindowsPath(first).name: drop trailing separators, take the last
-    // component across both slash flavors.
     let first_name = first
         .trim_end_matches(['\\', '/'])
         .rsplit(['\\', '/'])
@@ -261,8 +225,6 @@ pub fn assert_portable_version_import_named(path: &Path, dll_name: &str) -> Resu
         );
     }
 
-    // PureWindowsPath(first).drive: "C" for C:/C:\\, \\\\server\\\\share for UNC;
-    // empty otherwise.
     let bytes = first.as_bytes();
     let has_drive = (bytes.len() >= 2 && bytes[1] == b':' && bytes[0].is_ascii_alphabetic())
         || first.starts_with("\\\\");
@@ -288,13 +250,13 @@ pub fn assert_portable_version_import_named(path: &Path, dll_name: &str) -> Resu
     Ok(imports)
 }
 
-/// Port of pe.py::read_version_info - the six VS_VERSIONINFO fields.
+/// The six VS_VERSIONINFO fields.
 ///
 /// Pure static parsing through pelite's resource tree + version_info; the file
 /// is never started and no Win32 version.dll is touched, so this works on every
 /// platform (Python returned {} off-Windows because of version.dll).
 ///
-/// Fallback order is pe.py's: the file's Translation entries first (deduped,
+/// Fallback order: the file's Translation entries first (deduped,
 /// in file order), then the synthetic chain (0x0409,0x04B0) ->
 /// (0x0409,0x04E4) -> (0x0804,0x04B0). First hit wins per field.
 pub fn read_version_info(path: &Path) -> Result<BTreeMap<String, String>> {
@@ -376,7 +338,7 @@ pub struct PeResource {
     pub data: Vec<u8>,
 }
 
-/// Port of pe.py::iter_pe_resources - every resource entry as
+/// Every resource entry as
 /// ((type, name, language), bytes) in pe.py's walk order: depth-first, named
 /// entries before id entries in table order, identifiers padded with 0 to three
 /// and truncated to three, entries with unmappable or out-of-range payloads
@@ -406,7 +368,7 @@ pub fn iter_pe_resources(path: &Path) -> Result<Vec<PeResource>> {
     Ok(out)
 }
 
-/// Recursive walker mirroring pe.py's nested walk(directory_offset, parts).
+/// Recursive walker mirroring pe.py's nested walk.
 fn walk_resource_dir(
     dir: &pelite::resources::Directory<'_>,
     parts: &mut Vec<String>,
@@ -468,8 +430,6 @@ fn walk_resource_dir(
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // ---- unit tests on the raw layout parser (no fixtures needed) ----
 
     fn minimal_pe(machine: u16, magic: u16) -> Vec<u8> {
         let mut data = vec![0u8; 0x200];
@@ -541,9 +501,6 @@ mod tests {
         std::fs::remove_dir_all(&dir).ok();
     }
 
-    // ---- golden comparison: 7 samples vs _migration/pe-golden/python_reference.json ----
-
-    /// Sample set from brief-b2-pe.md: repo-relative paths.
     const GOLDEN_SAMPLES: &[(&str, &str)] = &[
         ("csex", "bin/360csex_23.1.1253.64.exe"),
         ("installer", "bin/BraveBrowserStandaloneSetup.exe"),

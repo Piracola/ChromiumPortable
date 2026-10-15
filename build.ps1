@@ -1,8 +1,3 @@
-﻿# ChromiumPortable 构建脚本
-# 平时用：       .\构建.bat        （debug，快，试界面用）
-# 出发行包：     .\构建.bat -Release
-# 顺手跑测试：   .\构建.bat -Test
-# 清缓存：       .\构建.bat -Clean
 param(
     [switch]$Release,
     [switch]$Test,
@@ -43,23 +38,9 @@ if (-not $Release) {
     return
 }
 
-# ---- 发行包：与 CI（release-engine.yml）同一套清单 ----
 $stage = "dist\ChromiumPortableBuilder-windows-x64"
 if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
-New-Item -ItemType Directory -Force -Path $stage | Out-Null
-Copy-Item "$bin\builder-app.exe" $stage/
-Copy-Item "$bin\portable-builder.exe" $stage/
-Copy-Item catalog $stage/catalog -Recurse
-Copy-Item setdll $stage/setdll -Recurse
-if (Test-Path "7zr.exe") {
-    Copy-Item 7zr.exe $stage/
-} else {
-    try {
-        Invoke-WebRequest -Uri 'https://www.7-zip.org/a/7zr.exe' -OutFile "$stage\7zr.exe" -UseBasicParsing
-    } catch {
-        Write-Host "[i] 7zr.exe 没拿到（不影响构建，引擎首跑会自己下载）" -ForegroundColor Yellow
-    }
-}
+& (Join-Path $PSScriptRoot "scripts\stage-dist.ps1") -Stage $stage -Bin $bin -Gui
 $size = "{0:N1} MB" -f ((Get-ChildItem $stage -Recurse | Measure-Object Length -Sum).Sum / 1MB)
 Write-Host ""
 Write-Host "[OK] 发行包就绪：$stage  ($size)" -ForegroundColor Green

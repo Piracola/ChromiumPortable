@@ -32,13 +32,7 @@ jobs:
         run: |
           $stage = "dist/portable-builder-windows-x64"
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
-          Copy-Item target/release/portable-builder.exe $stage/
-          Copy-Item catalog $stage/catalog -Recurse
-          Copy-Item setdll $stage/setdll -Recurse
-          # 7zr.exe 不入库（运行期产物）：从 7-Zip 官方直链取，取不到就让引擎首跑时自己下载
-          try {
-            Invoke-WebRequest -Uri 'https://www.7-zip.org/a/7zr.exe' -OutFile "$stage/7zr.exe" -UseBasicParsing
-          } catch { Write-Host "7zr.exe download skipped: $($_.Exception.Message)" }
+          & ./scripts/stage-dist.ps1 -Stage $stage -Bin target/release
           # 压顶层目录本身（消费方按 _engine/portable-builder-windows-x64/portable-builder.exe 取），
           # 不能压 "$stage/*"——那会把内容摊平到 zip 根，Linux 侧同理见下
           Compress-Archive -Path "$stage" -DestinationPath dist/portable-builder-windows-x64.zip -Force
@@ -49,13 +43,7 @@ jobs:
           # 目录版而非单文件：GUI 要派发引擎子进程，目录版更稳（沿用旧的 onedir 决定）
           $stage = "dist/ChromiumPortableBuilder-windows-x64"
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
-          Copy-Item target/release/builder-app.exe $stage/
-          Copy-Item target/release/portable-builder.exe $stage/
-          Copy-Item catalog $stage/catalog -Recurse
-          Copy-Item setdll $stage/setdll -Recurse
-          try {
-            Invoke-WebRequest -Uri 'https://www.7-zip.org/a/7zr.exe' -OutFile "$stage/7zr.exe" -UseBasicParsing
-          } catch { Write-Host "7zr.exe download skipped: $($_.Exception.Message)" }
+          & ./scripts/stage-dist.ps1 -Stage $stage -Bin target/release -Gui
           # 同上：压目录本身，保持 zip 内的顶层目录结构
           Compress-Archive -Path "$stage" -DestinationPath dist/ChromiumPortableBuilder-windows-x64.zip -Force
 

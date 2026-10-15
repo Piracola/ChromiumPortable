@@ -1,4 +1,3 @@
-﻿# ChromiumPortable 构建菜单（双击 构建.bat 进入）
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 

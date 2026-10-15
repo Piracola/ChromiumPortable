@@ -1,11 +1,8 @@
-//! Port of portable_builder/config.py - JSON/TOML config loading + serde Target schema. Owner: Wave1-B.
+//! JSON/TOML config loading + serde Target schema.
 //!
 //! Contract of record: docs/MIGRATION_RUST_TAURI.md §4.1.
 //!
-//! Divergences from Python (deliberate, per §11):
-//! - YAML support is dropped; \`.yml\` / \`.yaml\` now hit the unsupported-format error.
-//!
-//! `get_target` injection semantics (ported 1:1 from config.py:33-34):
+//! `get_target` injection semantics:
 //! `target = dict(targets[target_name])` **copies** the target mapping out of the
 //! loaded config; `target.setdefault("target", target_name)` then injects the
 //! queried name into that **copy** only. The loaded `config` value is never
@@ -62,7 +59,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::path::Path;
 
-/// Supported config formats after the Rust port (YAML dropped, §11).
+/// Supported config formats.
 pub const SUPPORTED_FORMATS: &str = ".json, .toml";
 
 #[derive(Debug, thiserror::Error)]
@@ -85,18 +82,16 @@ pub enum ConfigError {
         supported: &'static str,
     },
     /// Display string is byte-identical to the Python KeyError message
-    /// (config.py:32): `Target 'nope' not found. Available targets: chrome_stable`.
+    /// (`Target 'nope' not found. Available targets: chrome_stable`).
     #[error("Target '{name}' not found. Available targets: {available}")]
     UnknownTarget { name: String, available: String },
     #[error("target '{name}' does not match the Target schema: {detail}")]
     Schema { name: String, detail: String },
 }
 
-/// Port of config.py:load_config. JSON and TOML only.
 pub fn load_config(path: impl AsRef<Path>) -> Result<Value, ConfigError> {
     let path = path.as_ref();
     let path_str = path.to_string_lossy().into_owned();
-    // Python: suffix = config_path.suffix.lower(); the error message keeps the original suffix.
     let suffix = path
         .extension()
         .map(|ext| format!(".{}", ext.to_string_lossy()))
@@ -118,8 +113,7 @@ pub fn load_config(path: impl AsRef<Path>) -> Result<Value, ConfigError> {
             format: "TOML",
             detail: source.to_string(),
         }),
-        // .yml / .yaml and everything else: the Python port raised ValueError
-        // before ever attempting YAML import; the Rust port has no YAML path at all.
+        // .yml / .yaml and everything else: no YAML path at all.
         _ => Err(ConfigError::UnsupportedFormat {
             path: path_str,
             suffix,
@@ -128,11 +122,11 @@ pub fn load_config(path: impl AsRef<Path>) -> Result<Value, ConfigError> {
     }
 }
 
-/// Port of config.py:get_target, including the injection quirk: the returned
+/// The returned
 /// mapping is a **copy** with a `"target"` key injected via setdefault
 /// semantics; the loaded `config` is left untouched (see module docs).
 pub fn get_target(config: &Value, target_name: &str) -> Result<Value, ConfigError> {
-    // Python: targets = config.get("targets", {}) - a missing/empty "targets" key
+    // A missing/empty "targets" key
     // is an empty mapping, and "(none)" is reported when it holds no targets.
     let targets = config.get("targets").and_then(Value::as_object);
 
@@ -156,14 +150,14 @@ pub fn get_target(config: &Value, target_name: &str) -> Result<Value, ConfigErro
         }
     };
 
-    // Python: target = dict(targets[target_name]) - a copy, never a reference.
+    // A copy, never a reference.
     // dict() RAISES on non-mapping values (ValueError for str, TypeError for
     // None/bool/list); a scalar target entry must be rejected here, not passed
     // through (review-B1 finding 1, migration doc S4.1 entry validation).
     let mut target = source.clone();
     match &mut target {
         Value::Object(map) => {
-            // Python: target.setdefault("target", target_name) - keep an existing
+            // Keep an existing
             // value, inject the queried name only when the key is absent.
             map.entry("target".to_string())
                 .or_insert_with(|| Value::String(target_name.to_string()));
@@ -192,99 +186,82 @@ pub fn get_target(config: &Value, target_name: &str) -> Result<Value, ConfigErro
 /// in the key → default table in the module docs.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Target {
-    /// Injected by get_target; builder.py:36 uses `target.get("target", "")`.
+    /// Injected by get_target.
     #[serde(default = "default_empty_string")]
     pub target: String,
-    /// builder.py:37 chain `name → display_name → ""`.
+    /// Chain `name → display_name → ""`.
     #[serde(default)]
     pub name: Option<String>,
-    /// builder.py:38 chain `display_name → name → ""`.
+    /// Chain `display_name → name → ""`.
     #[serde(default)]
     pub display_name: Option<String>,
     /// Product targets (Chrome / Edge / Helium) set this explicitly; absent = falsy.
     #[serde(default = "default_false")]
     pub product: bool,
-    /// builder.py:39,155,363,395 chain `output_dir → name → "Browser"`.
+    /// Chain `output_dir → name → "Browser"`.
     #[serde(default)]
     pub output_dir: Option<String>,
-    /// builder.py:308 / verify.py:66 - no default; auto layout derives it from the PE.
+    /// No default; auto layout derives it from the PE.
     #[serde(default)]
     pub exe_name: Option<String>,
-    /// builder.py:43,107,256 / verify.py:58 - default `"x64"`.
     #[serde(default = "default_architecture")]
     pub architecture: String,
-    /// builder.py:66,75,102,157 / verify.py:57 - default `"move_version_root"`.
     #[serde(default = "default_layout")]
     pub layout: String,
-    /// builder.py:125 - Edge-style inner archive name; absent for plain layouts.
+    /// Edge-style inner archive name; absent for plain layouts.
     #[serde(default)]
     pub inner_archive: Option<String>,
-    /// builder.py:132 - default `"Chrome-bin"`.
     #[serde(default = "default_version_root")]
     pub version_root: String,
-    /// builder.py:54 - `target.get("provider", {})`; typed downstream by providers.
     #[serde(default)]
     pub provider: Option<Value>,
-    /// builder.py:207,268 - default `"chrome++"`.
     #[serde(default = "default_chrome_plus_dir")]
     pub chrome_plus_dir: String,
-    /// builder.py:208 - default `"chrome++.ini"`.
     #[serde(default = "default_ini_name")]
     pub ini_name: String,
-    /// builder.py:209 - default `"chrome++.override.ini"`.
     #[serde(default = "default_ini_override_name")]
     pub ini_override_name: String,
-    /// builder.py:257 - default `f"version-{arch}.dll"` depends on architecture,
+    /// Default depends on architecture,
     /// so `None` means "compute from `architecture`".
     #[serde(default)]
     pub version_dll_name: Option<String>,
-    /// builder.py:258 - default `f"setdll-{arch}.exe"` depends on architecture.
+    /// Default depends on architecture.
     #[serde(default)]
     pub setdll_name: Option<String>,
-    /// builder.py:279 - default `"app_root"`.
     #[serde(default = "default_version_dll_location")]
     pub version_dll_location: String,
-    /// builder.py:296 - default `"app_root"`.
     #[serde(default = "default_ini_location")]
     pub ini_location: String,
-    /// builder.py:99 / verify.py:186 - default is `not auto_layout`, computed downstream.
+    /// Default is `not auto_layout`, computed downstream.
     #[serde(default)]
     pub allow_7z_download: Option<bool>,
-    /// builder.py:100 / verify.py:187 - default is `not auto_layout`, computed downstream.
+    /// Default is `not auto_layout`, computed downstream.
     #[serde(default)]
     pub allow_7z_system_install: Option<bool>,
-    /// builder.py:322 - default `True`.
     #[serde(default = "default_true")]
     pub verify_architecture: bool,
-    /// tools.py:370 - default `[]`.
     #[serde(default)]
     pub forbidden_file_names: Vec<String>,
-    /// verify.py:132 - default `"Data"`.
     #[serde(default = "default_smoke_data_dir")]
     pub smoke_data_dir: String,
-    /// verify.py:145 uses 120 for the `--version` probe and verify.py:148 uses 180
+    /// 120 for the `--version` probe and 180
     /// for the GUI smoke run; `None` keeps both split defaults available.
     #[serde(default)]
     pub smoke_timeout: Option<u64>,
-    /// verify.py:152 - default `60`.
     #[serde(default = "default_smoke_data_timeout")]
     pub smoke_data_timeout: u64,
-    /// verify.py:147 - default is `DEFAULT_SMOKE_ARGS` (owned by verify).
+    /// Default is `DEFAULT_SMOKE_ARGS` (owned by verify).
     #[serde(default)]
     pub smoke_args: Option<Vec<String>>,
-    /// builder.py:372 - default `"开始.bat"`.
     #[serde(default = "default_start_script")]
     pub start_script: String,
-    /// builder.py:479 - default `"{display_name}_Portable_{version}_{date}.7z"`.
     #[serde(default)]
     pub archive_name: Option<String>,
-    /// multi.py:153 / release.py:100 - `target.get("release", {})`.
     #[serde(default)]
     pub release: Option<Value>,
-    /// multi.py:48,199,211,247,285,331 - `target.get("env_prefix") or env_name(target_name)`.
+    /// `target.get("env_prefix") or env_name(target_name)`.
     #[serde(default)]
     pub env_prefix: Option<String>,
-    /// builder.py:356 - default `True` (present in builder.py, absent from catalog).
     #[serde(default = "default_true")]
     pub remove_setdll: bool,
 }
@@ -333,7 +310,7 @@ fn default_start_script() -> String {
 }
 
 impl Target {
-    /// Convenience for downstream waves: `get_target` + `Target::deserialize`
+    /// Convenience: `get_target` + `Target::deserialize`
     /// with the schema error wrapped as `ConfigError::Schema`.
     pub fn from_config(config: &Value, target_name: &str) -> Result<Target, ConfigError> {
         let value = get_target(config, target_name)?;
@@ -446,8 +423,6 @@ name = "Chrome"
         let (_guard_i, path) = temp_file("config.txt", "not a config");
         let err = load_config(&path).expect_err("bad suffix must fail");
         let message = err.to_string();
-        // Python: "Unsupported config format: {suffix}" - extended with the file
-        // name and the supported list per the Wave1-B1 task contract.
         assert!(
             message.contains("Unsupported config format: .txt"),
             "{message}"
@@ -471,8 +446,6 @@ name = "Chrome"
         let (_guard_u, path_u) = temp_file("unknown.toml", CHROME_STABLE_TOML);
         let config = load_config(path_u).expect("load toml");
         let err = get_target(&config, "nope").expect_err("unknown target");
-        // Golden: config_toml_errors_golden.json errors.unknown_target, minus the
-        // Python exception-type wrapper: KeyError("...") -> "...".
         assert_eq!(
             err.to_string(),
             "Target 'nope' not found. Available targets: chrome_stable"
@@ -483,7 +456,6 @@ name = "Chrome"
     fn unknown_target_with_no_targets_reports_none() {
         let config = json!({});
         let err = get_target(&config, "nope").expect_err("no targets at all");
-        // Python: ", ".join(sorted(targets)) or "(none)".
         assert_eq!(
             err.to_string(),
             "Target 'nope' not found. Available targets: (none)"
@@ -492,8 +464,6 @@ name = "Chrome"
 
     #[test]
     fn injection_quirk_copies_and_does_not_mutate_config() {
-        // A target that already carries a "target" key keeps its own value
-        // (setdefault semantics).
         let config = json!({
             "targets": {
                 "weird": { "name": "Weird", "target": "something_else" }
@@ -502,8 +472,6 @@ name = "Chrome"
         let target = get_target(&config, "weird").expect("target found");
         assert_eq!(target["target"], json!("something_else"));
 
-        // The loaded config itself is never mutated: no "target" key
-        // appears on the stored mapping after get_target runs.
         let (_guard_q, path_q) = temp_file("quirk.toml", CHROME_STABLE_TOML);
         let config = load_config(path_q).expect("load toml");
         let _ = get_target(&config, "chrome_stable").unwrap();
@@ -523,11 +491,8 @@ name = "Chrome"
             );
         }
     }
-
     #[test]
     fn defaults_table_matches_python_get_chains() {
-        // Minimal target: only a name; every other field must land on the
-        // Python .get() chain default from the key → default table.
         let minimal = json!({ "name": "Minimal" });
         let target: Target = serde_json::from_value(minimal).expect("schema");
         assert_eq!(target.target, "");
@@ -546,7 +511,6 @@ name = "Chrome"
         assert!(target.verify_architecture);
         assert!(target.remove_setdll);
         assert!(target.forbidden_file_names.is_empty());
-        // Computed-downstream defaults stay Option/None.
         assert_eq!(target.version_dll_name, None);
         assert_eq!(target.setdll_name, None);
         assert_eq!(target.allow_7z_download, None);
@@ -561,7 +525,6 @@ name = "Chrome"
     #[test]
     fn product_boolean_round_trip_vs_golden() {
         let golden = i18n_golden();
-        // Golden target_chrome_stable: product == true.
         let chrome: Target =
             serde_json::from_value(golden["target_chrome_stable"].clone()).expect("chrome schema");
         assert!(chrome.product);
@@ -576,7 +539,6 @@ name = "Chrome"
         let round = serde_json::to_value(&chrome).expect("serialize");
         assert_eq!(round["product"], json!(true));
 
-        // catalog_reference.json full_brave_stable: product == false (Unofficial).
         let catalog_path = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../../_migration/pe-golden/catalog_reference.json");
         let catalog: Value = serde_json::from_str(

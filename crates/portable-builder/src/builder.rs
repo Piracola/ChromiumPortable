@@ -1,22 +1,6 @@
-//! Port of portable_builder/builder.py - prepare/stage/inject/archive pipeline.
 //! Owner: Wave3-A (contract: _migration/pe-golden/builder_archive_contract.md
 //! + addendum; goldens build_context_reference.json).
 //!
-//! Semantics follow the Python source exactly:
-//! - prepare_package: temp dir per target, provider package resolution
-//!   (path copy + digest verify, or download), auto layout routes through
-//!   discovery::analyze_package with the 0.0.0.0 version fallback chain;
-//! - stage_app: auto copytree / move_version_dir / copy_version_root /
-//!   default move_version_root, output_dir -> app_root;
-//! - copy_chrome_plus: version.dll + setdll copy, the three-layer
-//!   chrome++.ini resolution (baseline / defaults / override) via ini_overlay;
-//! - inject_dll: setdll /t probe then /d:<relpath> injection, the rel path
-//!   is version.dll relative to the exe dir (absolute on cross-drive),
-//!   OEM-codepage subprocess output decoding, backup removal,
-//!   assert_portable_version_import closure;
-//! - finalize / _complete_build / build_package_file / archive_target,
-//!   including the _complete_build version-mismatch WARN and the five
-//!   env keys written through github_env::write_env.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -32,10 +16,9 @@ use crate::pe::assert_portable_version_import;
 use crate::tools::{
     assert_no_forbidden_files, download_file, extract_with_7z, find_7z_tool, find_child_dir,
     find_child_file, find_version_dir, human_size, remove_path, sha256_file, verify_file_digest,
+    SevenZipDownload,
 };
 
-/// builder.py::format_value over the str.format subset (simple {name}
-/// fields; anything else keeps the template, like the frozen formatter).
 pub fn format_value(template: &str, context: &[(String, String)]) -> Result<String> {
     let mut out = String::with_capacity(template.len());
     let bytes = template.as_bytes();
@@ -137,7 +120,8 @@ pub fn build_context(
     ])
 }
 
-/// Python str(obj) over JSON scalars the context uses.
+/// Reads `key` from a target object as a string; JSON numbers and booleans
+/// render Python-style (`true`/`false`), anything else is `None`.
 fn target_str(target: &Value, key: &str) -> Option<String> {
     match target.get(key) {
         Some(Value::String(s)) => Some(s.clone()),
@@ -151,7 +135,6 @@ fn target_str(target: &Value, key: &str) -> Option<String> {
     }
 }
 
-/// os.getenv(name, "") semantics.
 fn env_or_empty(name: &str) -> String {
     std::env::var(name).unwrap_or_default()
 }
@@ -212,7 +195,6 @@ impl Prepared {
     }
 }
 
-/// builder.py::prepare_package.
 pub fn prepare_package(target: &Value, workdir: &Path, package: &Value) -> Result<Prepared> {
     let target_id = target_str(target, "target").unwrap_or_default();
     let temp_dir = workdir.join("build").join("temp").join(&target_id);
@@ -297,15 +279,19 @@ pub fn prepare_package(target: &Value, workdir: &Path, package: &Value) -> Resul
         installer_path
     };
 
-    // An already extracted auto-layout package never needs an extractor.
     let needs_extractor = !(auto_layout && installer_path.is_dir());
     let seven_zip: Option<String> = if needs_extractor {
+        let allow_download = target
+            .get("allow_7z_download")
+            .and_then(Value::as_bool)
+            .unwrap_or(!auto_layout);
         Some(find_7z_tool(
             workdir,
-            target
-                .get("allow_7z_download")
-                .and_then(Value::as_bool)
-                .unwrap_or(!auto_layout),
+            if allow_download {
+                SevenZipDownload::Allowed
+            } else {
+                SevenZipDownload::Never
+            },
             target
                 .get("allow_7z_system_install")
                 .and_then(Value::as_bool)
@@ -360,11 +346,6 @@ pub fn prepare_package(target: &Value, workdir: &Path, package: &Value) -> Resul
             extract_with_7z(&inner_archive_path, &temp_dir, &seven_zip)?;
         }
 
-        // repack_layout: flatten->version-root reshaping for upstreams that
-        // ship a flat portable zip (chrome.exe beside DLLs, no version dir).
-        // Runs after extraction, before version_root discovery: it moves the
-        // unpacked files into <version_root>/chrome.exe + <version_root>/<ver>/
-        // so the normal fixed-layout flow takes over unchanged.
         if let Some(repack) = target.get("repack_layout").and_then(Value::as_str) {
             let version_root_name = target
                 .get("version_root")
@@ -438,8 +419,6 @@ pub fn repack_flat_package(
         bail!("Unknown repack_layout '{kind}'. Supported: version_root");
     }
 
-    // Locate the unpacked source directory: the single root dir if the zip
-    // wrapped one, else temp_dir itself when files sit at its top level.
     let source_dir = {
         let dirs: Vec<_> = std::fs::read_dir(temp_dir)?
             .filter_map(|e| e.ok())
@@ -453,8 +432,6 @@ pub fn repack_flat_package(
         }
     };
 
-    // Version from <source>/<version>.manifest (case-insensitive), the
-    // script's chromium_version() rule.
     let mut version: Option<String> = None;
     for entry in std::fs::read_dir(&source_dir)? {
         let entry = entry?;
@@ -477,7 +454,6 @@ pub fn repack_flat_package(
         );
     };
 
-    // Nothing to do if the tree is already in version-root shape.
     if source_dir
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
@@ -488,7 +464,6 @@ pub fn repack_flat_package(
 
     let version_root = temp_dir.join(version_root_name);
 
-    // If a previous repack left the target, start clean.
     if version_root.exists() {
         remove_path(&version_root);
     }
@@ -516,7 +491,6 @@ pub fn repack_flat_package(
     Ok(())
 }
 
-/// builder.py::stage_app.
 pub fn stage_app(target: &Value, workdir: &Path, prepared: &Prepared) -> Result<Staged> {
     let target_id = target_str(target, "target").unwrap_or_default();
     let stage_dir = workdir.join("build").join("stage").join(&target_id);
@@ -606,7 +580,6 @@ pub fn stage_app(target: &Value, workdir: &Path, prepared: &Prepared) -> Result<
     Ok(staged)
 }
 
-/// shutil.copytree equivalent (dirs + files, symlinks followed).
 fn copy_tree(source: &Path, destination: &Path) -> Result<()> {
     std::fs::create_dir_all(destination)?;
     let mut stack = vec![source.to_path_buf()];
@@ -843,7 +816,6 @@ fn decode_oem_output(bytes: &[u8]) -> String {
     }
 }
 
-/// Recursive file collection for the exe-fallback search.
 fn collect_files(root: &Path) -> Vec<PathBuf> {
     let mut out = Vec::new();
     let mut stack = vec![root.to_path_buf()];
@@ -913,7 +885,6 @@ pub fn inject_dll(target: &Value, staged: &mut Staged) -> Result<()> {
             if direct.exists() {
                 direct
             } else {
-                // rglob(exe_name) keeping the shallowest relative depth.
                 let needle = Path::new(exe_name)
                     .file_name()
                     .map(|n| n.to_string_lossy().into_owned())
@@ -953,9 +924,6 @@ pub fn inject_dll(target: &Value, staged: &mut Staged) -> Result<()> {
         .ok_or_else(|| anyhow!("version.dll was not staged"))?;
 
     let setdll_abs = setdll.canonicalize().unwrap_or_else(|_| setdll.clone());
-    // staged 路径随 workdir 可能为相对（workdir 常是 "."）；Python 版在入口把
-    // workdir 解析成绝对路径，这条隐式行为在这里补上——否则 relpath_from 拿
-    // 相对路径对绝对 exe 目录做运算，会产出 setdll 无法解析的错误 dll 参数。
     let version_dll = version_dll
         .canonicalize()
         .unwrap_or_else(|_| version_dll.clone());
@@ -1305,7 +1273,6 @@ pub fn build_package_file(
         }
         Ok(result)
     })();
-    // finally: remove build/temp/<target_id>.
     remove_path(&temp_dir);
     result
 }
@@ -1322,12 +1289,17 @@ pub fn archive_target(
     source_dir: Option<&Path>,
 ) -> Result<Value> {
     let auto_layout = target_str(target, "layout").as_deref() == Some("auto");
+    let allow_download = target
+        .get("allow_7z_download")
+        .and_then(Value::as_bool)
+        .unwrap_or(!auto_layout);
     let seven_zip = find_7z_tool(
         workdir,
-        target
-            .get("allow_7z_download")
-            .and_then(Value::as_bool)
-            .unwrap_or(!auto_layout),
+        if allow_download {
+            SevenZipDownload::Allowed
+        } else {
+            SevenZipDownload::Never
+        },
         target
             .get("allow_7z_system_install")
             .and_then(Value::as_bool)
@@ -1436,7 +1408,6 @@ pub fn archive_target(
     }))
 }
 
-/// os.getenv(name) returning None for unset AND empty (Python falsy chain).
 fn env_non_empty(name: &str) -> Option<String> {
     std::env::var(name).ok().filter(|value| !value.is_empty())
 }
@@ -1445,25 +1416,19 @@ fn env_non_empty(name: &str) -> Option<String> {
 mod tests {
     use super::*;
 
-    /// review-Wave3 finding 1: the /d: argument must stay relative in every
-    /// same-root shape, including the chrome_stable one where version.dll sits
-    /// beside the version directory instead of inside it.
     #[test]
     fn relpath_from_matches_os_path_relpath() {
         let cases: [(Vec<&str>, Vec<&str>, Vec<&str>); 3] = [
-            // chrome_stable: exe at App\<ver>\chrome.exe, dll at App\version.dll
             (
                 vec!["App", "version.dll"],
                 vec!["App", "120.0.1", "chrome"],
                 vec!["..", "..", "version.dll"],
             ),
-            // dll inside the exe dir -> bare name
             (
                 vec!["App", "v", "version.dll"],
                 vec!["App", "v"],
                 vec!["version.dll"],
             ),
-            // sibling dirs -> single hop up
             (
                 vec!["App", "bin", "version.dll"],
                 vec!["App", "v"],
@@ -1501,7 +1466,6 @@ mod tests {
             safe_output_name("Chromium:Portable?", "Browser"),
             "Chromium_Portable_"
         );
-        // Python passes None through str(None) -> "None"; a literal matches.
         assert_eq!(safe_output_name("None", "Browser"), "None");
         assert_eq!(safe_output_name("a/b\\c", "Browser"), "a_b_c");
     }
@@ -1597,7 +1561,6 @@ mod tests {
 
     #[test]
     fn target_id_synthesis_matches_python() {
-        // re.sub(r"[^a-z0-9]+", "_", stem.casefold()).strip("_")
         let synth = |stem: &str| -> String {
             let sanitized: String = stem
                 .to_lowercase()
@@ -1624,11 +1587,6 @@ mod tests {
         assert_eq!(synth("---"), "auto_package");
     }
 
-    /// repack_flat_package: the Helium shape — zip wraps one folder holding a
-    /// flat install (chrome.exe beside DLLs and <version>.manifest). After the
-    /// repack the temp dir must hold <version_root>/chrome.exe plus
-    /// <version_root>/<version>/ with everything else, matching the fixed
-    /// layout the version-root flow expects.
     #[test]
     fn repack_flat_package_helium_shape() {
         let temp = std::env::temp_dir().join(format!("cpb_repack_test_{}", std::process::id()));
@@ -1649,14 +1607,11 @@ mod tests {
             .join("resources")
             .join("icudtl.dat")
             .is_file());
-        // The manifest itself belongs to the version dir, and the flat source
-        // is gone.
         assert!(root.join("0.19.2.1").join("0.19.2.1.manifest").is_file());
         assert!(!source.exists());
         remove_path(&temp);
     }
 
-    /// Already-repacked input is a no-op (idempotence against re-runs).
     #[test]
     fn repack_flat_package_skips_version_shaped_tree() {
         let temp = std::env::temp_dir().join(format!("cpb_repack_idem_{}", std::process::id()));
@@ -1667,13 +1622,11 @@ mod tests {
         std::fs::write(source.join("0.19.2.1.manifest"), b"").unwrap();
 
         repack_flat_package(&temp, "version_root", "Helium-bin", "chrome.exe").unwrap();
-        // Tree untouched: no Helium-bin sibling appeared.
         assert!(!temp.join("Helium-bin").exists());
         assert!(source.join("chrome.exe").is_file());
         remove_path(&temp);
     }
 
-    /// No .manifest file -> the script's chromium_version() error path.
     #[test]
     fn repack_flat_package_requires_manifest() {
         let temp =
@@ -1691,7 +1644,6 @@ mod tests {
         remove_path(&temp);
     }
 
-    /// Unknown repack kind is rejected with the supported list.
     #[test]
     fn repack_flat_package_unknown_kind() {
         let err =

@@ -41,7 +41,8 @@ GUI `crates/builder-app`：Tauri 2 + WebView2）、7-Zip/`7zr.exe`（外部工�
 
 - `crates/portable-builder/` — 构建引擎（CLI 面沿袭旧 `python -m portable_builder`，`*-targets` 的目标列表是位置参数）；`layout: auto` 静态识别主程序，绝不运行安装包/浏览器。提供器五种：`direct` / `google_omaha` / `microsoft_edge` / `github_release` / `script`——Chrome、Edge、Helium 三产品线全部走内置通道，`script` 仅留给 catalog 非官方 target；`repack_layout: version_root` 负责平铺 zip 的重排（Helium）
 - `crates/builder-app/` — Tauri 2 图形构建器；`ui/` 静态资产 + `src/main.rs` 命令面 + `capabilities/`
-- `scripts/` — 只剩 `update_chrome_plus.py`（维护者 CI 专用）与 `dispatch_child_builds.py`
+- `scripts/` — `update_chrome_plus.py`（维护者 CI 专用）、`dispatch_child_builds.py`、
+  `stage-dist.ps1`（发行包暂存清单，build.ps1 与 release-engine.yml 共用）
 - `catalog/browser_catalog.json` — 在线 target；非产品必须 `Unofficial` + Disclaimer
 - `installers/` — 用户投放安装包（已 ignore）；`bin/` — 回归样本（已 ignore，勿提交）
 - `docs/` — GitHub Pages 下载站；HTML 是生成产物，改 `data/site.json` 后重跑生成器

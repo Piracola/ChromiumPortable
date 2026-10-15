@@ -1,10 +1,8 @@
-//! Port of portable_builder/brave_bundle.py — BCJ2 + LZMA decode for Brave/Omaha metainstallers.
+//! BCJ2 + LZMA decode for Brave/Omaha metainstallers.
 //!
-//! Wave3-A note: the Wave1-D downgrade is lifted. The full port is in place:
 //! - the outer LZMA_ALONE stream decodes with lzma-rs,
-//! - the inner BCJ2 container uses the range decoder ported 1:1 from
-//!   brave_bundle.py::decode_bcj2_container (same probability table, same
-//!   branch pattern scan, same address stream ordering),
+//! - the inner BCJ2 container uses a range decoder (standard probability
+//!   table, branch pattern scan, address stream ordering),
 //! - the resulting tar is unpacked with the tar crate, flat-file only
 //!   (member.isfile, basename only), like Python's tarfile usage.
 //!
@@ -17,7 +15,7 @@ use anyhow::{anyhow, bail, Result};
 
 use crate::pe::iter_pe_resources;
 
-/// brave_bundle.py _BRANCH_PATTERN as a scan: [\xe8\xe9] or \x0f[\x80-\x8f].
+/// BCJ2 branch pattern: [\xe8\xe9] or \x0f[\x80-\x8f] (external format).
 fn find_branch(stream: &[u8], from: usize) -> Option<usize> {
     let mut i = from;
     while i < stream.len() {
@@ -33,7 +31,6 @@ fn find_branch(stream: &[u8], from: usize) -> Option<usize> {
     None
 }
 
-/// Port of brave_bundle.py::decode_bcj2_container.
 pub fn decode_bcj2_container(data: &[u8]) -> Result<Vec<u8>> {
     if data.len() < 20 {
         bail!("BCJ2 payload is too short.");
@@ -87,8 +84,6 @@ pub fn decode_bcj2_container(data: &[u8]) -> Result<Vec<u8>> {
             let remaining = original_size - output.len();
             let end = (main_pos + remaining).min(stream0.len());
             output.extend_from_slice(&stream0[main_pos..end]);
-            // Python does main_pos += remaining here; the loop breaks right
-            // after, so the assignment is dead - omitted to stay warning-free.
             break;
         };
 
@@ -178,8 +173,6 @@ pub fn decode_bcj2_container(data: &[u8]) -> Result<Vec<u8>> {
     Ok(output)
 }
 
-/// Port of brave_bundle.py::read_brave_metainstaller_tar - find the B/102
-/// PE resource, LZMA-decompress it, then BCJ2-decode the container.
 pub fn read_brave_metainstaller_tar(installer: &Path) -> Result<Vec<u8>> {
     let resources = iter_pe_resources(installer)?;
     let payload = resources
@@ -189,7 +182,6 @@ pub fn read_brave_metainstaller_tar(installer: &Path) -> Result<Vec<u8>> {
     let Some(payload) = payload else {
         bail!("Brave/Omaha payload resource B/102 was not found.");
     };
-    // lzma.decompress(format=FORMAT_ALONE): the raw .lzma stream.
     let mut reader = std::io::Cursor::new(&payload);
     let mut decompressed: Vec<u8> = Vec::new();
     lzma_rs::lzma_decompress(&mut reader, &mut decompressed)
@@ -197,8 +189,6 @@ pub fn read_brave_metainstaller_tar(installer: &Path) -> Result<Vec<u8>> {
     decode_bcj2_container(&decompressed)
 }
 
-/// Port of brave_bundle.py::extract_brave_metainstaller - statically unpack
-/// the metainstaller's tar payload into output_dir, flat files only.
 pub fn extract_brave_metainstaller(
     installer: &Path,
     output_dir: &Path,
@@ -231,7 +221,7 @@ pub fn extract_brave_metainstaller(
     Ok(extracted)
 }
 
-/// Marker helper kept so discovery can detect Brave metainstallers and report them
+/// Marker so discovery can detect Brave metainstallers and report them
 /// accurately instead of failing deep inside extraction.
 pub fn is_brave_metainstaller_name(file_name: &str) -> bool {
     let lowered = file_name.to_lowercase();
@@ -253,24 +243,20 @@ mod tests {
 
     #[test]
     fn bcj2_short_payload_error_text() {
-        // Below the 20-byte header minimum.
         let err = decode_bcj2_container(&[0u8; 10]).unwrap_err().to_string();
         assert_eq!(err, "BCJ2 payload is too short.");
-        // Header parses but the range streams are truncated (32 bytes covers the
-        // 20-byte header, then stream sizes exceed the remaining bytes).
         let err2 = decode_bcj2_container(&[0u8; 32]).unwrap_err().to_string();
         assert_eq!(err2, "BCJ2 range stream is too short.");
     }
 
     #[test]
     fn missing_b102_resource_error_text() {
-        // A PE without the B/102 resource hits the exact Python error text.
         let dir = std::env::temp_dir().join(format!("brave_bundle_{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let source =
             std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../setdll/setdll-x64.exe");
         if !source.is_file() {
-            return; // fixture unavailable
+            return;
         }
         let path = dir.join("setdll.exe");
         std::fs::write(&path, std::fs::read(&source).unwrap()).unwrap();

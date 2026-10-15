@@ -1,5 +1,3 @@
-//! Port of portable_builder/github_env.py - GITHUB_ENV/GITHUB_OUTPUT writer. Owner: Wave1-A.
-//!
 //! The heredoc delimiter `PORTABLE_BUILDER_EOF` is a frozen CI contract
 //! (docs/MIGRATION_RUST_TAURI.md S1/S4.6): it is emitted ONLY for values
 //! containing newlines; every other value stays a plain `KEY=value` line.
@@ -7,16 +5,9 @@
 use std::io::Write;
 use std::path::Path;
 
-/// Port of github_env.py::DELIMITER.
-///
-/// Only needed for values containing newlines; none currently do, but a stray
-/// one would otherwise corrupt the whole file.
 const DELIMITER: &str = "PORTABLE_BUILDER_EOF";
 
-/// Port of github_env.py::format_pair.
-///
-/// `None` maps to the empty string (Python: `"" if value is None else
-/// str(value)`). Values containing a newline become a
+/// `None` maps to the empty string. Values containing a newline become a
 /// `KEY<<PORTABLE_BUILDER_EOF` heredoc block; all other values stay a plain
 /// `KEY=value` line.
 pub fn format_pair(key: &str, value: Option<&str>) -> Vec<String> {
@@ -32,14 +23,12 @@ pub fn format_pair(key: &str, value: Option<&str>) -> Vec<String> {
     }
 }
 
-/// Port of github_env.py::append_lines.
-///
 /// Opens the file in append mode (creating it when missing) and writes the
 /// lines joined with `\n` plus one trailing newline, as UTF-8 bytes.
 ///
-/// NOTE: Python opens in text mode, which turns `\n` into CRLF on Windows;
-/// we always write LF, matching Python's behavior on Linux CI where these
-/// files are consumed (the Actions runner accepts both line endings).
+/// Python opens in text mode, which turns `\n` into CRLF on Windows; we
+/// always write LF, matching Python's behavior on Linux CI where these files
+/// are consumed (the Actions runner accepts both line endings).
 pub fn append_lines(path: impl AsRef<Path>, lines: &[String]) -> std::io::Result<()> {
     let mut file = std::fs::OpenOptions::new()
         .append(true)
@@ -50,12 +39,10 @@ pub fn append_lines(path: impl AsRef<Path>, lines: &[String]) -> std::io::Result
     file.write_all(payload.as_bytes())
 }
 
-/// Port of github_env.py::build_run_url.
-///
 /// Link back to the Actions run that produced the artifacts, when in CI.
 /// Missing or empty `GITHUB_REPOSITORY`/`GITHUB_RUN_ID` yields "".
 ///
-/// NOTE quirk: a set-but-empty `GITHUB_SERVER_URL` is used verbatim - Python's
+/// A set-but-empty `GITHUB_SERVER_URL` is used verbatim - Python's
 /// `os.getenv` default only applies when the variable is unset, producing a
 /// server-less URL.
 pub fn build_run_url() -> String {
@@ -69,14 +56,10 @@ pub fn build_run_url() -> String {
     format!("{server}/{repo}/actions/runs/{run_id}")
 }
 
-/// Python falsiness: an unset variable (None) and an empty string both count
-/// as "missing".
 fn non_empty_env(name: &str) -> Option<String> {
     std::env::var(name).ok().filter(|value| !value.is_empty())
 }
 
-/// Port of github_env.py::write_env.
-///
 /// Publishes values to GITHUB_ENV (later steps) and GITHUB_OUTPUT (later
 /// jobs). With neither variable set (local/non-CI path) every pair is printed
 /// to stdout as `KEY=value` and nothing is written.
@@ -116,8 +99,6 @@ pub fn write_env(values: &[(String, String)]) -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Non-CI stdout rendering: Python prints `f"{key}={value}"` per pair with no
-/// heredoc handling, so a newline-containing value yields two physical lines.
 fn stdout_lines(values: &[(String, String)]) -> Vec<String> {
     values
         .iter()
@@ -125,8 +106,6 @@ fn stdout_lines(values: &[(String, String)]) -> Vec<String> {
         .collect()
 }
 
-/// CI-path line construction: every pair expanded through `format_pair`, in
-/// slice order (Python: `lines.extend(format_pair(key, value))`).
 fn build_lines(values: &[(String, String)]) -> Vec<String> {
     let mut lines = Vec::new();
     for (key, value) in values {
@@ -143,9 +122,6 @@ fn build_lines(values: &[(String, String)]) -> Vec<String> {
 /// default Map is a sorted BTreeMap and would silently reorder keys (the
 /// "preserve_order" feature would fix that but also changes Map semantics for
 /// every other module in the crate, so it was deliberately not enabled).
-/// Per-string escaping is delegated to serde_json's string serializer, which
-/// matches Python's escape table for ensure_ascii=False: short escapes for
-/// \b \t \n \f \r, lowercase \u00xx for other C0 controls, raw UTF-8 else.
 fn env_json_blob(values: &[(String, String)]) -> String {
     let body = values
         .iter()
@@ -159,9 +135,6 @@ fn env_json_blob(values: &[(String, String)]) -> String {
     format!("{{{body}}}")
 }
 
-/// One JSON string literal, escaped exactly as Python's
-/// `json.dumps(..., ensure_ascii=False)` escapes a string. Serializing a
-/// `&str` cannot fail.
 fn json_string(text: &str) -> String {
     serde_json::to_string(text).expect("serializing a string cannot fail")
 }
@@ -172,7 +145,6 @@ mod tests {
     use std::path::PathBuf;
     use std::time::{SystemTime, UNIX_EPOCH};
 
-    /// Unique temp path per call; tests clean up after themselves.
     fn temp_path(tag: &str) -> PathBuf {
         let nanos = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -229,7 +201,6 @@ mod tests {
 
     #[test]
     fn carriage_return_alone_stays_plain() {
-        // Python only checks "\n" in text.
         assert_eq!(format_pair("K", Some("v\r")), vec!["K=v\r"]);
     }
 
@@ -285,8 +256,6 @@ mod tests {
 
     #[test]
     fn build_run_url_env_fallback() {
-        // Env vars are process-global; this is the only env-mutating test in
-        // the crate, so run all its cases sequentially and restore state.
         let keys = ["GITHUB_REPOSITORY", "GITHUB_RUN_ID", "GITHUB_SERVER_URL"];
         let saved: Vec<(String, Option<String>)> = keys
             .iter()
@@ -296,32 +265,26 @@ mod tests {
             std::env::remove_var(key);
         }
 
-        // Nothing set -> empty.
         assert_eq!(build_run_url(), "");
 
-        // Only the repository -> still empty.
         std::env::set_var("GITHUB_REPOSITORY", "owner/repo");
         assert_eq!(build_run_url(), "");
 
-        // Repository + run id -> default server https://github.com.
         std::env::set_var("GITHUB_RUN_ID", "12345");
         assert_eq!(
             build_run_url(),
             "https://github.com/owner/repo/actions/runs/12345"
         );
 
-        // Custom server wins.
         std::env::set_var("GITHUB_SERVER_URL", "https://gh.example.com");
         assert_eq!(
             build_run_url(),
             "https://gh.example.com/owner/repo/actions/runs/12345"
         );
 
-        // Empty repository counts as missing (Python falsy quirk).
         std::env::set_var("GITHUB_REPOSITORY", "");
         assert_eq!(build_run_url(), "");
 
-        // Empty run id counts as missing too.
         std::env::set_var("GITHUB_REPOSITORY", "owner/repo");
         std::env::set_var("GITHUB_RUN_ID", "");
         assert_eq!(build_run_url(), "");
@@ -331,7 +294,6 @@ mod tests {
         std::env::set_var("GITHUB_SERVER_URL", "");
         assert_eq!(build_run_url(), "/owner/repo/actions/runs/99");
 
-        // Restore the caller's environment.
         for (key, value) in saved {
             match value {
                 Some(v) => std::env::set_var(&key, v),
@@ -346,15 +308,11 @@ mod tests {
             ("a".to_string(), "1".to_string()),
             ("b".to_string(), "x\ny".to_string()),
         ];
-        // Python: json.dumps({"a": "1", "b": "x\ny"}, ensure_ascii=False,
-        //                     separators=(",", ":")) — the newline is escaped.
         assert_eq!(env_json_blob(&values), "{\"a\":\"1\",\"b\":\"x\\ny\"}");
     }
 
     #[test]
     fn env_json_blob_preserves_insertion_order() {
-        // b before a must serialize b-first. Hand-assembly guarantees it;
-        // serde_json's default Map (sorted BTreeMap) would silently reorder.
         let values = vec![
             ("b".to_string(), "2".to_string()),
             ("a".to_string(), "1".to_string()),
@@ -364,14 +322,12 @@ mod tests {
 
     #[test]
     fn env_json_blob_escapes_like_python_json_dumps() {
-        // Value chars: a " b \ c TAB d — JSON escapes \" \\ \t, nothing else.
         let values = vec![("k".to_string(), "a\"b\\c\td".to_string())];
         assert_eq!(env_json_blob(&values), "{\"k\":\"a\\\"b\\\\c\\td\"}");
     }
 
     #[test]
     fn env_json_blob_keeps_non_ascii_raw() {
-        // ensure_ascii=False: no \uXXXX escapes for non-ASCII.
         let values = vec![("标题".to_string(), "值 147.0.1".to_string())];
         assert_eq!(env_json_blob(&values), "{\"标题\":\"值 147.0.1\"}");
     }
@@ -383,7 +339,6 @@ mod tests {
 
     #[test]
     fn stdout_lines_is_plain_key_value_even_for_newlines() {
-        // Python's non-CI path prints f"{key}={value}" — no heredoc on stdout.
         let values = vec![("K".to_string(), "a\nb".to_string())];
         assert_eq!(stdout_lines(&values), vec!["K=a\nb"]);
     }
@@ -407,8 +362,6 @@ mod tests {
 
     #[test]
     fn write_env_routes_output_like_python() {
-        // Env vars are process-global: run every case inside this one test so
-        // parallel tests cannot race, and restore the caller's env after.
         let keys = ["GITHUB_ENV", "GITHUB_OUTPUT"];
         let saved: Vec<(String, Option<String>)> = keys
             .iter()
@@ -423,11 +376,8 @@ mod tests {
             ("a".to_string(), "1".to_string()),
         ];
 
-        // Non-CI path: only prints (captured by the harness), returns Ok.
         assert!(write_env(&values).is_ok());
 
-        // GITHUB_ENV only: heredoc for the multiline value, plain line
-        // otherwise, and no env_json anywhere.
         let env_path = temp_path("we_env");
         let _ = std::fs::remove_file(&env_path);
         std::env::set_var("GITHUB_ENV", &env_path);
@@ -437,9 +387,6 @@ mod tests {
             "b<<PORTABLE_BUILDER_EOF\nx\ny\nPORTABLE_BUILDER_EOF\na=1\n"
         );
 
-        // Both files: GITHUB_OUTPUT additionally gets lines + env_json, with
-        // the blob preserving slice order (b first) and escaping the newline,
-        // so env_json itself stays a plain KEY=value line.
         let out_path = temp_path("we_out");
         let _ = std::fs::remove_file(&out_path);
         std::env::set_var("GITHUB_OUTPUT", &out_path);
@@ -453,7 +400,6 @@ mod tests {
             "b<<PORTABLE_BUILDER_EOF\nx\ny\nPORTABLE_BUILDER_EOF\na=1\nenv_json={\"b\":\"x\\ny\",\"a\":\"1\"}\n"
         );
 
-        // Restore the caller's environment and clean up.
         for (key, value) in saved {
             match value {
                 Some(v) => std::env::set_var(&key, v),

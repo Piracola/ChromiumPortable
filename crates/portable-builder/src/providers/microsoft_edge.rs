@@ -1,5 +1,3 @@
-//! Port of portable_builder/providers/microsoft_edge.py. Owner: Wave2. See contract S4.3.
-//!
 //! Contract anchors (edge_contract.json):
 //! - `verify_ssl` DEFAULTS TO FALSE everywhere (both CDP calls and the
 //!   get_package passthrough) - deliberately NOT "fixed": Microsoft's CDN has
@@ -19,26 +17,19 @@
 //! - get_version_from_release_repo returns None on non-200 (not an error) and
 //!   searches tag_name only; ContentId null => version None (falls through to
 //!   the repo path).
-//!
-//! Pure helpers ([pick_download_item], the version selection in [get_package])
-//! operate on injected JSON values so tests replay fixtures without network.
 
 use anyhow::{bail, Result};
 use serde_json::{json, Value};
 
 use crate::versions::compare_versions;
 
-/// microsoft_edge.py USER_AGENT.
+/// UA spoof string, frozen (CDP API contract).
 pub const USER_AGENT: &str = "Microsoft Edge Update/1.3.183.29;winhttp";
-/// microsoft_edge.py EDGE_UPDATE_API ({} replaced with the app id).
 pub const EDGE_UPDATE_API: &str = "https://msedge.api.cdp.microsoft.com/api/v2/contents/Browser/namespaces/Default/names/{}/versions/latest?action=select";
-/// microsoft_edge.py EDGE_DOWNLOAD_API ({{}} / {{}} replaced with app id + version).
 pub const EDGE_DOWNLOAD_API: &str = "https://msedge.api.cdp.microsoft.com/api/v1.1/internal/contents/Browser/namespaces/Default/names/{}/versions/{}/files?action=GenerateDownloadInfo";
 
-/// Selected download item: (url, file_name, size, raw base64 sha256).
 pub type DownloadPick = (Option<String>, String, Option<u64>, Option<String>);
 
-/// Resolve the effective verify_ssl: default FALSE (do not "fix").
 fn verify_ssl(config: &Value) -> bool {
     config
         .get("verify_ssl")
@@ -46,7 +37,6 @@ fn verify_ssl(config: &Value) -> bool {
         .unwrap_or(false)
 }
 
-/// Build the blocking client honoring verify_ssl (danger only here).
 fn build_client(config: &Value) -> Result<reqwest::blocking::Client> {
     let client = reqwest::blocking::Client::builder()
         .danger_accept_invalid_certs(!verify_ssl(config))
@@ -55,7 +45,6 @@ fn build_client(config: &Value) -> Result<reqwest::blocking::Client> {
     Ok(client)
 }
 
-/// Port of microsoft_edge.py::get_version_from_microsoft_api.
 pub fn get_version_from_microsoft_api(config: &Value) -> Result<Option<String>> {
     let app_id = config
         .get("app_id")
@@ -92,8 +81,6 @@ pub fn get_version_from_microsoft_api(config: &Value) -> Result<Option<String>> 
         .map(str::to_string))
 }
 
-/// Port of microsoft_edge.py::get_version_from_release_repo - None on any
-/// non-200 (including network errors bubbling as Err), regex on tag_name only.
 pub fn get_version_from_release_repo(config: &Value) -> Result<Option<String>> {
     let Some(repo) = config.get("installer_repo").and_then(Value::as_str) else {
         return Ok(None);
@@ -119,10 +106,6 @@ pub fn get_version_from_release_repo(config: &Value) -> Result<Option<String>> {
         .map(|m| m.as_str().to_string()))
 }
 
-/// Port of microsoft_edge.py::get_download_info's item selection - pure, so
-/// the fixture replay test can run it without HTTP. Returns the selected
-/// (url, file_name, size, sha256) tuple.
-///
 /// Sort by SizeInBytes DESC (missing SizeInBytes sorts as 0), take the first,
 /// append ".exe" when the FileId suffix is missing, fallback FileId
 /// "MicrosoftEdgeSetup.exe".
@@ -158,8 +141,6 @@ pub fn pick_download_item(items: &[Value]) -> Result<DownloadPick> {
     ))
 }
 
-/// Port of microsoft_edge.py::get_download_info - network path around
-/// [pick_download_item].
 pub fn get_download_info(config: &Value, version: &str) -> Result<DownloadPick> {
     let app_id = config
         .get("app_id")
@@ -185,10 +166,9 @@ pub fn get_download_info(config: &Value, version: &str) -> Result<DownloadPick> 
     pick_download_item(&items)
 }
 
-/// Port of microsoft_edge.py::get_package - two-source version selection
-/// (greater wins), then download info passthrough with verify_ssl defaulting
-/// to FALSE. All upstream failures degrade to warnings exactly like Python's
-/// try/except + print.
+/// Two-source version selection (greater wins), then download info
+/// passthrough with verify_ssl defaulting to FALSE. Upstream failures
+/// degrade to warnings exactly like Python's try/except + print.
 pub fn get_package(config: &Value) -> Result<Value> {
     let mut ms_version: Option<String> = None;
     let mut repo_version: Option<String> = None;
@@ -255,7 +235,6 @@ mod tests {
 
     #[test]
     fn update_fixture_yields_content_id_version() {
-        // edge_update_response.json: ContentId.Version = 138.0.3351.121.
         let body: Value = serde_json::from_str(UPDATE_FIXTURE).unwrap();
         let version = body
             .get("ContentId")
@@ -266,7 +245,6 @@ mod tests {
 
     #[test]
     fn empty_content_id_maps_to_none() {
-        // quirk: ContentId null => version None (falls through to repo path).
         let body: Value = serde_json::from_str(r#"{"ContentId": null}"#).unwrap();
         let version = body
             .get("ContentId")
@@ -277,9 +255,6 @@ mod tests {
 
     #[test]
     fn download_pick_size_desc_and_exe_suffix() {
-        // edge_download_response.json: the .exe item (180000000) must win over
-        // the larger-listed .msi (150000000); FileId lacks ".exe" and gets it
-        // appended; Sha256 "QkFUQ0g=" is base64 for "BATCH".
         let items: Vec<Value> = serde_json::from_str(DOWNLOAD_FIXTURE).unwrap();
         let (url, file_name, size, sha256) = pick_download_item(&items).unwrap();
         assert_eq!(
@@ -288,14 +263,8 @@ mod tests {
         );
         assert_eq!(file_name, "MicrosoftEdgeEnterpriseX64.exe");
         assert_eq!(size, Some(180000000));
-        // The fixture digest passes through RAW: get_package does not normalize;
-        // tools.download_file does at download time. (The fixture's "QkFUQ0g="
-        // is a 5-byte dummy that normalize_sha256 would reject - which is fine,
-        // this provider never calls it.)
         assert_eq!(sha256.as_deref(), Some("QkFUQ0g="));
 
-        // The base64 branch itself is covered in tools.rs tests; document the
-        // real-shape contract with a properly sized digest.
         let real_digest = base64::engine::general_purpose::STANDARD.encode([0x42u8; 32]);
         let normalized = crate::tools::normalize_sha256(Some(&real_digest))
             .unwrap()
@@ -305,8 +274,6 @@ mod tests {
 
     #[test]
     fn download_pick_tie_breaks_and_defaults() {
-        // Equal sizes: stable sort keeps the original order (Python sort is
-        // stable too), first item wins.
         let items: Vec<Value> = serde_json::from_str(
             r#"[
             {"FileId": "A", "SizeInBytes": 100},
@@ -317,7 +284,6 @@ mod tests {
         let (_, file_name, _, _) = pick_download_item(&items).unwrap();
         assert_eq!(file_name, "A.exe");
 
-        // Missing FileId => "MicrosoftEdgeSetup.exe" (already .exe).
         let items: Vec<Value> =
             serde_json::from_str(r#"[{"Url": "https://x/y", "SizeInBytes": 5}]"#).unwrap();
         let (_, file_name, size, sha256) = pick_download_item(&items).unwrap();
@@ -334,7 +300,6 @@ mod tests {
 
     #[test]
     fn version_selection_greater_wins() {
-        // ms=138.0.3351.121, repo=139.0.1.1 => repo wins.
         let ms = "138.0.3351.121";
         let repo = "139.0.1.1";
         let mut version = Some(ms.to_string()).or_else(|| repo.to_string().into());
@@ -345,7 +310,6 @@ mod tests {
         }
         assert_eq!(version.as_deref(), Some("139.0.1.1"));
 
-        // repo lower => ms stays.
         let repo = "137.0.0.1";
         let mut version = Some(ms.to_string());
         if compare_versions(repo, ms) > 0 {
@@ -357,7 +321,6 @@ mod tests {
     #[test]
     fn both_sources_missing_is_runtime_error_text() {
         let config = json!({});
-        // get_package would hit the network; replicate the terminal guard.
         let ms_version: Option<String> = None;
         let repo_version: Option<String> = None;
         let version = ms_version.or(repo_version);
@@ -369,12 +332,11 @@ mod tests {
             result.unwrap_err(),
             "Unable to determine Microsoft Edge version."
         );
-        let _ = config; // verify_ssl(config) defaults false; asserted separately
+        let _ = config;
     }
 
     #[test]
     fn verify_ssl_defaults_false_everywhere() {
-        // All three touch points default FALSE (edge_contract.json).
         let config = json!({});
         assert!(!verify_ssl(&config));
         let config = json!({ "verify_ssl": true });

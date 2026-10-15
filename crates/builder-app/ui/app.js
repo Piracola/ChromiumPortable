@@ -1,15 +1,4 @@
-/*
-  ChromiumPortableBuilder 渲染逻辑（2026-10 重写版）。
-  无框架、无构建步骤：唯一入口 window.__TAURI__（withGlobalTauri）。
-
-  状态流：输入变化 → app_plan（纯预览）→ 渲染计划 → 开始构建 → app_start；
-  引擎输出经 Rust 泵线程 80ms 批量推 app-event，这里只做追加渲染。
-  文案集中在 STR 表（zh / en），与 engine GUI 文案无耦合。
-*/
-
 "use strict";
-
-/* ── 文案 ─────────────────────────────────────────────── */
 
 const STR = {
   zh: {
@@ -185,15 +174,11 @@ function tr(key, vars) {
   return vars ? fmt(String(t), vars) : t;
 }
 
-/* ── Tauri API 访问 ───────────────────────────────────── */
-
 function tauri() { return window.__TAURI__; }
 
 function invoke(cmd, args) {
   return tauri().core.invoke(cmd, args);
 }
-
-/* ── 渲染 ─────────────────────────────────────────────── */
 
 function applyLang() {
   document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
@@ -306,8 +291,6 @@ function appendLog(lines, cls) {
   if ($("in-autoscroll").checked) el.scrollTop = el.scrollHeight;
 }
 
-/* ── 状态装配 ─────────────────────────────────────────── */
-
 function mode() {
   return document.querySelector('input[name="mode"]:checked').value;
 }
@@ -380,8 +363,6 @@ function setRunning(on) {
   document.querySelectorAll(".btn-run").forEach((b) => (b.disabled = on));
   if (!on) refreshPlanSoon();
 }
-
-/* ── 事件绑定 ─────────────────────────────────────────── */
 
 function bindEvents() {
   $("lang").addEventListener("change", () => {
@@ -515,7 +496,6 @@ function bindEvents() {
     $("log-count").textContent = tr("logLines", { count: 0 });
   });
 
-  // 日志折叠：折叠时把空间还给上面的表单；开始构建时自动展开
   $("btn-log-fold").addEventListener("click", () => {
     const box = $("logbox");
     const folded = box.classList.toggle("folded");
@@ -529,14 +509,11 @@ function bindEvents() {
     $("logbox").scrollIntoView({ block: "nearest" });
   };
 
-  // 自绘窗口钮（原生标题栏已关）
   const win = () => tauri().window.getCurrentWindow();
   $("win-min").addEventListener("click", () => win().minimize());
   $("win-max").addEventListener("click", () => win().toggleMaximize());
   $("win-close").addEventListener("click", () => win().close());
 }
-
-/* ── 事件泵消费 ───────────────────────────────────────── */
 
 function bindAppEvents() {
   tauri().event.listen("app-event", (ev) => {
@@ -557,8 +534,6 @@ function bindAppEvents() {
     }
   });
 }
-
-/* ── 启动 ─────────────────────────────────────────────── */
 
 window.addEventListener("DOMContentLoaded", async () => {
   $("in-autoscroll").checked = true;

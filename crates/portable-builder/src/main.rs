@@ -1,9 +1,3 @@
-//! portable-builder CLI - frozen contract, docs/MIGRATION_RUST_TAURI.md S1/S5.
-//! Subcommand names, flags, exit codes and log prefixes must stay byte-compatible
-//! with the Python engine (`python -m portable_builder`). Implementations are
-//! wired wave by wave (S9); until then every unwired subcommand fails loudly.
-//! Wired so far: prepare-target (Wave2-C, port of scripts/prepare_build_target.py).
-
 use anyhow::{bail, Result};
 use clap::{Parser, Subcommand};
 use portable_builder::config::load_config;
@@ -130,7 +124,7 @@ pub enum Cmd {
         /// Comma-separated target names
         targets: String,
     },
-    /// Select one catalog target and write a single-target browser.json (was scripts/prepare_build_target.py)
+    /// Select one catalog target and write a single-target browser.json
     PrepareTarget {
         /// Target id from catalog/browser_catalog.json
         #[arg(long)]
@@ -147,7 +141,7 @@ pub enum Cmd {
         #[arg(long)]
         architecture: Option<String>,
     },
-    /// Resolve a browser's latest upstream installer (was scripts/upstream/resolve.py)
+    /// Resolve a browser's latest upstream installer
     ResolveUpstream {
         /// Pass-through arguments for upstream resolution
         #[arg(allow_hyphen_values = true, trailing_var_arg = true)]
@@ -164,8 +158,6 @@ fn main() {
 }
 
 fn run(cli: &Cli) -> Result<()> {
-    // Wiring of real implementations happens wave by wave (S9).
-    // The CLI surface itself is the frozen contract and is already complete.
     match &cli.command {
         Cmd::PrepareTarget {
             browser,
@@ -181,9 +173,6 @@ fn run(cli: &Cli) -> Result<()> {
             architecture.as_deref(),
             Path::new(output),
         ),
-        // Wave3-B arms: release/multi CI contract commands. Kept in a
-        // separate match arm block so Wave3-A's build/archive/verify wiring
-        // can add its own arms without touching this block.
         Cmd::Build => {
             let config = load_config(&cli.config).map_err(|err| anyhow::anyhow!("{err}"))?;
             let target =
@@ -296,7 +285,6 @@ fn run(cli: &Cli) -> Result<()> {
         | Cmd::BuildTargets { .. }
         | Cmd::RenderReleaseTargets { .. }
         | Cmd::UpdateReleaseTargets { .. } => run_release_command(cli),
-        // Every remaining subcommand stays a loud fail until its wave lands.
         _ => bail!(
             "subcommand '{}' is not implemented yet (migration in progress; \
              see docs/MIGRATION_RUST_TAURI.md S9 for the owning wave)",
@@ -305,10 +293,6 @@ fn run(cli: &Cli) -> Result<()> {
     }
 }
 
-/// Wave3-B dispatch: check / render-release / update-release and their
-/// -targets variants. Single-target commands resolve the target via
-/// config::get_target (injected "target" key included); targets-suffixed
-/// commands pass target=None and split the comma list (cli.py:250 semantics).
 fn run_release_command(cli: &Cli) -> Result<()> {
     use portable_builder::multi::{
         check_targets, render_multi_release, split_targets, update_multi_release,
@@ -319,7 +303,6 @@ fn run_release_command(cli: &Cli) -> Result<()> {
     let config = portable_builder::config::load_config(&cli.config)
         .map_err(|err| anyhow::anyhow!("{err}"))?;
 
-    // Split the comma list for the targets-suffixed commands.
     let targets: Vec<String> = match &cli.command {
         Cmd::CheckTargets { targets }
         | Cmd::BuildTargets { targets }
@@ -371,8 +354,6 @@ fn run_release_command(cli: &Cli) -> Result<()> {
     Ok(())
 }
 
-/// cli.py inspect-package dispatch (L142-165). The extracted tree lives
-/// under build/inspect-package/<stem> and is removed unless --keep-extracted.
 fn inspect_package(
     package: &str,
     architecture: &str,
@@ -381,7 +362,7 @@ fn inspect_package(
     workdir: &Path,
 ) -> Result<()> {
     use portable_builder::discovery::{analyze_package, print_report};
-    use portable_builder::tools::{find_7z_tool, remove_path};
+    use portable_builder::tools::{find_7z_tool, remove_path, SevenZipDownload};
 
     let package_path = PathBuf::from(package);
     let package_path = if package_path.is_absolute() {
@@ -401,7 +382,7 @@ fn inspect_package(
         let seven_zip = if package_path.is_dir() {
             None
         } else {
-            Some(find_7z_tool(workdir, false, false)?)
+            Some(find_7z_tool(workdir, SevenZipDownload::Never, false)?)
         };
         let analysis = analyze_package(
             &package_path,
@@ -418,8 +399,6 @@ fn inspect_package(
     result
 }
 
-/// cli.py build-package dispatch (L167-190): build, then optionally archive
-/// + static verify (never launches a browser or installer locally).
 fn build_package(
     package: &str,
     architecture: &str,
@@ -466,8 +445,6 @@ fn build_package(
             Some(package_version),
             Some(Path::new(output)),
         )?;
-        // Static archive verification deliberately avoids launching a
-        // browser or installer on the local machine.
         let archive_path = archive_info
             .get("path")
             .and_then(Value::as_str)
@@ -482,8 +459,6 @@ fn build_package(
     Ok(())
 }
 
-/// cli.py build-packages dispatch (L192-241): every installer in the
-/// directory, one auto-layout build each, [i/total] progress + summary.
 fn build_packages(
     directory: &str,
     architecture: &str,
@@ -599,8 +574,6 @@ fn build_packages(
     Ok(())
 }
 
-/// cli.py research-packages dispatch (L243-263+): static inspect of every
-/// sample, combined JSON or per-package human report.
 fn research_packages(
     directory: &str,
     architecture: &str,
@@ -609,7 +582,7 @@ fn research_packages(
     workdir: &Path,
 ) -> Result<()> {
     use portable_builder::discovery::{analyze_package, print_report, public_report};
-    use portable_builder::tools::{find_7z_tool, remove_path};
+    use portable_builder::tools::{find_7z_tool, remove_path, SevenZipDownload};
 
     let sample_dir = PathBuf::from(directory);
     let sample_dir = if sample_dir.is_absolute() {
@@ -643,7 +616,7 @@ fn research_packages(
     if packages.is_empty() {
         bail!("No installer samples found in: {}", sample_dir.display());
     }
-    let seven_zip = find_7z_tool(workdir, false, false)?;
+    let seven_zip = find_7z_tool(workdir, SevenZipDownload::Never, false)?;
 
     let mut reports: Vec<Value> = Vec::new();
     let mut failures: Vec<Value> = Vec::new();
@@ -688,7 +661,6 @@ fn research_packages(
     }
     let combined = serde_json::json!({ "recognized": reports, "failed": failures });
     if as_json {
-        // Python: json.dumps(combined, ensure_ascii=False, indent=2).
         println!("{}", serde_json::to_string_pretty(&combined)?);
     }
     if !failures.is_empty() {
@@ -697,9 +669,6 @@ fn research_packages(
     Ok(())
 }
 
-/// cli.py resolve_builder_dir - --builder-dir flag > PYTHONPATH entries >
-/// _portable_builder > the package's own checkout (setdll marker) >
-/// exe-adjacent (self-contained engine bundle layout, migration doc §8.4).
 fn resolve_builder_dir(builder_dir: Option<&str>) -> Result<Option<PathBuf>> {
     if let Some(dir) = builder_dir {
         let path = PathBuf::from(dir);
@@ -752,11 +721,6 @@ fn resolve_builder_dir(builder_dir: Option<&str>) -> Result<Option<PathBuf>> {
     Ok(None)
 }
 
-/// Resolve the builder repository directory (migration doc §6.5). Level 1 is the
-/// explicit `--builder-dir` flag, level 2 the `PORTABLE_BUILDER_DIR` env var,
-/// levels 3-5 probe the filesystem. Returns the first directory that actually
-/// contains `catalog/browser_catalog.json`; if none does, falls back to the
-/// last probed candidate so the error message names a concrete path.
 fn resolve_catalog_path(builder_dir: Option<&str>) -> Result<PathBuf> {
     let candidates: Vec<PathBuf> = {
         let mut candidates = Vec::new();
@@ -766,10 +730,8 @@ fn resolve_catalog_path(builder_dir: Option<&str>) -> Result<PathBuf> {
         if let Ok(dir) = std::env::var("PORTABLE_BUILDER_DIR") {
             candidates.push(PathBuf::from(dir));
         }
-        // cwd probe (the "setdll probe" of resolve_builder_dir, adapted per §6.5)
         candidates.push(PathBuf::from("."));
         candidates.push(PathBuf::from("_portable_builder"));
-        // exe-adjacent
         if let Ok(exe) = std::env::current_exe() {
             if let Some(parent) = exe.parent() {
                 candidates.push(parent.to_path_buf());
@@ -795,8 +757,6 @@ fn resolve_catalog_path(builder_dir: Option<&str>) -> Result<PathBuf> {
     Ok(path)
 }
 
-/// Port of scripts/prepare_build_target.py: select one catalog target and write
-/// a single-target browser.json for CI/local use.
 fn prepare_target(
     builder_dir: Option<&str>,
     browser: &str,
@@ -809,9 +769,8 @@ fn prepare_target(
     write_selected(&catalog_path, browser, url, path, architecture, output)
 }
 
-/// Load the catalog and return the selected target (deep copy, unmutated).
-/// Error text is byte-identical to the Python script:
-/// `Unknown browser '<id>'. Known: <sorted list>`.
+/// Load the catalog and return the selected target, deep-copied and unmutated.
+/// Error text: `Unknown browser '<id>'. Known: <sorted list>`.
 fn select_target_from_catalog(catalog_path: &Path, browser: &str) -> Result<Value> {
     let catalog = load_config(catalog_path).map_err(|err| anyhow::anyhow!("{err}"))?;
     let targets = catalog
@@ -822,16 +781,12 @@ fn select_target_from_catalog(catalog_path: &Path, browser: &str) -> Result<Valu
 
     let Some(source) = targets.get(browser) else {
         let mut known: Vec<&str> = targets.keys().map(String::as_str).collect();
-        // Python sorted() over str keys == UTF-8 byte order == Rust str Ord.
         known.sort_unstable();
         bail!("Unknown browser '{browser}'. Known: {}", known.join(", "));
     };
-    // Python: target = json.loads(json.dumps(target)) - a deep copy.
     Ok(source.clone())
 }
 
-/// Shared core: select + mutate the target, then write the single-target
-/// browser.json. Used by both `run()` and the in-file tests.
 fn write_selected(
     catalog_path: &Path,
     browser: &str,
@@ -861,7 +816,6 @@ fn write_selected(
         if let Some(p) = path {
             provider.insert("path".to_string(), json!(p));
         }
-        // Prefer explicit overrides over empty catalog placeholders.
         if let Some(obj) = target.as_object_mut() {
             obj.insert("provider".to_string(), Value::Object(provider));
         }
@@ -896,7 +850,6 @@ fn write_selected(
     let mut targets = Map::new();
     targets.insert(browser.to_string(), target.clone());
     let payload = json!({ "targets": targets });
-    // Python: json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
     std::fs::write(&output, serde_json::to_string_pretty(&payload)? + "\n")?;
 
     let product = if target
@@ -915,7 +868,6 @@ fn write_selected(
 }
 
 impl Cmd {
-    /// Canonical subcommand name, matching the Python CLI tokens one-for-one.
     fn name(&self) -> &'static str {
         match self {
             Cmd::Check => "check",
@@ -1018,7 +970,6 @@ mod tests {
         let guard = temp_dir("unknown");
         let catalog = mini_catalog_file(&guard);
         let err = select_target_from_catalog(&catalog, "nope").expect_err("unknown browser");
-        // Python: f"Unknown browser '{id}'. Known: {', '.join(sorted(targets))}"
         assert_eq!(
             err.to_string(),
             "Unknown browser 'nope'. Known: brave_stable, chrome_stable, zeta_stable"
@@ -1027,7 +978,6 @@ mod tests {
 
     #[test]
     fn selected_output_shape_matches_golden() {
-        // Golden: _migration/pe-golden/prepare_target_reference.json chrome_stable_full.
         let golden_path = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../../_migration/pe-golden/prepare_target_reference.json");
         let golden: Value =
@@ -1041,10 +991,8 @@ mod tests {
         // Deep-equal against the golden full record (all fields present, byte
         // semantics for the Chinese release body preserved via serde).
         assert_eq!(target, golden["chrome_stable_full"]);
-        // product boolean semantics: true must stay a JSON boolean, not a string.
         assert_eq!(target["product"], json!(true));
 
-        // The written payload shape: {"targets": {id: target}} only.
         let output = guard.path("build").join("selected.browser.json");
         write_selected(&catalog, "chrome_stable", None, None, None, &output).expect("write");
         let payload = read_output(&output);
@@ -1056,15 +1004,13 @@ mod tests {
             .keys()
             .collect();
         assert_eq!(target_ids, ["chrome_stable"]);
-        // The written record carries the injected "target" key (Python:
-        // target["target"] = args.browser); the golden full record is the raw
-        // catalog dict without it. Compare field-for-field after removing it.
+        // The written record carries the injected "target" key; the golden full
+        // record is the raw catalog dict without it. Compare after removing it.
         let written = payload["targets"]["chrome_stable"].clone();
         let mut raw = written.as_object().expect("target object").clone();
         let injected = raw.remove("target").expect("injected target key");
         assert_eq!(injected, json!("chrome_stable"));
         assert_eq!(Value::Object(raw), golden["chrome_stable_full"]);
-        // File ends with exactly one trailing newline (Python indent=2 + "\n").
         let text = std::fs::read_to_string(&output).expect("read back");
         assert!(text.ends_with("\n") && !text.ends_with("\n\n"), "{text:?}");
         assert!(text.contains("Chrome++ 构建版本"), "{text:?}");
@@ -1075,8 +1021,6 @@ mod tests {
         let guard = temp_dir("product");
         let catalog = mini_catalog_file(&guard);
         let output = guard.path("build").join("brave.json");
-        // brave_stable carries a bare "direct" provider with no url/path: the
-        // Python script demands --url/--path for that shape.
         let err = write_selected(&catalog, "brave_stable", None, None, None, &output)
             .expect_err("direct placeholder");
         assert_eq!(
@@ -1084,7 +1028,6 @@ mod tests {
             "Target 'brave_stable' needs --url or --path (no public auto-resolver)."
         );
 
-        // With --url the write succeeds and product:false survives verbatim.
         write_selected(
             &catalog,
             "brave_stable",
@@ -1143,7 +1086,6 @@ mod tests {
         )
         .expect("write");
         let payload = read_output(&output);
-        // Python rebuilds the provider from scratch: google_omaha keys are gone.
         assert_eq!(
             payload["targets"]["chrome_stable"]["provider"],
             json!({
@@ -1159,20 +1101,15 @@ mod tests {
     fn resolve_catalog_prefers_flag_then_env_then_cwd() {
         let guard = temp_dir("resolve");
         let catalog = mini_catalog_file(&guard);
-        // Level 1: explicit builder dir.
         let dir = catalog.parent().unwrap().parent().unwrap();
         assert_eq!(
             resolve_catalog_path(Some(&dir.to_string_lossy())).expect("flag wins"),
             catalog
         );
-        // Level 2: env var.
-        // SAFETY: tests are single-threaded per var; std::env::set_var is
-        // process-global, so run this probe last in the file order it appears.
         std::env::set_var("PORTABLE_BUILDER_DIR", &*dir.to_string_lossy());
         let resolved = resolve_catalog_path(None).expect("env wins");
         std::env::remove_var("PORTABLE_BUILDER_DIR");
         assert_eq!(resolved, catalog);
-        // Fallback: no candidate contains the catalog -> last probed path named.
         let fallback = resolve_catalog_path(Some("Z:/definitely/not/here")).expect("fallback path");
         assert!(
             fallback.to_string_lossy().contains("not/here")

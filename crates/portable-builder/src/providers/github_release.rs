@@ -207,7 +207,12 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    fn helium_release(prerelease: bool, tag: &str, asset_name: &str, digest: Option<&str>) -> Value {
+    fn helium_release(
+        prerelease: bool,
+        tag: &str,
+        asset_name: &str,
+        digest: Option<&str>,
+    ) -> Value {
         json!({
             "tag_name": tag,
             "prerelease": prerelease,
@@ -238,8 +243,18 @@ mod tests {
     #[test]
     fn stable_skips_prerelease() {
         let releases = vec![
-            helium_release(true, "v0.20.0-beta.1", "helium_0.20.0.1_x64-windows.zip", Some("sha256:aa")),
-            helium_release(false, "0.19.2.1", "helium_0.19.2.1_x64-windows.zip", Some("sha256:bb")),
+            helium_release(
+                true,
+                "v0.20.0-beta.1",
+                "helium_0.20.0.1_x64-windows.zip",
+                Some("sha256:aa"),
+            ),
+            helium_release(
+                false,
+                "0.19.2.1",
+                "helium_0.19.2.1_x64-windows.zip",
+                Some("sha256:bb"),
+            ),
         ];
         let release = pick_release(&releases, "stable").unwrap();
         assert_eq!(release["tag_name"], json!("0.19.2.1"));
@@ -250,7 +265,12 @@ mod tests {
 
     #[test]
     fn channel_mismatch_is_script_error_text() {
-        let releases = vec![helium_release(true, "v1", "helium_1_x64-windows.zip", Some("sha256:aa"))];
+        let releases = vec![helium_release(
+            true,
+            "v1",
+            "helium_1_x64-windows.zip",
+            Some("sha256:aa"),
+        )];
         let err = pick_release(&releases, "stable").unwrap_err();
         assert_eq!(err.to_string(), "No stable release found in repository.");
     }

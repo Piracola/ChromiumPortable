@@ -478,7 +478,11 @@ pub fn repack_flat_package(
     };
 
     // Nothing to do if the tree is already in version-root shape.
-    if source_dir.file_name().map(|n| n.to_string_lossy().into_owned()) == Some(version.clone()) {
+    if source_dir
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        == Some(version.clone())
+    {
         return Ok(());
     }
 
@@ -952,7 +956,9 @@ pub fn inject_dll(target: &Value, staged: &mut Staged) -> Result<()> {
     // staged 路径随 workdir 可能为相对（workdir 常是 "."）；Python 版在入口把
     // workdir 解析成绝对路径，这条隐式行为在这里补上——否则 relpath_from 拿
     // 相对路径对绝对 exe 目录做运算，会产出 setdll 无法解析的错误 dll 参数。
-    let version_dll = version_dll.canonicalize().unwrap_or_else(|_| version_dll.clone());
+    let version_dll = version_dll
+        .canonicalize()
+        .unwrap_or_else(|_| version_dll.clone());
     if target
         .get("verify_architecture")
         .and_then(Value::as_bool)
@@ -1638,7 +1644,11 @@ mod tests {
 
         let root = temp.join("Helium-bin");
         assert!(root.join("chrome.exe").is_file());
-        assert!(root.join("0.19.2.1").join("resources").join("icudtl.dat").is_file());
+        assert!(root
+            .join("0.19.2.1")
+            .join("resources")
+            .join("icudtl.dat")
+            .is_file());
         // The manifest itself belongs to the version dir, and the flat source
         // is gone.
         assert!(root.join("0.19.2.1").join("0.19.2.1.manifest").is_file());
@@ -1666,14 +1676,18 @@ mod tests {
     /// No .manifest file -> the script's chromium_version() error path.
     #[test]
     fn repack_flat_package_requires_manifest() {
-        let temp = std::env::temp_dir().join(format!("cpb_repack_nomanifest_{}", std::process::id()));
+        let temp =
+            std::env::temp_dir().join(format!("cpb_repack_nomanifest_{}", std::process::id()));
         remove_path(&temp);
         let source = temp.join("pkg");
         std::fs::create_dir_all(&source).unwrap();
         std::fs::write(source.join("chrome.exe"), b"MZ exe").unwrap();
 
-        let err = repack_flat_package(&temp, "version_root", "Helium-bin", "chrome.exe").unwrap_err();
-        assert!(err.to_string().contains("Unable to determine the browser version"));
+        let err =
+            repack_flat_package(&temp, "version_root", "Helium-bin", "chrome.exe").unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("Unable to determine the browser version"));
         remove_path(&temp);
     }
 

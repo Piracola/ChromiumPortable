@@ -175,7 +175,7 @@
         <p>Windows 內建的 Edge 是系統元件，移除麻煩、更新由系統託管、資料散落在使用者目錄裡。這個可攜版把它變成一個普通資料夾：</p>
         <ul class="prose__list">
           <li>和系統內建的 Edge 完全隔離，兩者可以同時執行、各用各的資料</li>
-          <li>使用者資料與快取保存在 Edge 資料夾同級的 Data 與 Cache 目錄</li>
+          <li>使用者資料與快取保存在解壓根目錄的 Data 與 Cache 目錄</li>
           <li>不寫登錄檔、不註冊更新服務，刪除資料夾即解除安裝</li>
           <li>適合放在 USB 隨身碟裡，或在公司電腦上用一份不受管控原則影響的瀏覽器設定</li>
           <li>垂直標籤頁、集錦、Copilot 等 Edge 內建功能保持可用</li>
@@ -187,8 +187,8 @@
         <ol class="prose__steps">
           <li>從 Releases 頁面下載 Edge_Portable_Win64 開頭的 7z 壓縮檔。</li>
           <li>解壓縮到任意位置。</li>
-          <li>連按兩下「開始.bat」建立桌面捷徑，或直接執行 Edge 目錄下的 msedge.exe。</li>
-          <li>首次啟動後會在同級產生 Data 與 Cache 目錄，所有資料都在裡面。</li>
+          <li>連按兩下「開始.bat」建立捷徑，或直接執行 Microsoft\Edge\Application 下版本目錄裡的 msedge.exe。</li>
+          <li>首次啟動後會在解壓根目錄產生 Data 與 Cache 目錄，所有資料都在裡面。</li>
         </ol>
       </section>
 
@@ -197,10 +197,10 @@
         <p>可攜版不會自動升級。本倉庫每天檢查微軟是否發佈新版，有就自動打包，你手動覆蓋即可：</p>
         <ol class="prose__steps">
           <li>完全關閉瀏覽器。</li>
-          <li>備份舊版 Edge 資料夾同級（解壓根目錄下）的 Data 目錄。</li>
-          <li>刪除舊的 Edge 資料夾。</li>
-          <li>解壓縮新版 Edge 資料夾到同級目錄。</li>
-          <li>把備份的 Data 放回新的 Edge 資料夾旁邊。</li>
+          <li>備份解壓根目錄下的 Data 目錄。</li>
+          <li>刪除舊的 Microsoft 資料夾。</li>
+          <li>解壓縮新版 Microsoft 資料夾到同級目錄。</li>
+          <li>把備份的 Data 放回解壓根目錄。</li>
         </ol>
       </section>
 

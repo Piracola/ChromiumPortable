@@ -175,7 +175,7 @@
         <p>Windows 自带的 Edge 是系统组件，卸载麻烦、更新由系统托管、数据散落在用户目录里。这个便携版把它变成一个普通文件夹：</p>
         <ul class="prose__list">
           <li>和系统自带的 Edge 完全隔离，两者可以同时运行、各用各的数据</li>
-          <li>用户数据与缓存保存在 Edge 文件夹同级的 Data 和 Cache 目录</li>
+          <li>用户数据与缓存保存在解压根目录的 Data 和 Cache 目录</li>
           <li>不写注册表、不注册更新服务，删除文件夹即卸载</li>
           <li>适合放在 U 盘里，或者在公司电脑上用一份不受管控策略影响的浏览器配置</li>
           <li>垂直标签页、集锦、Copilot 等 Edge 自带功能保持可用</li>
@@ -187,8 +187,8 @@
         <ol class="prose__steps">
           <li>从 Releases 页面下载 Edge_Portable_Win64 开头的 7z 压缩包。</li>
           <li>解压到任意位置。</li>
-          <li>双击「开始.bat」创建桌面快捷方式，或直接运行 Edge 目录下的 msedge.exe。</li>
-          <li>首次启动后会在同级生成 Data 和 Cache 目录，所有数据都在里面。</li>
+          <li>双击「开始.bat」生成快捷方式，或直接运行 Microsoft\Edge\Application 下版本目录里的 msedge.exe。</li>
+          <li>首次启动后会在解压根目录生成 Data 和 Cache 目录，所有数据都在里面。</li>
         </ol>
       </section>
 
@@ -197,10 +197,10 @@
         <p>便携版不会自动升级。本仓库每天检查微软是否发布新版，有就自动打包，你手动覆盖即可：</p>
         <ol class="prose__steps">
           <li>完全关闭浏览器。</li>
-          <li>备份旧版 Edge 文件夹同级（解压根目录下）的 Data 目录。</li>
-          <li>删除旧的 Edge 文件夹。</li>
-          <li>解压新版 Edge 文件夹到同级目录。</li>
-          <li>把备份的 Data 放回新的 Edge 文件夹旁边。</li>
+          <li>备份解压根目录下的 Data 目录。</li>
+          <li>删除旧的 Microsoft 文件夹。</li>
+          <li>解压新版 Microsoft 文件夹到同级目录。</li>
+          <li>把备份的 Data 放回解压根目录。</li>
         </ol>
       </section>
 

@@ -175,7 +175,7 @@
         <p>Windows ships Edge as a system component: hard to remove, system-managed updates, profile scattered under the user directory. This build turns it into an ordinary folder:</p>
         <ul class="prose__list">
           <li>Fully isolated from system Edge — run both at once with separate profiles</li>
-          <li>Profile and cache live in Data and Cache next to the Edge folder</li>
+          <li>Profile and cache live in Data and Cache in the extraction root</li>
           <li>No registry writes, no update service; delete the folder to uninstall</li>
           <li>Fits on a USB stick, or a work PC where you want an unmanaged browser profile</li>
           <li>Vertical tabs, Collections, Copilot, and other Edge features remain available</li>
@@ -187,8 +187,8 @@
         <ol class="prose__steps">
           <li>Download the Edge_Portable_Win64 7z archive from Releases.</li>
           <li>Extract anywhere.</li>
-          <li>Double-click 开始.bat for a desktop shortcut, or run msedge.exe in the Edge folder.</li>
-          <li>Data and Cache appear next to the app on first launch.</li>
+          <li>Double-click 开始.bat to create the shortcut, or run msedge.exe inside the version folder under Microsoft\Edge\Application.</li>
+          <li>Data and Cache appear in the extraction root on first launch.</li>
         </ol>
       </section>
 
@@ -197,10 +197,10 @@
         <p>Portable Edge won’t auto-upgrade. This repo repacks Microsoft releases daily; overwrite manually:</p>
         <ol class="prose__steps">
           <li>Quit the browser completely.</li>
-          <li>Back up the Data folder next to the old Edge folder (in the extraction root).</li>
-          <li>Delete the old Edge folder.</li>
-          <li>Extract the new Edge folder next to it.</li>
-          <li>Restore the Data folder next to the new folder.</li>
+          <li>Back up the Data folder in the extraction root.</li>
+          <li>Delete the old Microsoft folder.</li>
+          <li>Extract the new Microsoft folder next to it.</li>
+          <li>Restore the Data folder in the extraction root.</li>
         </ol>
       </section>
 

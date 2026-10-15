@@ -46,7 +46,7 @@ workflow 的版本检查运行在 Linux，只有需要重新构建时才启动 W
 
 配置支持 JSON、TOML 和 YAML。常用字段可参考 [examples](../examples/)：
 
-- `name`、`display_name`、`output_dir`：项目及产物名称。
+- `name`、`display_name`、`output_dir`：项目及产物名称。`output_dir` 可以是相对路径：Edge 设为 `Microsoft\Edge\Application`，因为 Edge 按主程序路径识别渠道，只有官方形态才会被认作 Stable。
 - `architecture`：目标架构，目前核心自带的 Chrome++ 文件为 x64。
 - `provider`：上游版本和安装包来源。
 - `version_root`、`inner_archive`、`layout`：安装包解压结构。

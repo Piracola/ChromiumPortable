@@ -1055,6 +1055,12 @@ pub fn finalize(target: &Value, workdir: &Path, staged: &Staged) -> Result<PathB
     let final_app_dir = release_dir.join(&output_dir_name);
 
     std::fs::create_dir_all(&release_dir)?;
+    // output_dir 允许是相对路径：Edge 必须落在 `Microsoft\Edge\Application`
+    // 这样的官方路径形态下，渠道识别才会是 Stable。rename 不会替我们造中间目录，
+    // 所以先把父目录补齐。
+    if let Some(parent) = final_app_dir.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
     remove_path(&final_app_dir);
     if final_app_dir.exists() {
         // remove_path 重试后仍删不掉（句柄被长期占用）：给出指向残骸的明确错误，
@@ -1468,6 +1474,56 @@ mod tests {
         );
         assert_eq!(safe_output_name("None", "Browser"), "None");
         assert_eq!(safe_output_name("a/b\\c", "Browser"), "a_b_c");
+    }
+
+    /// output_dir 允许是相对路径：finalize 必须替我们把中间目录造出来
+    /// （Edge 的 `Microsoft\Edge\Application` 外壳），否则 rename 会失败。
+    #[test]
+    fn finalize_creates_nested_output_dir() {
+        let workdir =
+            std::env::temp_dir().join(format!("cpb_finalize_nested_{}", std::process::id()));
+        remove_path(&workdir);
+
+        let stage_root = workdir.join("build").join("stage").join("edge_stable");
+        let app_root = stage_root
+            .join("Microsoft")
+            .join("Edge")
+            .join("Application");
+        let version_dir = app_root.join("155.0.4283.45");
+        std::fs::create_dir_all(&version_dir).unwrap();
+        std::fs::write(version_dir.join("msedge.exe"), b"stub").unwrap();
+        std::fs::write(workdir.join("开始.bat"), b"@echo off").unwrap();
+
+        let staged = Staged {
+            stage_dir: stage_root,
+            app_root: app_root.clone(),
+            version_dir,
+            version: "155.0.4283.45".to_string(),
+            executable: None,
+            discovery: None,
+            version_dll: None,
+            setdll: None,
+            chrome_plus_version: None,
+        };
+        let target = json!({
+            "target": "edge_stable",
+            "name": "Edge",
+            "output_dir": "Microsoft\\Edge\\Application",
+            "start_script": "开始.bat",
+        });
+
+        let release_dir = workdir.join("build").join("release");
+        let final_app_dir = finalize(&target, &workdir, &staged).unwrap();
+
+        assert_eq!(
+            final_app_dir,
+            release_dir.join("Microsoft").join("Edge").join("Application")
+        );
+        assert!(final_app_dir.join("155.0.4283.45").join("msedge.exe").is_file());
+        assert!(final_app_dir.join("version.txt").is_file());
+        assert!(release_dir.join("开始.bat").is_file());
+
+        remove_path(&workdir);
     }
 
     /// Golden: build_context_reference.json context_full.

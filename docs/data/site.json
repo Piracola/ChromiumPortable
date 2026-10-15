@@ -110,7 +110,7 @@
       "family": "Edge",
       "channel": "Stable",
       "target": "edge_stable",
-      "outputDir": "Edge",
+      "outputDir": "Microsoft\\Edge\\Application",
       "architecture": "x64",
       "assetHint": "Edge_Portable_Win64_…7z",
       "accent": "#1d7c84",
@@ -370,7 +370,7 @@
               ],
               "list": [
                 "和系统自带的 Edge 完全隔离，两者可以同时运行、各用各的数据",
-                "用户数据与缓存保存在 Edge 文件夹同级的 Data 和 Cache 目录",
+                "用户数据与缓存保存在解压根目录的 Data 和 Cache 目录",
                 "不写注册表、不注册更新服务，删除文件夹即卸载",
                 "适合放在 U 盘里，或者在公司电脑上用一份不受管控策略影响的浏览器配置",
                 "垂直标签页、集锦、Copilot 等 Edge 自带功能保持可用"
@@ -381,8 +381,8 @@
               "steps": [
                 "从 Releases 页面下载 Edge_Portable_Win64 开头的 7z 压缩包。",
                 "解压到任意位置。",
-                "双击「开始.bat」创建桌面快捷方式，或直接运行 Edge 目录下的 msedge.exe。",
-                "首次启动后会在同级生成 Data 和 Cache 目录，所有数据都在里面。"
+                "双击「开始.bat」生成快捷方式，或直接运行 Microsoft\\Edge\\Application 下版本目录里的 msedge.exe。",
+                "首次启动后会在解压根目录生成 Data 和 Cache 目录，所有数据都在里面。"
               ]
             },
             {
@@ -392,10 +392,10 @@
               ],
               "steps": [
                 "完全关闭浏览器。",
-                "备份旧版 Edge 文件夹同级（解压根目录下）的 Data 目录。",
-                "删除旧的 Edge 文件夹。",
-                "解压新版 Edge 文件夹到同级目录。",
-                "把备份的 Data 放回新的 Edge 文件夹旁边。"
+                "备份解压根目录下的 Data 目录。",
+                "删除旧的 Microsoft 文件夹。",
+                "解压新版 Microsoft 文件夹到同级目录。",
+                "把备份的 Data 放回解压根目录。"
               ]
             }
           ],
@@ -743,7 +743,7 @@
               ],
               "list": [
                 "Fully isolated from system Edge — run both at once with separate profiles",
-                "Profile and cache live in Data and Cache next to the Edge folder",
+                "Profile and cache live in Data and Cache in the extraction root",
                 "No registry writes, no update service; delete the folder to uninstall",
                 "Fits on a USB stick, or a work PC where you want an unmanaged browser profile",
                 "Vertical tabs, Collections, Copilot, and other Edge features remain available"
@@ -754,8 +754,8 @@
               "steps": [
                 "Download the Edge_Portable_Win64 7z archive from Releases.",
                 "Extract anywhere.",
-                "Double-click 开始.bat for a desktop shortcut, or run msedge.exe in the Edge folder.",
-                "Data and Cache appear next to the app on first launch."
+                "Double-click 开始.bat to create the shortcut, or run msedge.exe inside the version folder under Microsoft\\Edge\\Application.",
+                "Data and Cache appear in the extraction root on first launch."
               ]
             },
             {
@@ -765,10 +765,10 @@
               ],
               "steps": [
                 "Quit the browser completely.",
-                "Back up the Data folder next to the old Edge folder (in the extraction root).",
-                "Delete the old Edge folder.",
-                "Extract the new Edge folder next to it.",
-                "Restore the Data folder next to the new folder."
+                "Back up the Data folder in the extraction root.",
+                "Delete the old Microsoft folder.",
+                "Extract the new Microsoft folder next to it.",
+                "Restore the Data folder in the extraction root."
               ]
             }
           ],
@@ -1116,7 +1116,7 @@
               ],
               "list": [
                 "和系統內建的 Edge 完全隔離，兩者可以同時執行、各用各的資料",
-                "使用者資料與快取保存在 Edge 資料夾同級的 Data 與 Cache 目錄",
+                "使用者資料與快取保存在解壓根目錄的 Data 與 Cache 目錄",
                 "不寫登錄檔、不註冊更新服務，刪除資料夾即解除安裝",
                 "適合放在 USB 隨身碟裡，或在公司電腦上用一份不受管控原則影響的瀏覽器設定",
                 "垂直標籤頁、集錦、Copilot 等 Edge 內建功能保持可用"
@@ -1127,8 +1127,8 @@
               "steps": [
                 "從 Releases 頁面下載 Edge_Portable_Win64 開頭的 7z 壓縮檔。",
                 "解壓縮到任意位置。",
-                "連按兩下「開始.bat」建立桌面捷徑，或直接執行 Edge 目錄下的 msedge.exe。",
-                "首次啟動後會在同級產生 Data 與 Cache 目錄，所有資料都在裡面。"
+                "連按兩下「開始.bat」建立捷徑，或直接執行 Microsoft\\Edge\\Application 下版本目錄裡的 msedge.exe。",
+                "首次啟動後會在解壓根目錄產生 Data 與 Cache 目錄，所有資料都在裡面。"
               ]
             },
             {
@@ -1138,10 +1138,10 @@
               ],
               "steps": [
                 "完全關閉瀏覽器。",
-                "備份舊版 Edge 資料夾同級（解壓根目錄下）的 Data 目錄。",
-                "刪除舊的 Edge 資料夾。",
-                "解壓縮新版 Edge 資料夾到同級目錄。",
-                "把備份的 Data 放回新的 Edge 資料夾旁邊。"
+                "備份解壓根目錄下的 Data 目錄。",
+                "刪除舊的 Microsoft 資料夾。",
+                "解壓縮新版 Microsoft 資料夾到同級目錄。",
+                "把備份的 Data 放回解壓根目錄。"
               ]
             }
           ],
@@ -1496,7 +1496,7 @@
               ],
               "list": [
                 "システム Edge と完全に分離。同時に起動でき、プロファイルも別々",
-                "プロファイルとキャッシュは Edge フォルダー隣の Data と Cache",
+                "プロファイルとキャッシュは展開ルートの Data と Cache",
                 "レジストリ書き込みも更新サービスもなし。削除すればアンインストール",
                 "USB や、管理ポリシーの影響を受けないブラウザー設定が必要な業務 PC に最適",
                 "垂直タブ・コレクション・Copilot など Edge 機能はそのまま利用可能"
@@ -1507,8 +1507,8 @@
               "steps": [
                 "Releases から Edge_Portable_Win64 で始まる 7z をダウンロード。",
                 "任意の場所に展開。",
-                "開始.bat をダブルクリック、または Edge フォルダーの msedge.exe を実行。",
-                "初回起動で Data と Cache が同じ場所に作られます。"
+                "開始.bat をダブルクリックしてショートカットを作成、または Microsoft\\Edge\\Application 下のバージョンフォルダー内の msedge.exe を実行。",
+                "初回起動で展開ルートに Data と Cache が作られます。"
               ]
             },
             {
@@ -1518,10 +1518,10 @@
               ],
               "steps": [
                 "ブラウザーを完全に終了。",
-                "展開ルートで旧 Edge フォルダーの隣にある Data をバックアップ。",
-                "旧 Edge フォルダーを削除。",
-                "新しい Edge フォルダーを展開。",
-                "Data を新しいフォルダーの隣に戻す。"
+                "展開ルートの Data をバックアップ。",
+                "旧 Microsoft フォルダーを削除。",
+                "新しい Microsoft フォルダーを展開。",
+                "Data を展開ルートに戻す。"
               ]
             }
           ],

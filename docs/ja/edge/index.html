@@ -175,7 +175,7 @@
         <p>Windows 標準の Edge はシステムコンポーネントで、削除しづらく、更新はシステム管理、プロファイルはユーザー配下に散らばります。このビルドはそれを普通のフォルダーにします:</p>
         <ul class="prose__list">
           <li>システム Edge と完全に分離。同時に起動でき、プロファイルも別々</li>
-          <li>プロファイルとキャッシュは Edge フォルダー隣の Data と Cache</li>
+          <li>プロファイルとキャッシュは展開ルートの Data と Cache</li>
           <li>レジストリ書き込みも更新サービスもなし。削除すればアンインストール</li>
           <li>USB や、管理ポリシーの影響を受けないブラウザー設定が必要な業務 PC に最適</li>
           <li>垂直タブ・コレクション・Copilot など Edge 機能はそのまま利用可能</li>
@@ -187,8 +187,8 @@
         <ol class="prose__steps">
           <li>Releases から Edge_Portable_Win64 で始まる 7z をダウンロード。</li>
           <li>任意の場所に展開。</li>
-          <li>開始.bat をダブルクリック、または Edge フォルダーの msedge.exe を実行。</li>
-          <li>初回起動で Data と Cache が同じ場所に作られます。</li>
+          <li>開始.bat をダブルクリックしてショートカットを作成、または Microsoft\Edge\Application 下のバージョンフォルダー内の msedge.exe を実行。</li>
+          <li>初回起動で展開ルートに Data と Cache が作られます。</li>
         </ol>
       </section>
 
@@ -197,10 +197,10 @@
         <p>ポータブル Edge は自動更新されません。本リポジトリは Microsoft の新版を毎日再パッケージし、手動で上書きします:</p>
         <ol class="prose__steps">
           <li>ブラウザーを完全に終了。</li>
-          <li>展開ルートで旧 Edge フォルダーの隣にある Data をバックアップ。</li>
-          <li>旧 Edge フォルダーを削除。</li>
-          <li>新しい Edge フォルダーを展開。</li>
-          <li>Data を新しいフォルダーの隣に戻す。</li>
+          <li>展開ルートの Data をバックアップ。</li>
+          <li>旧 Microsoft フォルダーを削除。</li>
+          <li>新しい Microsoft フォルダーを展開。</li>
+          <li>Data を展開ルートに戻す。</li>
         </ol>
       </section>
 

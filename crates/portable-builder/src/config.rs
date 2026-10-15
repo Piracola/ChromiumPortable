@@ -20,6 +20,8 @@
 //! | display_name            | chain `display_name → name → ""`                  | `Option<String> = None`              |
 //! | product                 | missing key is falsy in Python                  | `bool = false`                       |
 //! | output_dir              | chain `output_dir → name → "Browser"`            | `Option<String> = None`              |
+//! |                         | may be a relative path (Edge: `Microsoft\Edge\   |                                      |
+//! |                         | Application`, its channel check reads the shape) |                                      |
 //! | exe_name                | `target.get("exe_name")` (builder.py:308)        | `Option<String> = None`              |
 //! | architecture            | `"x64"` (builder.py:43,107,256)                  | `String = "x64"`                     |
 //! | layout                  | `"move_version_root"` (builder.py:157)           | `String = "move_version_root"`       |
@@ -198,7 +200,11 @@ pub struct Target {
     /// Product targets (Chrome / Edge / Helium) set this explicitly; absent = falsy.
     #[serde(default = "default_false")]
     pub product: bool,
-    /// Chain `output_dir → name → "Browser"`.
+    /// Chain `output_dir → name → "Browser"`. May contain path separators when
+    /// the browser's own logic depends on the exe's path shape: Edge only
+    /// reports the Stable channel when the path looks like
+    /// `...\Microsoft\Edge\Application\...`, so its target stages the version
+    /// directory under that prefix instead of a single folder name.
     #[serde(default)]
     pub output_dir: Option<String>,
     /// No default; auto layout derives it from the PE.

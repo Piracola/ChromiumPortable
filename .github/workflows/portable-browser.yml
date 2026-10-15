@@ -47,7 +47,7 @@ jobs:
       env_json: ${{ steps.check.outputs.env_json }}
     steps:
       - name: Checkout caller repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Download engine bundle
         shell: bash
@@ -86,7 +86,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout caller repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Download engine bundle
         shell: pwsh
@@ -138,7 +138,7 @@ jobs:
           & $env:CPB_ENGINE --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . render-release
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.artifact-name }}
           path: build/assets/*.7z
@@ -153,7 +153,7 @@ jobs:
 
       - name: Upload assets to existing release
         if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'push') && env.UPDATE_NEEDED == 'true' && env.CREATE_NEW_RELEASE == 'false'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: ${{ env.RELEASE_TITLE }}
@@ -164,7 +164,7 @@ jobs:
 
       - name: Create new release
         if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'push') && env.UPDATE_NEEDED == 'true' && env.CREATE_NEW_RELEASE == 'true'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: ${{ env.RELEASE_TITLE }}

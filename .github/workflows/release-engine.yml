@@ -15,7 +15,7 @@ jobs:
   windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
 
@@ -67,7 +67,7 @@ jobs:
             "$hash  $($_.Name)" | Out-File -FilePath "$($_.FullName).sha256" -Encoding ascii
           }
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: engine-windows
           path: dist/*windows-x64.zip*
@@ -75,7 +75,7 @@ jobs:
   linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
 
@@ -91,7 +91,7 @@ jobs:
           (cd dist && zip -qr portable-builder-linux-x64.zip portable-builder-linux-x64)
           (cd dist && sha256sum portable-builder-linux-x64.zip > portable-builder-linux-x64.zip.sha256)
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: engine-linux
           path: dist/*linux-x64.zip*
@@ -100,11 +100,11 @@ jobs:
     needs: [windows, linux]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: dist/*.zip*
           fail_on_unmatched_files: true

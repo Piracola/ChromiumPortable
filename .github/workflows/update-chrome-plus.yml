@@ -24,7 +24,7 @@ jobs:
         ]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Ensure 7-Zip is available
         shell: bash

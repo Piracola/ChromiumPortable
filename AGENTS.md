@@ -39,7 +39,7 @@ GUI `crates/builder-app`：Tauri 2 + WebView2）、7-Zip/`7zr.exe`（外部工�
 
 ## 目录与约定
 
-- `crates/portable-builder/` — 构建引擎（CLI 面与旧 `python -m portable_builder` 一字不改）；`layout: auto` 静态识别主程序，绝不运行安装包/浏览器
+- `crates/portable-builder/` — 构建引擎（CLI 面沿袭旧 `python -m portable_builder`，`*-targets` 的目标列表是位置参数）；`layout: auto` 静态识别主程序，绝不运行安装包/浏览器。提供器五种：`direct` / `google_omaha` / `microsoft_edge` / `github_release` / `script`——Chrome、Edge、Helium 三产品线全部走内置通道，`script` 仅留给 catalog 非官方 target；`repack_layout: version_root` 负责平铺 zip 的重排（Helium）
 - `crates/builder-app/` — Tauri 2 图形构建器；`ui/` 静态资产 + `src/main.rs` 命令面 + `capabilities/`
 - `scripts/` — 只剩 `update_chrome_plus.py`（维护者 CI 专用）与 `dispatch_child_builds.py`
 - `catalog/browser_catalog.json` — 在线 target；非产品必须 `Unofficial` + Disclaimer
@@ -52,5 +52,6 @@ GUI `crates/builder-app`：Tauri 2 + WebView2）、7-Zip/`7zr.exe`（外部工�
 
 Rust + Tauri 2 迁移完成（M0–M6，见 `docs/MIGRATION_RUST_TAURI.md`）：引擎 17 子命令、GUI 后端、
 CI（engine-ci.yml / release-engine.yml）与 v2 引擎包下载全部就位。产品面仅 Chrome / Edge / Helium，
-三子仓库按迁移文档 §8.3 切 `@v2`。语言策略：README 双语、下载站四语。新浏览器优先 `layout: auto`
+三子仓库已切 `@v2`（v2 为滚动 tag：重切到 main 即触发引擎包重发）并全部使用内置提供器，
+子仓库的 Python 脚本已退役。语言策略：README 双语、下载站四语。新浏览器优先 `layout: auto`
 + catalog；涉及注入/验证的改动需用三渠道实际配置回归。

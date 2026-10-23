@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-10-21",
+  "fetchedAt": "2026-10-23",
   "repos": {
     "chrome": {
       "tag": "v156.0.8078.48",
@@ -21,28 +21,28 @@
       ]
     },
     "edge": {
-      "tag": "v155.0.4283.62",
-      "publishedAt": "2026-10-09T04:10:38Z",
-      "htmlUrl": "https://github.com/Piracola/Edge_Portable/releases/tag/v155.0.4283.62",
+      "tag": "v156.0.4314.42",
+      "publishedAt": "2026-10-23T03:00:31Z",
+      "htmlUrl": "https://github.com/Piracola/Edge_Portable/releases/tag/v156.0.4314.42",
       "assets": [
         {
-          "name": "Edge_Portable_Win64_155.0.4283.62_2026-10-17.7z",
-          "size": 202047333,
-          "url": "https://github.com/Piracola/Edge_Portable/releases/download/v155.0.4283.62/Edge_Portable_Win64_155.0.4283.62_2026-10-17.7z",
-          "digest": "sha256:f8418c9a6a0ce4bb991d53f3c9f6919b47fa330b072a6acaaf0b127547d2dfd4"
+          "name": "Edge_Portable_Win64_156.0.4314.42_2026-10-23.7z",
+          "size": 202751249,
+          "url": "https://github.com/Piracola/Edge_Portable/releases/download/v156.0.4314.42/Edge_Portable_Win64_156.0.4314.42_2026-10-23.7z",
+          "digest": "sha256:80624258314a77bbd2ccf328fa4b59ea2d3171a17b563944a48536069bb88d1f"
         }
       ]
     },
     "helium": {
-      "tag": "v0.19.4.1",
-      "publishedAt": "2026-10-17T12:42:03Z",
-      "htmlUrl": "https://github.com/Piracola/Helium_Portable/releases/tag/v0.19.4.1",
+      "tag": "v0.20.1.1",
+      "publishedAt": "2026-10-22T14:21:09Z",
+      "htmlUrl": "https://github.com/Piracola/Helium_Portable/releases/tag/v0.20.1.1",
       "assets": [
         {
-          "name": "Helium_0.19.4.1_2026-10-17.7z",
-          "size": 117378281,
-          "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.19.4.1/Helium_0.19.4.1_2026-10-17.7z",
-          "digest": "sha256:ecb7f18afd6db15e26727e0b94ee50347db75770b84fbaecf20e71b035c72609"
+          "name": "Helium_0.20.1.1_2026-10-22.7z",
+          "size": 118737886,
+          "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.20.1.1/Helium_0.20.1.1_2026-10-22.7z",
+          "digest": "sha256:736dc4e6a49be2c8bd22e542e39e79698ca63698998701ee059502cccaed6381"
         }
       ]
     }
@@ -65,20 +65,20 @@
       "publishedAt": "2026-10-21T13:42:50Z"
     },
     "edge-stable": {
-      "version": "155.0.4283.62",
-      "assetName": "Edge_Portable_Win64_155.0.4283.62_2026-10-17.7z",
-      "size": 202047333,
-      "url": "https://github.com/Piracola/Edge_Portable/releases/download/v155.0.4283.62/Edge_Portable_Win64_155.0.4283.62_2026-10-17.7z",
-      "sha256": "f8418c9a6a0ce4bb991d53f3c9f6919b47fa330b072a6acaaf0b127547d2dfd4",
-      "publishedAt": "2026-10-09T04:10:38Z"
+      "version": "156.0.4314.42",
+      "assetName": "Edge_Portable_Win64_156.0.4314.42_2026-10-23.7z",
+      "size": 202751249,
+      "url": "https://github.com/Piracola/Edge_Portable/releases/download/v156.0.4314.42/Edge_Portable_Win64_156.0.4314.42_2026-10-23.7z",
+      "sha256": "80624258314a77bbd2ccf328fa4b59ea2d3171a17b563944a48536069bb88d1f",
+      "publishedAt": "2026-10-23T03:00:31Z"
     },
     "helium-stable": {
-      "version": "0.19.4.1",
-      "assetName": "Helium_0.19.4.1_2026-10-17.7z",
-      "size": 117378281,
-      "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.19.4.1/Helium_0.19.4.1_2026-10-17.7z",
-      "sha256": "ecb7f18afd6db15e26727e0b94ee50347db75770b84fbaecf20e71b035c72609",
-      "publishedAt": "2026-10-17T12:42:03Z"
+      "version": "0.20.1.1",
+      "assetName": "Helium_0.20.1.1_2026-10-22.7z",
+      "size": 118737886,
+      "url": "https://github.com/Piracola/Helium_Portable/releases/download/v0.20.1.1/Helium_0.20.1.1_2026-10-22.7z",
+      "sha256": "736dc4e6a49be2c8bd22e542e39e79698ca63698998701ee059502cccaed6381",
+      "publishedAt": "2026-10-22T14:21:09Z"
     }
   }
 }

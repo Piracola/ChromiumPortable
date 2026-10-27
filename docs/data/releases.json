@@ -21,15 +21,15 @@
       ]
     },
     "edge": {
-      "tag": "v156.0.4314.42",
+      "tag": "v156.0.4314.50",
       "publishedAt": "2026-10-23T03:00:31Z",
-      "htmlUrl": "https://github.com/Piracola/Edge_Portable/releases/tag/v156.0.4314.42",
+      "htmlUrl": "https://github.com/Piracola/Edge_Portable/releases/tag/v156.0.4314.50",
       "assets": [
         {
-          "name": "Edge_Portable_Win64_156.0.4314.42_2026-10-23.7z",
-          "size": 202751249,
-          "url": "https://github.com/Piracola/Edge_Portable/releases/download/v156.0.4314.42/Edge_Portable_Win64_156.0.4314.42_2026-10-23.7z",
-          "digest": "sha256:80624258314a77bbd2ccf328fa4b59ea2d3171a17b563944a48536069bb88d1f"
+          "name": "Edge_Portable_Win64_156.0.4314.50_2026-10-27.7z",
+          "size": 202844313,
+          "url": "https://github.com/Piracola/Edge_Portable/releases/download/v156.0.4314.50/Edge_Portable_Win64_156.0.4314.50_2026-10-27.7z",
+          "digest": "sha256:9f542616b72df82b870ee64e08877c08cca02e5ff2c315da3918eea019b95bee"
         }
       ]
     },
@@ -65,11 +65,11 @@
       "publishedAt": "2026-10-21T13:42:50Z"
     },
     "edge-stable": {
-      "version": "156.0.4314.42",
-      "assetName": "Edge_Portable_Win64_156.0.4314.42_2026-10-23.7z",
-      "size": 202751249,
-      "url": "https://github.com/Piracola/Edge_Portable/releases/download/v156.0.4314.42/Edge_Portable_Win64_156.0.4314.42_2026-10-23.7z",
-      "sha256": "80624258314a77bbd2ccf328fa4b59ea2d3171a17b563944a48536069bb88d1f",
+      "version": "156.0.4314.50",
+      "assetName": "Edge_Portable_Win64_156.0.4314.50_2026-10-27.7z",
+      "size": 202844313,
+      "url": "https://github.com/Piracola/Edge_Portable/releases/download/v156.0.4314.50/Edge_Portable_Win64_156.0.4314.50_2026-10-27.7z",
+      "sha256": "9f542616b72df82b870ee64e08877c08cca02e5ff2c315da3918eea019b95bee",
       "publishedAt": "2026-10-23T03:00:31Z"
     },
     "helium-stable": {

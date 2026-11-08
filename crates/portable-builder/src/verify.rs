@@ -494,11 +494,21 @@ fn assert_target_architecture(target: &Value, app_root: &Path, executable: &Path
         .and_then(Value::as_str)
         .unwrap_or("x64");
     let mut binaries = vec![executable.to_path_buf()];
+    let mut seen: Vec<PathBuf> = Vec::new();
     for dir in [Some(app_root), executable.parent()].into_iter().flatten() {
         let dll = dir.join("version.dll");
-        if dll.is_file() && !binaries.contains(&dll) {
-            binaries.push(dll);
+        if !dll.is_file() {
+            continue;
         }
+        // app_root and the executable's directory can name the same file with
+        // different prefixes (the extracted tree carries one), so dedupe on the
+        // canonical path rather than on string equality.
+        let key = std::fs::canonicalize(&dll).unwrap_or_else(|_| dll.clone());
+        if seen.contains(&key) {
+            continue;
+        }
+        seen.push(key);
+        binaries.push(dll);
     }
     for binary in binaries {
         let actual = read_pe_machine(&binary)?;

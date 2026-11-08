@@ -1533,9 +1533,15 @@ mod tests {
 
         assert_eq!(
             final_app_dir,
-            release_dir.join("Microsoft").join("Edge").join("Application")
+            release_dir
+                .join("Microsoft")
+                .join("Edge")
+                .join("Application")
         );
-        assert!(final_app_dir.join("155.0.4283.45").join("msedge.exe").is_file());
+        assert!(final_app_dir
+            .join("155.0.4283.45")
+            .join("msedge.exe")
+            .is_file());
         assert!(final_app_dir.join("version.txt").is_file());
         assert!(release_dir.join("开始.bat").is_file());
 

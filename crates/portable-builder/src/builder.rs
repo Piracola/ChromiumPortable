@@ -689,6 +689,20 @@ fn resolve_chrome_plus_ini(
     Ok(Some((text, encoding)))
 }
 
+/// setdll only rewrites an import table, so a host-runnable build patches
+/// either PE architecture - but it cannot execute on a foreign host. An x64
+/// runner building an ARM64 package therefore must NOT pick setdll-arm64.exe
+/// (it fails with "not compatible with the version of Windows you're running").
+/// Use the target's own tool only when this host can run it; otherwise x64,
+/// which runs natively on x64 and under emulation on Windows on Arm.
+pub fn default_setdll_name(arch: &str) -> String {
+    if arch == "arm64" && cfg!(target_arch = "aarch64") {
+        "setdll-arm64.exe".to_string()
+    } else {
+        "setdll-x64.exe".to_string()
+    }
+}
+
 /// builder.py::copy_chrome_plus - version.dll + setdll into the staged
 /// tree, then the ini layers. staged is mutated in place.
 pub fn copy_chrome_plus(
@@ -710,7 +724,7 @@ pub fn copy_chrome_plus(
         .get("setdll_name")
         .and_then(Value::as_str)
         .map(str::to_string)
-        .unwrap_or_else(|| format!("setdll-{arch}.exe"));
+        .unwrap_or_else(|| default_setdll_name(&arch));
 
     let (setdll_src_dir, version_dll_src, setdll_src) = if let Some(builder_dir) = builder_dir {
         let setdll_src_dir = builder_dir.join("setdll");
@@ -1708,5 +1722,15 @@ mod tests {
             err.to_string(),
             "Unknown repack_layout 'banana'. Supported: version_root"
         );
+    }
+
+    /// CI builds ARM64 packages on x64 runners, where setdll-arm64.exe refuses
+    /// to start (os error 216), so the default must follow the host.
+    #[cfg(not(target_arch = "aarch64"))]
+    #[test]
+    fn setdll_default_follows_the_host_not_the_target() {
+        assert_eq!(default_setdll_name("arm64"), "setdll-x64.exe");
+        assert_eq!(default_setdll_name("x64"), "setdll-x64.exe");
+        assert_eq!(default_setdll_name("x86"), "setdll-x64.exe");
     }
 }

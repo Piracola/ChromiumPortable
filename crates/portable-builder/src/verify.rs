@@ -18,7 +18,7 @@ use crate::discovery::analyze_extracted_app;
 use crate::github_env::write_env;
 use crate::log_fmt::{info, warn};
 use crate::multi::env_name;
-use crate::pe::assert_portable_version_import;
+use crate::pe::{assert_portable_version_import, read_pe_machine};
 use crate::tools::{
     assert_no_forbidden_files, extract_with_7z, find_7z_tool, find_version_dir, remove_path,
     sha256_file, SevenZipDownload,
@@ -461,6 +461,7 @@ pub fn verify_target(
         })
         .unwrap_or_default();
     assert_no_forbidden_files(&extracted_root, &forbidden)?;
+    assert_target_architecture(target, &app_root, &executable)?;
 
     if smoke {
         smoke_test(target, &extracted_root, &app_root, &executable)?;
@@ -481,6 +482,41 @@ pub fn verify_target(
         "archive": archive.to_string_lossy(),
         "executable": executable.to_string_lossy(),
     }))
+}
+
+/// A wrong-architecture payload passes every other check: the file name, the
+/// config and the release body all say arm64 while the bytes are x64, and the
+/// mistake only surfaces when someone runs it on real hardware. Assert the two
+/// binaries this project controls carry the target's machine type.
+fn assert_target_architecture(target: &Value, app_root: &Path, executable: &Path) -> Result<()> {
+    let expected = target
+        .get("architecture")
+        .and_then(Value::as_str)
+        .unwrap_or("x64");
+    let mut binaries = vec![executable.to_path_buf()];
+    for dir in [Some(app_root), executable.parent()].into_iter().flatten() {
+        let dll = dir.join("version.dll");
+        if dll.is_file() && !binaries.contains(&dll) {
+            binaries.push(dll);
+        }
+    }
+    for binary in binaries {
+        let actual = read_pe_machine(&binary)?;
+        if actual != expected {
+            bail!(
+                "Architecture mismatch: expected {expected}, found {actual}: {}",
+                binary.display()
+            );
+        }
+        info(format!(
+            "{expected} PE verified: {}",
+            binary
+                .file_name()
+                .map(|name| name.to_string_lossy().into_owned())
+                .unwrap_or_default()
+        ));
+    }
+    Ok(())
 }
 
 /// Per-target verification with the env-prefix
@@ -639,6 +675,28 @@ mod tests {
             Duration::from_millis(50)
         ));
         remove_path(&dir);
+    }
+
+    #[test]
+    fn architecture_assertion_compares_peer_machines() {
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let x64 = repo.join("setdll/setdll-x64.exe");
+        let arm64 = repo.join("setdll/version-arm64.dll");
+        if !x64.is_file() || !arm64.is_file() {
+            return;
+        }
+        assert_target_architecture(&serde_json::json!({"architecture": "x64"}), &repo, &x64)
+            .unwrap();
+        assert_target_architecture(&serde_json::json!({"architecture": "arm64"}), &repo, &arm64)
+            .unwrap();
+        let err =
+            assert_target_architecture(&serde_json::json!({"architecture": "arm64"}), &repo, &x64)
+                .unwrap_err()
+                .to_string();
+        assert!(
+            err.contains("Architecture mismatch: expected arm64, found x64"),
+            "{err}"
+        );
     }
 
     #[test]

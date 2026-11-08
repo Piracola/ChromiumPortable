@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Chrome Portable Download — No Install, Chrome++ Integrated, Daily Builds</title>
-    <meta name="description" content="Download Google Chrome Portable for Windows x64. Stable and Beta channels, Chrome++ enhancements, profile stored next to the app, rebuilt daily from official packages with SHA256 checks." />
+    <meta name="description" content="Download Google Chrome Portable for Windows x64 / ARM64. Stable and Beta channels, Chrome++ enhancements, profile stored next to the app, rebuilt daily from official packages with SHA256 checks." />
     <meta name="author" content="Piracola" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="color-scheme" content="light dark" />
@@ -22,14 +22,14 @@
     <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content="Chromium Portable Builds" />
     <meta property="og:title" content="Chrome Portable Download — No Install, Chrome++ Integrated, Daily Builds" />
-    <meta property="og:description" content="Download Google Chrome Portable for Windows x64. Stable and Beta channels, Chrome++ enhancements, profile stored next to the app, rebuilt daily from official packages with SHA256 checks." />
+    <meta property="og:description" content="Download Google Chrome Portable for Windows x64 / ARM64. Stable and Beta channels, Chrome++ enhancements, profile stored next to the app, rebuilt daily from official packages with SHA256 checks." />
     <meta property="og:url" content="https://piracola.github.io/ChromiumPortable/en/chrome/" />
     <meta property="og:image" content="https://piracola.github.io/ChromiumPortable/assets/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Chrome Portable Download — No Install, Chrome++ Integrated, Daily Builds" />
-    <meta name="twitter:description" content="Download Google Chrome Portable for Windows x64. Stable and Beta channels, Chrome++ enhancements, profile stored next to the app, rebuilt daily from official packages with SHA256 checks." />
+    <meta name="twitter:description" content="Download Google Chrome Portable for Windows x64 / ARM64. Stable and Beta channels, Chrome++ enhancements, profile stored next to the app, rebuilt daily from official packages with SHA256 checks." />
     <meta name="twitter:image" content="https://piracola.github.io/ChromiumPortable/assets/og.png" />
     <link rel="stylesheet" href="../../styles.css" />
     <script>
@@ -51,7 +51,7 @@
             "@id": "https://piracola.github.io/ChromiumPortable/en/chrome/#webpage",
             "url": "https://piracola.github.io/ChromiumPortable/en/chrome/",
             "name": "Chrome Portable Download — No Install, Chrome++ Integrated, Daily Builds",
-            "description": "Download Google Chrome Portable for Windows x64. Stable and Beta channels, Chrome++ enhancements, profile stored next to the app, rebuilt daily from official packages with SHA256 checks.",
+            "description": "Download Google Chrome Portable for Windows x64 / ARM64. Stable and Beta channels, Chrome++ enhancements, profile stored next to the app, rebuilt daily from official packages with SHA256 checks.",
             "inLanguage": "en",
             "isPartOf": {
               "@id": "https://piracola.github.io/ChromiumPortable/#website"
@@ -100,6 +100,30 @@
           },
           {
             "@type": "SoftwareApplication",
+            "name": "Chrome Portable ARM64",
+            "applicationCategory": "BrowserApplication",
+            "operatingSystem": "Windows 10, Windows 11",
+            "processorRequirements": "ARM64",
+            "url": "https://piracola.github.io/ChromiumPortable/en/chrome/",
+            "downloadUrl": "https://github.com/Piracola/Chrome-Portable/releases/download/v157.0.8103.39/Chrome%2B%2B_stable_arm64_157.0.8103.39_2026-11-08.7z",
+            "softwareHelp": "https://piracola.github.io/ChromiumPortable/en/chrome/",
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "author": {
+              "@type": "Person",
+              "name": "Piracola"
+            },
+            "license": "https://opensource.org/licenses/MIT",
+            "softwareVersion": "157.0.8103.39",
+            "datePublished": "2026-11-04",
+            "fileSize": "140548856"
+          },
+          {
+            "@type": "SoftwareApplication",
             "name": "Chrome Portable Beta",
             "applicationCategory": "BrowserApplication",
             "operatingSystem": "Windows 10, Windows 11",
@@ -121,6 +145,30 @@
             "softwareVersion": "158.0.8127.18",
             "datePublished": "2026-11-04",
             "fileSize": "157999394"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "Chrome Portable Beta ARM64",
+            "applicationCategory": "BrowserApplication",
+            "operatingSystem": "Windows 10, Windows 11",
+            "processorRequirements": "ARM64",
+            "url": "https://piracola.github.io/ChromiumPortable/en/chrome/",
+            "downloadUrl": "https://github.com/Piracola/Chrome-Portable/releases/download/v157.0.8103.39/Chrome%2B%2B_beta_arm64_158.0.8127.18_2026-11-08.7z",
+            "softwareHelp": "https://piracola.github.io/ChromiumPortable/en/chrome/",
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "author": {
+              "@type": "Person",
+              "name": "Piracola"
+            },
+            "license": "https://opensource.org/licenses/MIT",
+            "softwareVersion": "158.0.8127.18",
+            "datePublished": "2026-11-04",
+            "fileSize": "141989115"
           }
         ]
       }
@@ -157,7 +205,7 @@
       </nav>
 
       <section class="hero hero--page">
-        <p class="eyebrow">Google Chrome · Windows x64 · Portable</p>
+        <p class="eyebrow">Google Chrome · Windows x64 / ARM64 · Portable</p>
         <h1>Chrome Portable</h1>
         <p class="hero__lede">Google Chrome without an installer. Unzip and run — no registry writes. Profile and cache stay next to the app; delete the folder to uninstall cleanly.</p>
         <p class="hero__note">Installers come from Google’s Omaha update API. Versions match official Chrome Stable / Beta exactly.</p>
@@ -191,6 +239,28 @@
               <a class="btn btn--quiet" href="https://github.com/Piracola/Chrome-Portable/actions/workflows/build.yml" target="_blank" rel="noopener">Build log</a>
             </div>
           </article>
+          <article class="build-card" data-family="Chrome" style="--accent: #d8653f">
+            <div class="build-card__head">
+              <img class="build-card__icon" src="../../assets/chrome.svg" alt="" width="40" height="40" loading="lazy" />
+              <div class="build-card__title">
+                <h3>Chrome Portable ARM64</h3>
+                <p>Stable · Windows on Arm PCs</p>
+              </div>
+              <span class="pill">Stable</span>
+            </div>
+            <p class="build-card__summary">Built for Windows on Arm PCs (Snapdragon X and friends); same pipeline as x64, keep the Data folders apart.</p>
+            <dl class="build-card__meta">
+              <div><dt>Version</dt><dd>157.0.8103.39</dd></div>
+              <div><dt>Size</dt><dd>134 MB</dd></div>
+              <div><dt>Updated</dt><dd>2026-11-04</dd></div>
+              <div><dt>Platform</dt><dd>Windows ARM64</dd></div>
+            </dl>
+            <div class="build-card__actions">
+              <a class="btn btn--primary" href="https://github.com/Piracola/Chrome-Portable/releases/download/v157.0.8103.39/Chrome%2B%2B_stable_arm64_157.0.8103.39_2026-11-08.7z" target="_blank" rel="noopener">Download .7z<span class="build-card__version">v157.0.8103.39</span></a>
+              <a class="btn btn--soft" href="https://github.com/Piracola/Chrome-Portable" target="_blank" rel="noopener">Repository</a>
+              <a class="btn btn--quiet" href="https://github.com/Piracola/Chrome-Portable/actions/workflows/build.yml" target="_blank" rel="noopener">Build log</a>
+            </div>
+          </article>
           <article class="build-card" data-family="Chrome" style="--accent: #e08a48">
             <div class="build-card__head">
               <img class="build-card__icon" src="../../assets/chrome.svg" alt="" width="40" height="40" loading="lazy" />
@@ -209,6 +279,28 @@
             </dl>
             <div class="build-card__actions">
               <a class="btn btn--primary" href="https://github.com/Piracola/Chrome-Portable/releases/download/v157.0.8103.39/Chrome%2B%2B_beta_158.0.8127.18_2026-11-04.7z" target="_blank" rel="noopener">Download .7z<span class="build-card__version">v158.0.8127.18</span></a>
+              <a class="btn btn--soft" href="https://github.com/Piracola/Chrome-Portable" target="_blank" rel="noopener">Repository</a>
+              <a class="btn btn--quiet" href="https://github.com/Piracola/Chrome-Portable/actions/workflows/build.yml" target="_blank" rel="noopener">Build log</a>
+            </div>
+          </article>
+          <article class="build-card" data-family="Chrome" style="--accent: #e08a48">
+            <div class="build-card__head">
+              <img class="build-card__icon" src="../../assets/chrome.svg" alt="" width="40" height="40" loading="lazy" />
+              <div class="build-card__title">
+                <h3>Chrome Portable Beta ARM64</h3>
+                <p>Beta · Early access on Arm</p>
+              </div>
+              <span class="pill">Beta</span>
+            </div>
+            <p class="build-card__summary">Chrome Beta for Windows on Arm, about four weeks ahead of Stable; keep it off the x64 Data folder.</p>
+            <dl class="build-card__meta">
+              <div><dt>Version</dt><dd>158.0.8127.18</dd></div>
+              <div><dt>Size</dt><dd>135 MB</dd></div>
+              <div><dt>Updated</dt><dd>2026-11-04</dd></div>
+              <div><dt>Platform</dt><dd>Windows ARM64</dd></div>
+            </dl>
+            <div class="build-card__actions">
+              <a class="btn btn--primary" href="https://github.com/Piracola/Chrome-Portable/releases/download/v157.0.8103.39/Chrome%2B%2B_beta_arm64_158.0.8127.18_2026-11-08.7z" target="_blank" rel="noopener">Download .7z<span class="build-card__version">v158.0.8127.18</span></a>
               <a class="btn btn--soft" href="https://github.com/Piracola/Chrome-Portable" target="_blank" rel="noopener">Repository</a>
               <a class="btn btn--quiet" href="https://github.com/Piracola/Chrome-Portable/actions/workflows/build.yml" target="_blank" rel="noopener">Build log</a>
             </div>
@@ -261,7 +353,10 @@
           <h2>Verify your download</h2>
           <p>Every Release lists the SHA256 of each archive. Run one PowerShell command after download and compare — a match means the file is byte-identical to the build output.</p>
         </div>
-        <pre class="code"><code>certutil -hashfile .\Chrome++_stable_version_date.7z SHA256</code></pre>
+        <pre class="code"><code>certutil -hashfile .\Chrome++_stable_version_date.7z SHA256
+      certutil -hashfile .\Chrome++_stable_arm64_version_date.7z SHA256
+      certutil -hashfile .\Chrome++_beta_version_date.7z SHA256
+      certutil -hashfile .\Chrome++_beta_arm64_version_date.7z SHA256</code></pre>
         <p class="note">Build logs are public on GitHub Actions, so you can confirm the archive came from that exact run.</p>
       </section>
 

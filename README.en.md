@@ -16,7 +16,7 @@ Shared build core for portable Chromium-family browsers
 
 </div>
 
-This project builds portable browsers with Chrome++ integrated. It does not ship browser installers. Everyday users should get ready-made builds from the projects below or the unified download site.
+This repository provides a build engine and a graphical builder for portable Chromium-family browsers with Chrome++ integrated. Browser binaries are not distributed here; the three products are published by the repositories listed below.
 
 ## Current products
 
@@ -28,12 +28,6 @@ These three channels have dedicated release repositories and ongoing builds.
 | **Microsoft Edge Portable** | [Edge_Portable][link-edge] | [![][badge-edge-release]][link-edge] | 2026-09-11 | [![][badge-edge-downloads]][link-edge] | [![][badge-edge-stars]][link-edge] |
 | **Helium Portable** | [Helium_Portable][link-helium] | [![][badge-helium-release]][link-helium] | 2026-09-21 | [![][badge-helium-downloads]][link-helium] | [![][badge-helium-stars]][link-helium] |
 
-**Channel notes**
-
-- **Chrome**: `stable` / `beta`; official Omaha packages; artifacts `Chrome++_stable_*` / `Chrome++_beta_*`.
-- **Edge**: stable; Microsoft CDP API + installer source; artifacts `Edge_Portable_Win64_*`.
-- **Helium**: stable; auto layout parsing; artifacts `Helium_*`. Official product builds live in the child repo. If upstream has no public Windows package, pass `package_url`.
-
 See the [download site](https://piracola.github.io/ChromiumPortable/) for files, versions, and checksums.
 
 ## Using a portable build
@@ -42,53 +36,21 @@ See the [download site](https://piracola.github.io/ChromiumPortable/) for files,
 2. Extract it to any writable folder.
 3. Run the browser exe, or double-click `开始.bat` in the archive.
 
-Browsing data is usually stored next to the browser folder in `Data` and `Cache`. When updating, replace only the browser program folder and keep your data directories.
+Browsing data is usually stored next to the browser folder in `Data` and `Cache`. When updating, replace only the browser program folder and keep the data directories unchanged.
 
-## Other Chromium-family browsers (personal builds)
+## Graphical builder
 
-This toolchain can also produce portable builds of Brave, Vivaldi, Opera, Thorium, 360 Extreme Browser X, and similar.  
-These are **not** products of this project: no download-site product cards, builds are for learning and personal use only. Read upstream terms before redistributing (see [NOTICE](./NOTICE)).
-
-**Graphical builder (recommended)**
-
-1. Grab `ChromiumPortableBuilder-windows-x64.zip` from [Releases](../../releases) (engine and GUI included; the target machine does **not** need Python).
-2. Extract anywhere and copy installer packages into **`installers\`** (see `README.txt` inside).
-3. Run `builder-app.exe`:
-
-- The page reads top-to-bottom in four steps: **Source** (single installer / a folder / an online target; the installer list reads `installers\`) → **Options** (architecture, optional 7z packaging) → **Output** (working directory and artifact locations) → **Plan and run**.
-- The plan panel lays out the engine commands your selection will run (prepare → build → 7z → verify for online + archive) before you press anything; the commands you see are the commands that run.
-- **Toolbox**: static installer inspection, batch research, single-target config, upstream URL resolution, artifact verification — each runnable on its own.
-- While a task runs, Start becomes Cancel; the log auto-scrolls and can be cleared, copied, and saved. `7zr.exe` is provisioned into the working directory automatically.
-- The **working directory** holds `installers\`, `build\release\`, and `build\assets\`; it defaults to the exe folder and can be changed at any time.
-
-UI language: Simplified Chinese / English, switchable in the top-right corner.
-
-**Command line**
-
-```powershell
-portable-builder.exe --workdir . build-package <installer> --archive
-portable-builder.exe --workdir . inspect-package <installer> --json
-```
-
-Building from source: install [Rust](https://rustup.rs/) and run `cargo build --release -p portable-builder -p builder-app`.
-
-Supported online browsers, CI release flow, and advanced CLI: [development docs](./docs/DEVELOPMENT.md).
+[Releases](../../releases) provides `ChromiumPortableBuilder-windows-x64.zip`, which contains the build engine and the graphical interface; the target machine does not need Python. Extract it, run `builder-app.exe`, and place browser installers in `installers\` to select the source, architecture, and output directory and start a build. The interface offers Simplified Chinese and English. Full operating steps, toolbox commands, and command-line usage are in the [development docs](./docs/DEVELOPMENT.md).
 
 ## Notes
 
 - Published builds target Windows x64.
 - Portability patches the browser main program and loads Chrome++; original code signatures may break and some security tools may warn.
-- Get product-channel files only from the child projects’ GitHub Releases or the unified download site, and verify SHA256 when needed. `Unofficial` builds of other browsers are not official.
 - Back up important browser data before use.
-- Trademarks, third-party components, and redistribution boundaries: [NOTICE](./NOTICE).
-
-## Development
-
-This repository is the build core, not a browser-binary distribution. To add a browser, wire a build, or maintain releases, see [development docs](./docs/DEVELOPMENT.md). Download-site maintenance: [docs/README.md](./docs/README.md).
 
 ## Sibling engine
 
-Chromium-family and Firefox-family builds each have their own engine. The two repositories are maintained and released independently, but they follow the same shape: unpack with 7-Zip → inject the portability runtime (Chrome++ on the Chromium side, [libportable][link-libportable] on the Gecko side) → package as 7z and publish a SHA256.
+Chromium-family and Firefox-family builds each have their own engine. The two repositories are maintained and released independently, and both follow the sequence of unpacking with 7-Zip → injecting the portability runtime (Chrome++ on the Chromium side, [libportable][link-libportable] on the Gecko side) → packaging as 7z and publishing a SHA256.
 
 | Family | Engine repository | Browsers covered |
 | --- | --- | --- |
@@ -104,6 +66,10 @@ Chromium-family and Firefox-family builds each have their own engine. The two re
 | **Zen Portable** | [Zen-Portable][link-gecko-zen] |
 
 The channels under [Current products](#current-products) are built by this repository; the three Gecko channels are built by [Gecko-Portable][link-gecko].
+
+## Development docs
+
+Adding a browser, wiring a build, and maintaining releases are documented in the [development docs](./docs/DEVELOPMENT.md), which also covers command-line usage and CI. Download-site maintenance: [docs/README.md](./docs/README.md). Trademarks, third-party components, and redistribution boundaries: [NOTICE](./NOTICE).
 
 ## License
 

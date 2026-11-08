@@ -23,33 +23,36 @@ ChromiumPortable 统一处理上游版本检查、安装包下载、解压、Chr
 
 ## 接入子仓库
 
-子仓库可以通过以下 workflow 调用构建核心：
+子仓库只声明触发条件和目标列表，流水线本体复用本仓库的 workflow：
 
 ```yaml
 jobs:
-  portable:
+  build:
     permissions:
       contents: write
-    uses: Piracola/ChromiumPortable/.github/workflows/portable-browser.yml@v1.2
+    uses: Piracola/ChromiumPortable/.github/workflows/portable-browser.yml@main
     with:
       builder-repository: Piracola/ChromiumPortable
-      builder-ref: v1.2
+      builder-ref: v2
       config: browser.json
-      target: browser_stable
+      targets: chrome_stable,chrome_beta,chrome_stable_arm64,chrome_beta_arm64
+      artifact-name: Chrome-Portable-Builds
 ```
 
-建议固定使用正式 tag，确认兼容后再升级 core 版本，避免主分支上的改动直接影响生产构建。
+建议固定使用正式 tag，确认兼容后再升级 core 版本，避免主分支上的改动直接影响生产构建（`uses:` 指向 workflow 文件，`builder-ref` 指向引擎包，两者可以分开升级）。
 
 workflow 的版本检查运行在 Linux，只有需要重新构建时才启动 Windows runner。Windows job 会依次执行构建、打包、成品验证和 Release 更新。
 
-要发布多种架构或渠道（x64 + ARM64、Stable + Beta）时不能用这个只接受单个 `target` 的 reusable workflow，参考 Chrome-Portable / Edge_Portable / Helium_Portable 的 `build.yml`：自己下载引擎包，用 `check-targets` / `build-targets` / `verify-targets` 一次处理多个 target，所有资产发布到同一条 Release，架构靠 `archive_name`（`…_arm64_…`）区分。
+`targets` 是逗号分隔的列表：多架构（x64 + ARM64）、多渠道（Stable + Beta）都放进同一份配置、走同一条 Ring Release，架构靠 `archive_name`（`…_arm64_…`）区分，每个 target 的 `env_prefix` 决定它自己的 `*_UPDATE` 开关。加一个架构或渠道就是改这一行列表，不用动流水线。要跑子仓库自己的额外检查（例如 Chrome 的 `node scripts/test-config.cjs`），用 `pre-check-command`，它在 check job 里 checkout 之后执行。
 
 ## browser.json
 
 配置支持 JSON、TOML 和 YAML。常用字段可参考 [examples](../examples/)：
 
+字段是**严格校验**的：每个 target 会按引擎的 schema 反序列化一次，写错的键（`archtecture`、`output_dirs`）会直接报错并指出 target 名，而不是悄悄退回 x64 / `Browser` 默认值。新增字段要同时加进 `crates/portable-builder/src/config.rs` 的 `Target`。
+
 - `name`、`display_name`、`output_dir`：项目及产物名称。`output_dir` 可以是相对路径：Edge 设为 `Microsoft\Edge\Application`，因为 Edge 按主程序路径识别渠道，只有官方形态才会被认作 Stable。
-- `architecture`：目标架构，`x64`（默认）或 `arm64`，决定注入哪个 Chrome++ DLL。两种架构的组件都由引擎包提供（`version-x64.dll` / `version-arm64.dll`），不需要子仓库自己下载。ARM64 包在 x64 runner 上构建并静态校验（`verify --no-smoke` 会断言主程序与 `version.dll` 的 PE 机器类型），真正的启动测试只有 ARM64 真机能做。
+- `architecture`：目标架构，`x64`（默认）或 `arm64`，决定注入哪个 Chrome++ DLL。两种架构的组件都由引擎包提供（`version-x64.dll` / `version-arm64.dll`），不需要子仓库自己下载。`arm64` 包在 x64 runner 上构建并静态校验：`verify` 会断言主程序与 `version.dll` 的 PE 机器类型，并在这个主机跑不动该架构时自动跳过启动测试（真正的启动测试只有 ARM64 真机能做）。
 - `provider`：上游版本和安装包来源。
 - `version_root`、`inner_archive`、`layout`：安装包解压结构。
 - `exe_name`：相对于版本目录的浏览器主程序路径，也可以包含 `..`。
@@ -211,3 +214,47 @@ Release 正文中的版本号会被 `version_pattern` 重新读取，因此正�
 ## 下载站
 
 `docs/` 同时包含 GitHub Pages 下载站。页面内容、生成方式和发布说明见 [docs/README.md](./README.md)。
+
+## 图形构建器与渠道说明
+
+图形构建器 `builder-app.exe` 随 [Releases](../../releases) 的 `ChromiumPortableBuilder-windows-x64.zip` 发布，包含构建引擎与图形界面，目标机不需要 Python。解压后运行，把浏览器安装包复制进 `installers\`（该目录内有一份 `README.txt` 说明）。
+
+页面自上而下分为四步：
+
+1. **来源**：单个安装包 / 整个文件夹 / 在线目标，安装包列表直接读 `installers\`。
+2. **选项**：架构，以及是否同时打包 7z。
+3. **输出**：工作目录与产物落点。
+4. **计划与执行**：先列出当前选择对应的引擎命令（在线 + 打包时为 准备 → 构建 → 打包 7z → 校验），列出的命令即为实际执行的命令。
+
+工具箱页可单独执行以下操作：
+
+- 静态识别安装包
+- 批量静态巡检
+- 生成单目标配置
+- 解析上游下载地址
+- 校验产物压缩包
+
+运行期间「开始构建」切换为「取消」；日志支持自动滚动，并可清空、复制或保存。`7zr.exe` 会自动补齐到工作目录。工作目录决定 `installers\`、`build\release\`、`build\assets\` 的落点，默认取 exe 所在目录，可随时更改。界面语言为简体中文 / English，在右上角切换。
+
+命令行示例：
+
+```powershell
+portable-builder.exe --workdir . build-package <安装包> --archive
+portable-builder.exe --workdir . inspect-package <安装包> --json
+```
+
+从源码构建：安装 [Rust](https://rustup.rs/) 后运行 `cargo build --release -p portable-builder -p builder-app`。
+
+### 渠道说明
+
+- **Chrome**：`stable` / `beta` 两线，官方 Omaha 取包，产物 `Chrome++_stable_*` / `Chrome++_beta_*`。
+- **Edge**：稳定线，微软 CDP API + 安装器源，产物 `Edge_Portable_Win64_*`。
+- **Helium**：稳定线，auto 结构解析，产物 `Helium_*`。官方产品构建在子仓库；本核心 `build-browser` 若上游未挂公开安装包资产，需提供 `package_url`。
+
+### 其他浏览器与自用构建
+
+本工具也能为 Brave / Vivaldi / Opera / Thorium / 360 极速浏览器 X 等制作便携版。这些不属于本项目产品，无下载站产品页，构建结果仅供学习与自用；再分发请先阅读上游协议（见 [NOTICE](../NOTICE)）。支持的在线浏览器见 [在线 target（catalog）](#在线-targetcatalog)。
+
+### 获取与校验
+
+请只从三个产品仓库的 GitHub Releases 或统一下载页面获取产品渠道文件，并在需要时核对 SHA256。其他浏览器的 `Unofficial` 构建不代表官方立场。商标、第三方组件与再分发边界见 [NOTICE](../NOTICE)。

@@ -1,3 +1,13 @@
+# Multi-target reusable pipeline for a browser repository.
+#
+# Callers keep their own triggers (push / schedule / workflow_dispatch) and pass
+# `targets` as a comma-separated list; every target in the list is checked,
+# built, verified, rendered and published as one shared Release. Adding an
+# architecture or a channel is a caller-side list edit, not a workflow rewrite.
+#
+# Smoke launches are decided per target by the engine: an arm64 payload on an
+# x64 runner runs the PE checks and skips the launch, so callers never split
+# `verify-targets` into an x64 step and a `--no-smoke` step again.
 name: Portable Browser Build
 
 on:
@@ -8,8 +18,8 @@ on:
         required: false
         type: string
         default: browser.json
-      target:
-        description: Target name from the browser config.
+      targets:
+        description: Comma-separated target names from that config.
         required: true
         type: string
       artifact-name:
@@ -23,7 +33,7 @@ on:
         type: number
         default: 15
       builder-repository:
-        description: Repository that contains ChromiumPortable builder scripts.
+        description: Repository that publishes the engine bundle.
         required: true
         type: string
       builder-ref:
@@ -31,6 +41,11 @@ on:
         required: false
         type: string
         default: v2
+      pre-check-command:
+        description: Optional shell command run in the check job after checkout.
+        required: false
+        type: string
+        default: ""
 
 jobs:
   # Upstream version discovery is a handful of HTTP calls and needs no Windows,
@@ -42,12 +57,15 @@ jobs:
       contents: read
     outputs:
       update_needed: ${{ steps.check.outputs.UPDATE_NEEDED }}
-      create_new_release: ${{ steps.check.outputs.CREATE_NEW_RELEASE }}
-      upstream_version: ${{ steps.check.outputs.UPSTREAM_VERSION }}
       env_json: ${{ steps.check.outputs.env_json }}
     steps:
       - name: Checkout caller repository
         uses: actions/checkout@v7
+
+      - name: Run caller pre-check
+        if: inputs.pre-check-command != ''
+        shell: bash
+        run: ${{ inputs.pre-check-command }}
 
       - name: Download engine bundle
         shell: bash
@@ -66,24 +84,31 @@ jobs:
         id: check
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: _engine/portable-builder-linux-x64/portable-builder --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . check
+        run: _engine/portable-builder-linux-x64/portable-builder --config "${{ inputs.config }}" --workdir . check-targets "${{ inputs.targets }}"
 
       - name: Summarize
         shell: bash
+        env:
+          CHECK_ENV: ${{ steps.check.outputs.env_json }}
         run: |
-          echo "UPDATE_NEEDED=${{ steps.check.outputs.UPDATE_NEEDED }}"
-          echo "UPSTREAM_VERSION=${{ steps.check.outputs.UPSTREAM_VERSION }}"
-          echo "CREATE_NEW_RELEASE=${{ steps.check.outputs.CREATE_NEW_RELEASE }}"
-          echo "MINOR_UPDATE=${{ steps.check.outputs.MINOR_UPDATE }}"
-          echo "RELEASE_ID=${{ steps.check.outputs.RELEASE_ID }}"
-          echo "RELEASE_TAG=${{ steps.check.outputs.RELEASE_TAG }}"
+          python3 -c "
+          import json, os
+          for key, value in sorted(json.loads(os.environ['CHECK_ENV'] or '{}').items()):
+              print(f'{key}={value}')
+          "
 
   build:
     needs: check
     if: github.event_name != 'schedule' || needs.check.outputs.update_needed == 'true'
     runs-on: windows-latest
+    concurrency:
+      group: portable-build-${{ github.repository }}
+      cancel-in-progress: false
     permissions:
       contents: write
+    env:
+      TARGETS: ${{ inputs.targets }}
+      BUILDER_REF: ${{ inputs.builder-ref }}
     steps:
       - name: Checkout caller repository
         uses: actions/checkout@v7
@@ -93,7 +118,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download "${{ inputs.builder-ref }}" --repo "${{ inputs.builder-repository }}" --pattern 'portable-builder-windows-x64.zip*' --dir _engine
+          gh release download "$env:BUILDER_REF" --repo "${{ inputs.builder-repository }}" --pattern 'portable-builder-windows-x64.zip*' --dir _engine
           $zip = Get-ChildItem _engine/*.zip | Select-Object -First 1
           $expected = ((Get-Content "$($zip.FullName).sha256") -split '\s+')[0].ToLower()
           $actual = (Get-FileHash $zip.FullName -Algorithm SHA256).Hash.ToLower()
@@ -121,25 +146,24 @@ jobs:
           $date = Get-Date -Format 'yyyy-MM-dd'
           "BUILD_DATE=$date" >> $env:GITHUB_ENV
 
-      - name: Build portable browser
+      - name: Build updated targets
         run: |
-          & $env:CPB_ENGINE --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . build
+          & $env:CPB_ENGINE --config "${{ inputs.config }}" --workdir . build-targets "$env:TARGETS"
+          if ($LASTEXITCODE -ne 0) { throw 'build-targets failed' }
 
-      - name: Archive build
+      - name: Verify archives
         run: |
-          & $env:CPB_ENGINE --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . archive
-
-      - name: Verify archive
-        run: |
-          & $env:CPB_ENGINE --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . verify
+          & $env:CPB_ENGINE --config "${{ inputs.config }}" --target "$env:TARGETS" --workdir . verify-targets
+          if ($LASTEXITCODE -ne 0) { throw 'archive verification failed' }
 
       - name: Render release metadata
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          & $env:CPB_ENGINE --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . render-release
+          & $env:CPB_ENGINE --config "${{ inputs.config }}" --workdir . render-release-targets "$env:TARGETS"
+          if ($LASTEXITCODE -ne 0) { throw 'render-release-targets failed' }
 
-      - name: Upload artifact
+      - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: ${{ inputs.artifact-name }}
@@ -151,7 +175,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          & $env:CPB_ENGINE --config "${{ inputs.config }}" --target "${{ inputs.target }}" --workdir . update-release
+          & $env:CPB_ENGINE --config "${{ inputs.config }}" --workdir . update-release-targets "$env:TARGETS"
+          if ($LASTEXITCODE -ne 0) { throw 'update-release-targets failed' }
 
       - name: Upload assets to existing release
         if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'push') && env.UPDATE_NEEDED == 'true' && env.CREATE_NEW_RELEASE == 'false'

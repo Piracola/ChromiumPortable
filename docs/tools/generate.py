@@ -140,6 +140,11 @@ def lang_switch_html(site: dict, locale: dict, slug: str | None) -> str:
     )
 
 
+def arch_label(ui: dict, architecture: str) -> str:
+    """架构的展示名（x64 / ARM64），由各语言的 ui.archLabels 提供。"""
+    return (ui.get("archLabels") or {}).get(architecture, architecture)
+
+
 def merged_build(site: dict, build: dict, code: str) -> dict:
     copy = t(site, code)["builds"][build["id"]]
     return {**build, **copy}
@@ -304,6 +309,7 @@ def build_card_html(
     updated = short_date(release["publishedAt"]) if release else "—"
     download_url = release["url"] if release else repo["releasesUrl"]
     download_label = ui["download7z"] if release else ui["goReleases"]
+    arch = arch_label(ui, build["architecture"])
 
     version_chip = (
         f'<span class="build-card__version">v{esc(version)}</span>' if version else ""
@@ -328,7 +334,7 @@ def build_card_html(
     <div><dt>{esc(ui["version"])}</dt><dd>{esc(version) if version else "—"}</dd></div>
     <div><dt>{esc(ui["size"])}</dt><dd>{esc(size)}</dd></div>
     <div><dt>{esc(ui["updated"])}</dt><dd>{esc(updated)}</dd></div>
-    <div><dt>{esc(ui["platform"])}</dt><dd>Windows {esc(build["architecture"])}</dd></div>
+    <div><dt>{esc(ui["platform"])}</dt><dd>Windows {esc(arch)}</dd></div>
   </dl>
   <div class="build-card__actions">
     <a class="btn btn--primary" href="{esc(download_url)}" target="_blank" rel="noopener">{download_label}{version_chip}</a>
@@ -373,9 +379,11 @@ def features_html(site: dict, code: str) -> str:
 </section>"""
 
 
-def verify_html(site: dict, code: str, asset_hint: str) -> str:
+def verify_html(site: dict, code: str, asset_hints: list[str]) -> str:
     verify = t(site, code)["verify"]
-    command = verify["command"].replace("{asset}", asset_hint)
+    command = "\n".join(
+        verify["command"].replace("{asset}", hint) for hint in asset_hints
+    )
     return f"""<section class="section" id="verify">
   <div class="section__head">
     <h2>{esc(verify["heading"])}</h2>
@@ -453,13 +461,14 @@ def software_application(
     release: dict | None,
     page_url: str,
     currency: str,
+    ui: dict,
 ) -> dict:
     node = {
         "@type": "SoftwareApplication",
         "name": build["title"],
         "applicationCategory": "BrowserApplication",
         "operatingSystem": "Windows 10, Windows 11",
-        "processorRequirements": "x64",
+        "processorRequirements": arch_label(ui, build["architecture"]),
         "url": page_url,
         "downloadUrl": release["url"] if release else repo["releasesUrl"],
         "softwareHelp": page_url,
@@ -479,6 +488,7 @@ def home_jsonld(site: dict, locale: dict, code: str, releases: dict) -> dict:
     content = t(site, code)
     site_url = abs_url(site, locale, None)
     currency = "CNY" if code.startswith("zh") else "USD"
+    ui = t(site, code)["ui"]
     repo_map = {repo["id"]: repo for repo in all_repos(site, code)}
     items = []
     for position, build in enumerate(all_builds(site, code), start=1):
@@ -489,7 +499,7 @@ def home_jsonld(site: dict, locale: dict, code: str, releases: dict) -> dict:
             {
                 "@type": "ListItem",
                 "position": position,
-                "item": software_application(build, repo, release, page_url, currency),
+                "item": software_application(build, repo, release, page_url, currency, ui),
             }
         )
 
@@ -537,10 +547,16 @@ def page_jsonld(site: dict, locale: dict, code: str, page: dict, builds: list[di
     page_url = abs_url(site, locale, page["slug"])
     repo_map = {repo["id"]: repo for repo in all_repos(site, code)}
     repo = repo_map[page["repoId"]]
+    ui = content["ui"]
 
     apps = [
         software_application(
-            build, repo, (releases.get("builds") or {}).get(build["id"]), page_url, currency
+            build,
+            repo,
+            (releases.get("builds") or {}).get(build["id"]),
+            page_url,
+            currency,
+            ui,
         )
         for build in builds
     ]
@@ -804,6 +820,8 @@ def render_page(site: dict, locale: dict, code: str, page: dict, releases: dict)
     release_map = releases.get("builds") or {}
     builds = [b for b in all_builds(site, code) if b["pageSlug"] == slug]
 
+    asset_hints = [b["assetHint"].replace("…", ui["assetHintSuffix"]) for b in builds]
+
     cards = indent(
         "\n".join(
             build_card_html(
@@ -868,7 +886,7 @@ def render_page(site: dict, locale: dict, code: str, page: dict, releases: dict)
 
       {indent(sections_html(page), 6).strip()}
 
-      {indent(verify_html(site, code, builds[0]["assetHint"].replace("…", ui["assetHintSuffix"])), 6).strip()}
+      {indent(verify_html(site, code, asset_hints), 6).strip()}
 
       {indent(features_html(site, code), 6).strip()}
 

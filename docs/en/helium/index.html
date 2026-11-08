@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Helium Portable Download — Ad-free Chromium, No Install, Daily Builds</title>
-    <meta name="description" content="Download Helium browser Portable for Windows x64. Chrome++ integrated, built from imputnet/helium stable releases with daily rebuilds and SHA256 verification." />
+    <meta name="description" content="Download Helium browser Portable for Windows x64 / ARM64. Chrome++ integrated, built from imputnet/helium stable releases with daily rebuilds and SHA256 verification." />
     <meta name="author" content="Piracola" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="color-scheme" content="light dark" />
@@ -22,14 +22,14 @@
     <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content="Chromium Portable Builds" />
     <meta property="og:title" content="Helium Portable Download — Ad-free Chromium, No Install, Daily Builds" />
-    <meta property="og:description" content="Download Helium browser Portable for Windows x64. Chrome++ integrated, built from imputnet/helium stable releases with daily rebuilds and SHA256 verification." />
+    <meta property="og:description" content="Download Helium browser Portable for Windows x64 / ARM64. Chrome++ integrated, built from imputnet/helium stable releases with daily rebuilds and SHA256 verification." />
     <meta property="og:url" content="https://piracola.github.io/ChromiumPortable/en/helium/" />
     <meta property="og:image" content="https://piracola.github.io/ChromiumPortable/assets/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Helium Portable Download — Ad-free Chromium, No Install, Daily Builds" />
-    <meta name="twitter:description" content="Download Helium browser Portable for Windows x64. Chrome++ integrated, built from imputnet/helium stable releases with daily rebuilds and SHA256 verification." />
+    <meta name="twitter:description" content="Download Helium browser Portable for Windows x64 / ARM64. Chrome++ integrated, built from imputnet/helium stable releases with daily rebuilds and SHA256 verification." />
     <meta name="twitter:image" content="https://piracola.github.io/ChromiumPortable/assets/og.png" />
     <link rel="stylesheet" href="../../styles.css" />
     <script>
@@ -51,7 +51,7 @@
             "@id": "https://piracola.github.io/ChromiumPortable/en/helium/#webpage",
             "url": "https://piracola.github.io/ChromiumPortable/en/helium/",
             "name": "Helium Portable Download — Ad-free Chromium, No Install, Daily Builds",
-            "description": "Download Helium browser Portable for Windows x64. Chrome++ integrated, built from imputnet/helium stable releases with daily rebuilds and SHA256 verification.",
+            "description": "Download Helium browser Portable for Windows x64 / ARM64. Chrome++ integrated, built from imputnet/helium stable releases with daily rebuilds and SHA256 verification.",
             "inLanguage": "en",
             "isPartOf": {
               "@id": "https://piracola.github.io/ChromiumPortable/#website"
@@ -97,6 +97,30 @@
             "softwareVersion": "0.21.1.1",
             "datePublished": "2026-11-05",
             "fileSize": "120926422"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "Helium Portable ARM64",
+            "applicationCategory": "BrowserApplication",
+            "operatingSystem": "Windows 10, Windows 11",
+            "processorRequirements": "ARM64",
+            "url": "https://piracola.github.io/ChromiumPortable/en/helium/",
+            "downloadUrl": "https://github.com/Piracola/Helium_Portable/releases/download/v0.21.1.1/Helium_arm64_0.21.1.1_2026-11-08.7z",
+            "softwareHelp": "https://piracola.github.io/ChromiumPortable/en/helium/",
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "author": {
+              "@type": "Person",
+              "name": "Piracola"
+            },
+            "license": "https://opensource.org/licenses/MIT",
+            "softwareVersion": "0.21.1.1",
+            "datePublished": "2026-11-05",
+            "fileSize": "106963232"
           }
         ]
       }
@@ -133,7 +157,7 @@
       </nav>
 
       <section class="hero hero--page">
-        <p class="eyebrow">Helium · Windows x64 · Portable</p>
+        <p class="eyebrow">Helium · Windows x64 / ARM64 · Portable</p>
         <h1>Helium Portable</h1>
         <p class="hero__lede">Helium is a Chromium fork that blocks ads and strips telemetry by default. This is its Windows x64 portable build.</p>
         <p class="hero__note">Tracks imputnet/helium-windows official stable Releases.</p>
@@ -163,6 +187,28 @@
             </dl>
             <div class="build-card__actions">
               <a class="btn btn--primary" href="https://github.com/Piracola/Helium_Portable/releases/download/v0.21.1.1/Helium_0.21.1.1_2026-11-05.7z" target="_blank" rel="noopener">Download .7z<span class="build-card__version">v0.21.1.1</span></a>
+              <a class="btn btn--soft" href="https://github.com/Piracola/Helium_Portable" target="_blank" rel="noopener">Repository</a>
+              <a class="btn btn--quiet" href="https://github.com/Piracola/Helium_Portable/actions/workflows/build.yml" target="_blank" rel="noopener">Build log</a>
+            </div>
+          </article>
+          <article class="build-card" data-family="Helium" style="--accent: #5b5bd6">
+            <div class="build-card__head">
+              <img class="build-card__icon" src="../../assets/helium.svg" alt="" width="40" height="40" loading="lazy" />
+              <div class="build-card__title">
+                <h3>Helium Portable ARM64</h3>
+                <p>Stable · Ad-blocked on Arm</p>
+              </div>
+              <span class="pill">Stable</span>
+            </div>
+            <p class="build-card__summary">The Windows on Arm build of Helium, tracking upstream arm64 stable; ads and telemetry stripped by default.</p>
+            <dl class="build-card__meta">
+              <div><dt>Version</dt><dd>0.21.1.1</dd></div>
+              <div><dt>Size</dt><dd>102 MB</dd></div>
+              <div><dt>Updated</dt><dd>2026-11-05</dd></div>
+              <div><dt>Platform</dt><dd>Windows ARM64</dd></div>
+            </dl>
+            <div class="build-card__actions">
+              <a class="btn btn--primary" href="https://github.com/Piracola/Helium_Portable/releases/download/v0.21.1.1/Helium_arm64_0.21.1.1_2026-11-08.7z" target="_blank" rel="noopener">Download .7z<span class="build-card__version">v0.21.1.1</span></a>
               <a class="btn btn--soft" href="https://github.com/Piracola/Helium_Portable" target="_blank" rel="noopener">Repository</a>
               <a class="btn btn--quiet" href="https://github.com/Piracola/Helium_Portable/actions/workflows/build.yml" target="_blank" rel="noopener">Build log</a>
             </div>
@@ -202,7 +248,8 @@
           <h2>Verify your download</h2>
           <p>Every Release lists the SHA256 of each archive. Run one PowerShell command after download and compare — a match means the file is byte-identical to the build output.</p>
         </div>
-        <pre class="code"><code>certutil -hashfile .\Helium_version_date.7z SHA256</code></pre>
+        <pre class="code"><code>certutil -hashfile .\Helium_version_date.7z SHA256
+      certutil -hashfile .\Helium_arm64_version_date.7z SHA256</code></pre>
         <p class="note">Build logs are public on GitHub Actions, so you can confirm the archive came from that exact run.</p>
       </section>
 

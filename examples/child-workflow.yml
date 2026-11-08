@@ -7,13 +7,15 @@ on:
   schedule:
     - cron: "0 0 * * *"
 
+# 整条流水线在 ChromiumPortable 的 reusable workflow 里；这里只声明触发条件和目标列表。
 jobs:
-  portable:
+  build:
     permissions:
       contents: write
-    uses: your-name/ChromiumPortable/.github/workflows/portable-browser.yml@v1.1
+    uses: your-name/ChromiumPortable/.github/workflows/portable-browser.yml@main
     with:
       builder-repository: your-name/ChromiumPortable
-      builder-ref: v1.1
+      builder-ref: v2
       config: browser.json
-      target: edge_stable
+      targets: edge_stable,edge_arm64
+      artifact-name: Edge-Portable-Builds

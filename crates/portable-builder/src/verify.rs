@@ -545,6 +545,20 @@ fn assert_target_architecture(target: &Value, app_root: &Path, executable: &Path
     Ok(())
 }
 
+/// True when this host can launch a browser of `arch`.
+///
+/// CI builds ARM64 on x64 runners: pe/lib checks still apply, but launching an
+/// arm64 `chrome.exe` there cannot work, so the smoke run is skipped per target
+/// instead of per invocation (callers used to split one call into an x64 step
+/// and an `--no-smoke` step).
+pub fn host_can_run(arch: &str) -> bool {
+    match arch.to_ascii_lowercase().as_str() {
+        "arm64" => cfg!(target_arch = "aarch64"),
+        // x64/x86 payloads run natively on x64 and under emulation on arm64.
+        _ => true,
+    }
+}
+
 /// Per-target verification with the env-prefix
 /// skip logic, then VERIFIED_TARGETS written through write_env.
 pub fn verify_targets(
@@ -572,7 +586,17 @@ pub fn verify_targets(
             ));
             continue;
         }
-        verify_target(&target, workdir, None, smoke)?;
+        let arch = target
+            .get("architecture")
+            .and_then(Value::as_str)
+            .unwrap_or("x64");
+        let smoke_here = smoke && host_can_run(arch);
+        if smoke && !smoke_here {
+            info(format!(
+                "{target_name}: {arch} payload on this host - smoke launch skipped, PE checks still run."
+            ));
+        }
+        verify_target(&target, workdir, None, smoke_here)?;
         verified.push(target_name.clone());
     }
 
@@ -588,6 +612,14 @@ pub fn verify_targets(
 mod tests {
     use super::*;
 
+    #[test]
+    fn smoke_gate_only_blocks_arm64_on_non_arm64_hosts() {
+        assert!(host_can_run("x64"));
+        assert!(host_can_run("x86"));
+        assert!(host_can_run("X64"));
+        assert_eq!(host_can_run("arm64"), cfg!(target_arch = "aarch64"));
+        assert_eq!(host_can_run("Arm64"), cfg!(target_arch = "aarch64"));
+    }
     /// Golden: verify_archive_locate_golden.json - the regex is a fullmatch
     /// over ProbeBrowser_{version}_{date}.7z, the newest mtime wins, and the
     /// no-match error lists every archive present ("(none)" when empty).

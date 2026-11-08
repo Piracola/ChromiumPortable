@@ -90,6 +90,20 @@
       "assetPattern": "^Chrome\\+\\+_stable_(?P<version>[\\d.]+)_"
     },
     {
+      "id": "chrome-stable-arm64",
+      "repoId": "chrome",
+      "pageSlug": "chrome",
+      "family": "Chrome",
+      "channel": "Stable",
+      "target": "chrome_stable_arm64",
+      "outputDir": "Chrome",
+      "architecture": "arm64",
+      "assetHint": "Chrome++_stable_arm64_…7z",
+      "accent": "#d8653f",
+      "icon": "assets/chrome.svg",
+      "assetPattern": "^Chrome\\+\\+_stable_arm64_(?P<version>[\\d.]+)_"
+    },
+    {
       "id": "chrome-beta",
       "repoId": "chrome",
       "pageSlug": "chrome",
@@ -102,6 +116,20 @@
       "accent": "#e08a48",
       "icon": "assets/chrome.svg",
       "assetPattern": "^Chrome\\+\\+_beta_(?P<version>[\\d.]+)_"
+    },
+    {
+      "id": "chrome-beta-arm64",
+      "repoId": "chrome",
+      "pageSlug": "chrome",
+      "family": "Chrome",
+      "channel": "Beta",
+      "target": "chrome_beta_arm64",
+      "outputDir": "Chrome",
+      "architecture": "arm64",
+      "assetHint": "Chrome++_beta_arm64_…7z",
+      "accent": "#e08a48",
+      "icon": "assets/chrome.svg",
+      "assetPattern": "^Chrome\\+\\+_beta_arm64_(?P<version>[\\d.]+)_"
     },
     {
       "id": "edge-stable",
@@ -118,6 +146,20 @@
       "assetPattern": "^Edge_Portable_Win64_(?P<version>[\\d.]+)_"
     },
     {
+      "id": "edge-stable-arm64",
+      "repoId": "edge",
+      "pageSlug": "edge",
+      "family": "Edge",
+      "channel": "Stable",
+      "target": "edge_arm64",
+      "outputDir": "Microsoft\\Edge\\Application",
+      "architecture": "arm64",
+      "assetHint": "Edge_Portable_arm64_…7z",
+      "accent": "#1d7c84",
+      "icon": "assets/edge.svg",
+      "assetPattern": "^Edge_Portable_arm64_(?P<version>[\\d.]+)_"
+    },
+    {
       "id": "helium-stable",
       "repoId": "helium",
       "pageSlug": "helium",
@@ -130,6 +172,20 @@
       "accent": "#5b5bd6",
       "icon": "assets/helium.svg",
       "assetPattern": "^Helium_(?P<version>\\d[\\d.]*)_"
+    },
+    {
+      "id": "helium-stable-arm64",
+      "repoId": "helium",
+      "pageSlug": "helium",
+      "family": "Helium",
+      "channel": "Stable",
+      "target": "helium_arm64",
+      "outputDir": "Helium",
+      "architecture": "arm64",
+      "assetHint": "Helium_arm64_…7z",
+      "accent": "#5b5bd6",
+      "icon": "assets/helium.svg",
+      "assetPattern": "^Helium_arm64_(?P<version>\\d[\\d.]*)_"
     }
   ],
   "pages": [
@@ -174,6 +230,10 @@
         "size": "体积",
         "updated": "更新",
         "platform": "平台",
+        "archLabels": {
+          "x64": "x64",
+          "arm64": "ARM64"
+        },
         "repoLink": "仓库",
         "browsers": "浏览器",
         "upstreamCredits": "上游与致谢",
@@ -185,15 +245,15 @@
       },
       "home": {
         "title": "Chrome / Edge / Helium 便携版下载 — 免安装绿色版 · 每日构建 · Chrome++",
-        "description": "开源可复现的 Chromium 系便携版：Chrome、Edge、Helium Windows x64 免安装绿色版。集成 Chrome++，每日跟随官方版本自动构建，SHA256 全流程校验并实机验证便携性。",
-        "eyebrow": "Windows x64 · 免安装 · 开源自动构建",
+        "description": "开源可复现的 Chromium 系便携版：Chrome、Edge、Helium Windows x64 / ARM64 免安装绿色版。集成 Chrome++，每日跟随官方版本自动构建，SHA256 全流程校验并实机验证便携性。",
+        "eyebrow": "Windows x64 / ARM64 · 免安装 · 开源自动构建",
         "h1": "Chrome、Edge、Helium 便携版",
         "lede": "免安装、不写注册表、数据留在自己的文件夹里。由 GitHub Actions 每日跟随官方版本自动构建，构建过程与校验日志全部公开可查。",
         "stats": [
           {
-            "value": "4",
+            "value": "8",
             "label": "构建目标",
-            "detail": "3 个浏览器 · 4 个发布渠道"
+            "detail": "3 个浏览器 · 4 个渠道 · x64 / ARM64"
           },
           {
             "value": "每日",
@@ -214,7 +274,7 @@
       },
       "downloads": {
         "heading": "下载",
-        "description": "选择浏览器与渠道。所有压缩包由 GitHub Actions 自动构建并直接发布到对应仓库的 Releases。"
+        "description": "选择浏览器、渠道与架构（x64 或 ARM64）。所有压缩包由 GitHub Actions 自动构建并直接发布到对应仓库的 Releases。"
       },
       "trust": {
         "heading": "为什么值得用这一份",
@@ -279,31 +339,51 @@
           "highlight": "日常使用推荐",
           "summary": "跟随 Google Chrome 正式版渠道，适合作为主力浏览器长期使用。"
         },
+        "chrome-stable-arm64": {
+          "title": "Chrome 便携版 ARM64",
+          "highlight": "Windows on Arm 设备",
+          "summary": "面向 Windows on Arm 设备（骁龙 X 这类 ARM64 机器），流程与 x64 版一致，数据目录别共用。"
+        },
         "chrome-beta": {
           "title": "Chrome 便携版 Beta",
           "highlight": "抢先体验新特性",
           "summary": "跟随 Chrome Beta 渠道，提前几周体验新功能，不建议与 Stable 共用同一份数据目录。"
+        },
+        "chrome-beta-arm64": {
+          "title": "Chrome 便携版 Beta ARM64",
+          "highlight": "ARM64 抢先体验",
+          "summary": "Chrome Beta 的 Windows on Arm 构建，比正式版领先约四周，同样别共用数据目录。"
         },
         "edge-stable": {
           "title": "Edge 便携版",
           "highlight": "微软生态兼容",
           "summary": "使用微软官方离线安装包构建，保留 Edge 的垂直标签、集锦等自带能力。"
         },
+        "edge-stable-arm64": {
+          "title": "Edge 便携版 ARM64",
+          "highlight": "ARM64 设备专用",
+          "summary": "面向 Windows on Arm，用微软官方 ARM64 离线包构建，垂直标签页、集锦等能力照常可用。"
+        },
         "helium-stable": {
           "title": "Helium 便携版",
           "highlight": "去广告去遥测",
           "summary": "基于 imputnet/helium 的正式版构建，一个默认去广告、去遥测的 Chromium 分支。"
+        },
+        "helium-stable-arm64": {
+          "title": "Helium 便携版 ARM64",
+          "highlight": "ARM64 去广告去遥测",
+          "summary": "Helium 的 Windows on Arm 构建，跟随上游 arm64 正式版，默认去广告、去遥测。"
         }
       },
       "pageChrome": {
-        "eyebrow": "{upstream} · Windows x64 · 免安装",
+        "eyebrow": "{upstream} · Windows x64 / ARM64 · 免安装",
         "downloadsNote": "压缩包直接来自 {repo} 仓库的 Releases，附带 SHA256 校验值。"
       },
       "pages": {
         "chrome": {
           "navLabel": "Chrome",
           "title": "Chrome 便携版下载 — 免安装绿色版，集成 Chrome++，每日自动构建",
-          "description": "Google Chrome 便携版（绿色免安装版）下载，Windows x64，Stable 与 Beta 双渠道，集成 Chrome++，数据保存在程序同级目录，每日自动跟随官方版本并提供 SHA256 校验。",
+          "description": "Google Chrome 便携版（绿色免安装版）下载，Windows x64 / ARM64，Stable 与 Beta 双渠道，集成 Chrome++，数据保存在程序同级目录，每日自动跟随官方版本并提供 SHA256 校验。",
           "h1": "Chrome 便携版",
           "lede": "Google Chrome 的免安装版本。解压即用，不写注册表，用户数据与缓存都留在程序同级目录，删掉文件夹就等于卸载干净。",
           "upstream": "Google Chrome",
@@ -357,7 +437,7 @@
         "edge": {
           "navLabel": "Edge",
           "title": "Edge 便携版下载 — 免安装绿色版，集成 Chrome++，每日自动构建",
-          "description": "Microsoft Edge 便携版（绿色免安装版）下载，Windows x64 Stable 渠道，集成 Chrome++，数据保存在程序同级目录，使用微软官方离线安装包每日自动构建并提供 SHA256 校验。",
+          "description": "Microsoft Edge 便携版（绿色免安装版）下载，Windows x64 / ARM64 Stable 渠道，集成 Chrome++，数据保存在程序同级目录，使用微软官方离线安装包每日自动构建并提供 SHA256 校验。",
           "h1": "Edge 便携版",
           "lede": "Microsoft Edge 的免安装版本，用微软官方离线安装包构建。适合想要 Edge 的兼容性和自带功能，又不希望它把自己写进系统的人。",
           "upstream": "Microsoft Edge",
@@ -404,7 +484,7 @@
         "helium": {
           "navLabel": "Helium",
           "title": "Helium 便携版下载 — 去广告去遥测的 Chromium 分支，免安装绿色版",
-          "description": "Helium 浏览器便携版（绿色免安装版）下载，Windows x64，集成 Chrome++，基于 imputnet/helium 上游正式版构建，每日自动跟随并提供 SHA256 校验。",
+          "description": "Helium 浏览器便携版（绿色免安装版）下载，Windows x64 / ARM64，集成 Chrome++，基于 imputnet/helium 上游正式版构建，每日自动跟随并提供 SHA256 校验。",
           "h1": "Helium 便携版",
           "lede": "Helium 是一个默认去广告、去遥测的 Chromium 分支。这里提供它的 Windows x64 免安装版本。",
           "upstream": "Helium",
@@ -547,6 +627,10 @@
         "size": "Size",
         "updated": "Updated",
         "platform": "Platform",
+        "archLabels": {
+          "x64": "x64",
+          "arm64": "ARM64"
+        },
         "repoLink": "Repo",
         "browsers": "Browsers",
         "upstreamCredits": "Upstream & credits",
@@ -558,15 +642,15 @@
       },
       "home": {
         "title": "Chrome / Edge / Helium Portable Download — No Install, Daily Builds, Chrome++",
-        "description": "Open-source, reproducible portable builds of Chrome, Edge, and Helium for Windows x64. No installer, no registry writes. Chrome++ integrated, rebuilt daily from official packages with SHA256 verification.",
-        "eyebrow": "Windows x64 · No install · Open-source automated builds",
+        "description": "Open-source, reproducible portable builds of Chrome, Edge, and Helium for Windows x64 / ARM64. No installer, no registry writes. Chrome++ integrated, rebuilt daily from official packages with SHA256 verification.",
+        "eyebrow": "Windows x64 / ARM64 · No install · Open-source automated builds",
         "h1": "Portable Chrome, Edge & Helium",
         "lede": "Unzip and run. No installer, no registry writes — your profile stays next to the app. Rebuilt daily from official packages via GitHub Actions, with public logs and checksums.",
         "stats": [
           {
-            "value": "4",
+            "value": "8",
             "label": "Build targets",
-            "detail": "3 browsers · 4 release channels"
+            "detail": "3 browsers · 4 channels · x64 / ARM64"
           },
           {
             "value": "Daily",
@@ -587,7 +671,7 @@
       },
       "downloads": {
         "heading": "Downloads",
-        "description": "Pick a browser and channel. Every archive is built by GitHub Actions and published straight to that browser’s Releases page."
+        "description": "Pick a browser, channel and architecture (x64 or ARM64). Every archive is built by GitHub Actions and published straight to that browser’s Releases page."
       },
       "trust": {
         "heading": "Why this portable set is different",
@@ -652,31 +736,51 @@
           "highlight": "Recommended daily driver",
           "summary": "Follows the Google Chrome Stable channel — a solid long-term default browser."
         },
+        "chrome-stable-arm64": {
+          "title": "Chrome Portable ARM64",
+          "highlight": "Windows on Arm PCs",
+          "summary": "Built for Windows on Arm PCs (Snapdragon X and friends); same pipeline as x64, keep the Data folders apart."
+        },
         "chrome-beta": {
           "title": "Chrome Portable Beta",
           "highlight": "Try features early",
           "summary": "Follows Chrome Beta, about four weeks ahead of Stable. Don’t share one Data folder with Stable."
+        },
+        "chrome-beta-arm64": {
+          "title": "Chrome Portable Beta ARM64",
+          "highlight": "Early access on Arm",
+          "summary": "Chrome Beta for Windows on Arm, about four weeks ahead of Stable; keep it off the x64 Data folder."
         },
         "edge-stable": {
           "title": "Edge Portable",
           "highlight": "Microsoft ecosystem",
           "summary": "Built from Microsoft’s official offline installer, keeping vertical tabs, Collections, and other Edge features."
         },
+        "edge-stable-arm64": {
+          "title": "Edge Portable ARM64",
+          "highlight": "For ARM64 PCs",
+          "summary": "Portable Edge for Windows on Arm, built from Microsoft’s ARM64 offline installer; Edge features intact."
+        },
         "helium-stable": {
           "title": "Helium Portable",
           "highlight": "Ad-blocked, de-Googled",
           "summary": "Stable builds of imputnet/helium — a Chromium fork that blocks ads and strips Google telemetry by default."
+        },
+        "helium-stable-arm64": {
+          "title": "Helium Portable ARM64",
+          "highlight": "Ad-blocked on Arm",
+          "summary": "The Windows on Arm build of Helium, tracking upstream arm64 stable; ads and telemetry stripped by default."
         }
       },
       "pageChrome": {
-        "eyebrow": "{upstream} · Windows x64 · Portable",
+        "eyebrow": "{upstream} · Windows x64 / ARM64 · Portable",
         "downloadsNote": "Archives come straight from the {repo} Releases, each with a SHA256 checksum."
       },
       "pages": {
         "chrome": {
           "navLabel": "Chrome",
           "title": "Chrome Portable Download — No Install, Chrome++ Integrated, Daily Builds",
-          "description": "Download Google Chrome Portable for Windows x64. Stable and Beta channels, Chrome++ enhancements, profile stored next to the app, rebuilt daily from official packages with SHA256 checks.",
+          "description": "Download Google Chrome Portable for Windows x64 / ARM64. Stable and Beta channels, Chrome++ enhancements, profile stored next to the app, rebuilt daily from official packages with SHA256 checks.",
           "h1": "Chrome Portable",
           "lede": "Google Chrome without an installer. Unzip and run — no registry writes. Profile and cache stay next to the app; delete the folder to uninstall cleanly.",
           "upstream": "Google Chrome",
@@ -730,7 +834,7 @@
         "edge": {
           "navLabel": "Edge",
           "title": "Edge Portable Download — No Install Windows Edition, Daily Builds",
-          "description": "Download Microsoft Edge Portable for Windows x64 Stable. Built from Microsoft’s offline installer, Chrome++ integrated, profile next to the app, rebuilt daily with SHA256 verification.",
+          "description": "Download Microsoft Edge Portable for Windows x64 / ARM64 Stable. Built from Microsoft’s offline installer, Chrome++ integrated, profile next to the app, rebuilt daily with SHA256 verification.",
           "h1": "Edge Portable",
           "lede": "Microsoft Edge without an installer, built from Microsoft’s offline package. For people who want Edge compatibility and built-in features without letting it take over the system.",
           "upstream": "Microsoft Edge",
@@ -777,7 +881,7 @@
         "helium": {
           "navLabel": "Helium",
           "title": "Helium Portable Download — Ad-free Chromium, No Install, Daily Builds",
-          "description": "Download Helium browser Portable for Windows x64. Chrome++ integrated, built from imputnet/helium stable releases with daily rebuilds and SHA256 verification.",
+          "description": "Download Helium browser Portable for Windows x64 / ARM64. Chrome++ integrated, built from imputnet/helium stable releases with daily rebuilds and SHA256 verification.",
           "h1": "Helium Portable",
           "lede": "Helium is a Chromium fork that blocks ads and strips telemetry by default. This is its Windows x64 portable build.",
           "upstream": "Helium",
@@ -920,6 +1024,10 @@
         "size": "檔案大小",
         "updated": "更新",
         "platform": "平台",
+        "archLabels": {
+          "x64": "x64",
+          "arm64": "ARM64"
+        },
         "repoLink": "倉庫",
         "browsers": "瀏覽器",
         "upstreamCredits": "上游與致謝",
@@ -931,15 +1039,15 @@
       },
       "home": {
         "title": "Chrome / Edge / Helium 可攜版下載 — 免安裝綠色版 · 每日建置 · Chrome++",
-        "description": "開源可重現的 Chromium 系可攜版：Chrome、Edge、Helium Windows x64 免安裝綠色版。整合 Chrome++，每日跟隨官方版本自動建置，SHA256 全流程校驗並實機驗證可攜性。",
-        "eyebrow": "Windows x64 · 免安裝 · 開源自動建置",
+        "description": "開源可重現的 Chromium 系可攜版：Chrome、Edge、Helium Windows x64 / ARM64 免安裝綠色版。整合 Chrome++，每日跟隨官方版本自動建置，SHA256 全流程校驗並實機驗證可攜性。",
+        "eyebrow": "Windows x64 / ARM64 · 免安裝 · 開源自動建置",
         "h1": "Chrome、Edge、Helium 可攜版",
         "lede": "免安裝、不寫登錄檔、資料留在自己的資料夾裡。由 GitHub Actions 每日跟隨官方版本自動建置，建置過程與校驗日誌全部公開可查。",
         "stats": [
           {
-            "value": "4",
+            "value": "8",
             "label": "建置目標",
-            "detail": "3 個瀏覽器 · 4 個發布通道"
+            "detail": "3 個瀏覽器 · 4 個通道 · x64 / ARM64"
           },
           {
             "value": "每日",
@@ -960,7 +1068,7 @@
       },
       "downloads": {
         "heading": "下載",
-        "description": "選擇瀏覽器與通道。所有壓縮檔由 GitHub Actions 自動建置並直接發佈到對應倉庫的 Releases。"
+        "description": "選擇瀏覽器、通道與架構（x64 或 ARM64）。所有壓縮檔由 GitHub Actions 自動建置並直接發佈到對應倉庫的 Releases。"
       },
       "trust": {
         "heading": "為什麼值得用這一份",
@@ -1025,31 +1133,51 @@
           "highlight": "日常使用推薦",
           "summary": "跟隨 Google Chrome 正式版通道，適合作為主力瀏覽器長期使用。"
         },
+        "chrome-stable-arm64": {
+          "title": "Chrome 可攜版 ARM64",
+          "highlight": "Windows on Arm 裝置",
+          "summary": "針對 Windows on Arm 裝置（Snapdragon X 這類 ARM64 機器），流程與 x64 版一致，資料目錄別共用。"
+        },
         "chrome-beta": {
           "title": "Chrome 可攜版 Beta",
           "highlight": "搶先體驗新特性",
           "summary": "跟隨 Chrome Beta 通道，提前幾週體驗新功能，不建議與 Stable 共用同一份資料目錄。"
+        },
+        "chrome-beta-arm64": {
+          "title": "Chrome 可攜版 Beta ARM64",
+          "highlight": "ARM64 搶先體驗",
+          "summary": "Chrome Beta 的 Windows on Arm 建置，比正式版領先約四週，同樣別共用資料目錄。"
         },
         "edge-stable": {
           "title": "Edge 可攜版",
           "highlight": "微軟生態相容",
           "summary": "使用微軟官方離線安裝檔建置，保留 Edge 的垂直標籤頁、集錦等內建能力。"
         },
+        "edge-stable-arm64": {
+          "title": "Edge 可攜版 ARM64",
+          "highlight": "ARM64 裝置專用",
+          "summary": "針對 Windows on Arm，使用微軟官方 ARM64 離線安裝檔建置，垂直標籤頁、集錦等能力照常可用。"
+        },
         "helium-stable": {
           "title": "Helium 可攜版",
           "highlight": "去廣告去遙測",
           "summary": "基於 imputnet/helium 的正式版建置，一個預設去廣告、去遙測的 Chromium 分支。"
+        },
+        "helium-stable-arm64": {
+          "title": "Helium 可攜版 ARM64",
+          "highlight": "ARM64 去廣告去遙測",
+          "summary": "Helium 的 Windows on Arm 建置，跟隨上游 arm64 正式版，預設去廣告、去遙測。"
         }
       },
       "pageChrome": {
-        "eyebrow": "{upstream} · Windows x64 · 免安裝",
+        "eyebrow": "{upstream} · Windows x64 / ARM64 · 免安裝",
         "downloadsNote": "壓縮檔直接來自 {repo} 倉庫的 Releases，附帶 SHA256 校驗值。"
       },
       "pages": {
         "chrome": {
           "navLabel": "Chrome",
           "title": "Chrome 可攜版下載 — 免安裝綠色版，整合 Chrome++，每日自動建置",
-          "description": "Google Chrome 可攜版（綠色免安裝版）下載，Windows x64，Stable 與 Beta 雙通道，整合 Chrome++，資料保存在程式同級目錄，每日自動跟隨官方版本並提供 SHA256 校驗。",
+          "description": "Google Chrome 可攜版（綠色免安裝版）下載，Windows x64 / ARM64，Stable 與 Beta 雙通道，整合 Chrome++，資料保存在程式同級目錄，每日自動跟隨官方版本並提供 SHA256 校驗。",
           "h1": "Chrome 可攜版",
           "lede": "Google Chrome 的免安裝版本。解壓縮即用，不寫登錄檔，使用者資料與快取都留在程式同級目錄，刪掉資料夾就等於解除安裝乾淨。",
           "upstream": "Google Chrome",
@@ -1103,7 +1231,7 @@
         "edge": {
           "navLabel": "Edge",
           "title": "Edge 可攜版下載 — 免安裝綠色版，整合 Chrome++，每日自動建置",
-          "description": "Microsoft Edge 可攜版（綠色免安裝版）下載，Windows x64 Stable 通道，整合 Chrome++，資料保存在程式同級目錄，使用微軟官方離線安裝檔每日自動建置並提供 SHA256 校驗。",
+          "description": "Microsoft Edge 可攜版（綠色免安裝版）下載，Windows x64 / ARM64 Stable 通道，整合 Chrome++，資料保存在程式同級目錄，使用微軟官方離線安裝檔每日自動建置並提供 SHA256 校驗。",
           "h1": "Edge 可攜版",
           "lede": "Microsoft Edge 的免安裝版本，用微軟官方離線安裝檔建置。適合想要 Edge 的相容性和內建功能，又不希望它把自己寫進系統的人。",
           "upstream": "Microsoft Edge",
@@ -1150,7 +1278,7 @@
         "helium": {
           "navLabel": "Helium",
           "title": "Helium 可攜版下載 — 去廣告去遙測的 Chromium 分支，免安裝綠色版",
-          "description": "Helium 瀏覽器可攜版（綠色免安裝版）下載，Windows x64，整合 Chrome++，基於 imputnet/helium 上游正式版建置，每日自動跟隨並提供 SHA256 校驗。",
+          "description": "Helium 瀏覽器可攜版（綠色免安裝版）下載，Windows x64 / ARM64，整合 Chrome++，基於 imputnet/helium 上游正式版建置，每日自動跟隨並提供 SHA256 校驗。",
           "h1": "Helium 可攜版",
           "lede": "Helium 是一個預設去廣告、去遙測的 Chromium 分支。這裡提供它的 Windows x64 免安裝版本。",
           "upstream": "Helium",
@@ -1300,6 +1428,10 @@
         "size": "サイズ",
         "updated": "更新",
         "platform": "プラットフォーム",
+        "archLabels": {
+          "x64": "x64",
+          "arm64": "ARM64"
+        },
         "repoLink": "Repo",
         "browsers": "ブラウザー",
         "upstreamCredits": "上游とクレジット",
@@ -1311,15 +1443,15 @@
       },
       "home": {
         "title": "Chrome / Edge / Helium ポータブル版ダウンロード — インストール不要・毎日ビルド・Chrome++",
-        "description": "オープンソースで再現可能な Chromium 系ポータブル版。Chrome・Edge・Helium を Windows x64 向けに提供。インストーラー不要、レジストリ書き込みなし。Chrome++ 統合、公式パッケージから毎日再ビルド、SHA256 検証付き。",
-        "eyebrow": "Windows x64 · インストール不要 · オープンソース自動ビルド",
+        "description": "オープンソースで再現可能な Chromium 系ポータブル版。Chrome・Edge・Helium を Windows x64 / ARM64 向けに提供。インストーラー不要、レジストリ書き込みなし。Chrome++ 統合、公式パッケージから毎日再ビルド、SHA256 検証付き。",
+        "eyebrow": "Windows x64 / ARM64 · インストール不要 · オープンソース自動ビルド",
         "h1": "ポータブル版 Chrome・Edge・Helium",
         "lede": "展開してすぐ使えます。インストーラーもレジストリ書き込みもなし。プロファイルはアプリの隣に残ります。GitHub Actions が公式版を毎日再パッケージし、ログとチェックサムを公開しています。",
         "stats": [
           {
-            "value": "4",
+            "value": "8",
             "label": "ビルド対象",
-            "detail": "3 ブラウザー · 4 チャンネル"
+            "detail": "3 ブラウザー · 4 チャンネル · x64 / ARM64"
           },
           {
             "value": "毎日",
@@ -1340,7 +1472,7 @@
       },
       "downloads": {
         "heading": "ダウンロード",
-        "description": "ブラウザーとチャンネルを選んでください。すべてのアーカイブは GitHub Actions がビルドし、各リポジトリの Releases に直接公開されます。"
+        "description": "ブラウザー・チャンネル・アーキテクチャ（x64 / ARM64）を選んでください。すべてのアーカイブは GitHub Actions がビルドし、各リポジトリの Releases に直接公開されます。"
       },
       "trust": {
         "heading": "このポータブル版が違う理由",
@@ -1405,31 +1537,51 @@
           "highlight": "日常利用におすすめ",
           "summary": "Google Chrome Stable を追跡。メインブラウザーとしての長期利用に適しています。"
         },
+        "chrome-stable-arm64": {
+          "title": "Chrome ポータブル ARM64",
+          "highlight": "Windows on Arm 搭載 PC 向け",
+          "summary": "Windows on Arm（Snapdragon X など ARM64 の PC）向け。x64 版と同じ流れで、Data フォルダーは共用しないでください。"
+        },
         "chrome-beta": {
           "title": "Chrome ポータブル Beta",
           "highlight": "新機能を先行体験",
           "summary": "Chrome Beta を追跡し、Stable より約 4 週間先の機能を試せます。Stable と Data フォルダーを共有しないでください。"
+        },
+        "chrome-beta-arm64": {
+          "title": "Chrome ポータブル Beta ARM64",
+          "highlight": "Arm で先行体験",
+          "summary": "Chrome Beta の Windows on Arm 向けビルド。Stable より約 4 週間先で、x64 版とは Data フォルダーを分けてください。"
         },
         "edge-stable": {
           "title": "Edge ポータブル",
           "highlight": "Microsoft エコシステム",
           "summary": "Microsoft 公式オフラインインストーラーからビルド。垂直タブやコレクションなど Edge 機能はそのまま。"
         },
+        "edge-stable-arm64": {
+          "title": "Edge ポータブル ARM64",
+          "highlight": "ARM64 PC 向け",
+          "summary": "Windows on Arm 向けのポータブル版 Edge。Microsoft 公式の ARM64 インストーラーからビルド。"
+        },
         "helium-stable": {
           "title": "Helium ポータブル",
           "highlight": "広告ブロック・テレメトリ除去",
           "summary": "imputnet/helium の stable ビルド。既定で広告をブロックし Google テレメトリを削った Chromium フォークです。"
+        },
+        "helium-stable-arm64": {
+          "title": "Helium ポータブル ARM64",
+          "highlight": "Arm でも広告ブロック",
+          "summary": "Helium の Windows on Arm 向けビルド。上游の arm64 stable を追跡し、既定で広告とテレメトリを削除します。"
         }
       },
       "pageChrome": {
-        "eyebrow": "{upstream} · Windows x64 · ポータブル",
+        "eyebrow": "{upstream} · Windows x64 / ARM64 · ポータブル",
         "downloadsNote": "アーカイブは {repo} の Releases から直接提供され、それぞれ SHA256 が付いています。"
       },
       "pages": {
         "chrome": {
           "navLabel": "Chrome",
           "title": "Chrome ポータブル版ダウンロード — インストール不要・Chrome++ 統合・毎日ビルド",
-          "description": "Google Chrome ポータブル版を Windows x64 向けにダウンロード。Stable / Beta、Chrome++ 強化、プロファイルはアプリ隣、公式パッケージから毎日再ビルド、SHA256 検証付き。",
+          "description": "Google Chrome ポータブル版を Windows x64 / ARM64 向けにダウンロード。Stable / Beta、Chrome++ 強化、プロファイルはアプリ隣、公式パッケージから毎日再ビルド、SHA256 検証付き。",
           "h1": "Chrome ポータブル",
           "lede": "インストーラーなしの Google Chrome。展開してすぐ使え、レジストリも書き込みません。プロファイルとキャッシュはアプリの隣に残り、フォルダーを削除すればクリーンにアンインストールできます。",
           "upstream": "Google Chrome",
@@ -1483,7 +1635,7 @@
         "edge": {
           "navLabel": "Edge",
           "title": "Edge ポータブル版ダウンロード — インストール不要の Windows 版・毎日ビルド",
-          "description": "Microsoft Edge ポータブル版を Windows x64 Stable 向けにダウンロード。Microsoft オフラインインストーラーからビルド、Chrome++ 統合、プロファイルはアプリ隣、毎日再ビルドと SHA256 検証付き。",
+          "description": "Microsoft Edge ポータブル版を Windows x64 / ARM64 Stable 向けにダウンロード。Microsoft オフラインインストーラーからビルド、Chrome++ 統合、プロファイルはアプリ隣、毎日再ビルドと SHA256 検証付き。",
           "h1": "Edge ポータブル",
           "lede": "Microsoft のオフラインパッケージから作った、インストーラーなしの Microsoft Edge。Edge の互換性と内蔵機能は欲しいが、システムに食い込ませたくない人向けです。",
           "upstream": "Microsoft Edge",
@@ -1530,7 +1682,7 @@
         "helium": {
           "navLabel": "Helium",
           "title": "Helium ポータブル版ダウンロード — 広告なし Chromium・インストール不要・毎日ビルド",
-          "description": "Helium ブラウザーのポータブル版を Windows x64 向けにダウンロード。Chrome++ 統合、imputnet/helium の stable リリースから毎日再ビルド、SHA256 検証付き。",
+          "description": "Helium ブラウザーのポータブル版を Windows x64 / ARM64 向けにダウンロード。Chrome++ 統合、imputnet/helium の stable リリースから毎日再ビルド、SHA256 検証付き。",
           "h1": "Helium ポータブル",
           "lede": "Helium は既定で広告をブロックしテレメトリを削る Chromium フォークです。ここではその Windows x64 ポータブル版を提供します。",
           "upstream": "Helium",

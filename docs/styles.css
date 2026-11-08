@@ -573,6 +573,9 @@ main {
 
 .build-card__title h3 {
   font-size: 1.12rem;
+  /* 标题里带架构后缀（「Chrome 便携版 ARM64」），按词换行才不会把中文词劈开 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .build-card__title p {

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Edge ポータブル版ダウンロード — インストール不要の Windows 版・毎日ビルド</title>
-    <meta name="description" content="Microsoft Edge ポータブル版を Windows x64 Stable 向けにダウンロード。Microsoft オフラインインストーラーからビルド、Chrome++ 統合、プロファイルはアプリ隣、毎日再ビルドと SHA256 検証付き。" />
+    <meta name="description" content="Microsoft Edge ポータブル版を Windows x64 / ARM64 Stable 向けにダウンロード。Microsoft オフラインインストーラーからビルド、Chrome++ 統合、プロファイルはアプリ隣、毎日再ビルドと SHA256 検証付き。" />
     <meta name="author" content="Piracola" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="color-scheme" content="light dark" />
@@ -22,14 +22,14 @@
     <meta property="og:locale" content="ja_JP" />
     <meta property="og:site_name" content="Chromium ポータブルビルド" />
     <meta property="og:title" content="Edge ポータブル版ダウンロード — インストール不要の Windows 版・毎日ビルド" />
-    <meta property="og:description" content="Microsoft Edge ポータブル版を Windows x64 Stable 向けにダウンロード。Microsoft オフラインインストーラーからビルド、Chrome++ 統合、プロファイルはアプリ隣、毎日再ビルドと SHA256 検証付き。" />
+    <meta property="og:description" content="Microsoft Edge ポータブル版を Windows x64 / ARM64 Stable 向けにダウンロード。Microsoft オフラインインストーラーからビルド、Chrome++ 統合、プロファイルはアプリ隣、毎日再ビルドと SHA256 検証付き。" />
     <meta property="og:url" content="https://piracola.github.io/ChromiumPortable/ja/edge/" />
     <meta property="og:image" content="https://piracola.github.io/ChromiumPortable/assets/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Edge ポータブル版ダウンロード — インストール不要の Windows 版・毎日ビルド" />
-    <meta name="twitter:description" content="Microsoft Edge ポータブル版を Windows x64 Stable 向けにダウンロード。Microsoft オフラインインストーラーからビルド、Chrome++ 統合、プロファイルはアプリ隣、毎日再ビルドと SHA256 検証付き。" />
+    <meta name="twitter:description" content="Microsoft Edge ポータブル版を Windows x64 / ARM64 Stable 向けにダウンロード。Microsoft オフラインインストーラーからビルド、Chrome++ 統合、プロファイルはアプリ隣、毎日再ビルドと SHA256 検証付き。" />
     <meta name="twitter:image" content="https://piracola.github.io/ChromiumPortable/assets/og.png" />
     <link rel="stylesheet" href="../../styles.css" />
     <script>
@@ -51,7 +51,7 @@
             "@id": "https://piracola.github.io/ChromiumPortable/ja/edge/#webpage",
             "url": "https://piracola.github.io/ChromiumPortable/ja/edge/",
             "name": "Edge ポータブル版ダウンロード — インストール不要の Windows 版・毎日ビルド",
-            "description": "Microsoft Edge ポータブル版を Windows x64 Stable 向けにダウンロード。Microsoft オフラインインストーラーからビルド、Chrome++ 統合、プロファイルはアプリ隣、毎日再ビルドと SHA256 検証付き。",
+            "description": "Microsoft Edge ポータブル版を Windows x64 / ARM64 Stable 向けにダウンロード。Microsoft オフラインインストーラーからビルド、Chrome++ 統合、プロファイルはアプリ隣、毎日再ビルドと SHA256 検証付き。",
             "inLanguage": "ja",
             "isPartOf": {
               "@id": "https://piracola.github.io/ChromiumPortable/#website"
@@ -97,6 +97,30 @@
             "softwareVersion": "157.0.4341.42",
             "datePublished": "2026-11-06",
             "fileSize": "203080720"
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "Edge ポータブル ARM64",
+            "applicationCategory": "BrowserApplication",
+            "operatingSystem": "Windows 10, Windows 11",
+            "processorRequirements": "ARM64",
+            "url": "https://piracola.github.io/ChromiumPortable/ja/edge/",
+            "downloadUrl": "https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.42/Edge_Portable_arm64_157.0.4341.42_2026-11-08.7z",
+            "softwareHelp": "https://piracola.github.io/ChromiumPortable/ja/edge/",
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "author": {
+              "@type": "Person",
+              "name": "Piracola"
+            },
+            "license": "https://opensource.org/licenses/MIT",
+            "softwareVersion": "157.0.4341.42",
+            "datePublished": "2026-11-06",
+            "fileSize": "186864589"
           }
         ]
       }
@@ -133,7 +157,7 @@
       </nav>
 
       <section class="hero hero--page">
-        <p class="eyebrow">Microsoft Edge · Windows x64 · ポータブル</p>
+        <p class="eyebrow">Microsoft Edge · Windows x64 / ARM64 · ポータブル</p>
         <h1>Edge ポータブル</h1>
         <p class="hero__lede">Microsoft のオフラインパッケージから作った、インストーラーなしの Microsoft Edge。Edge の互換性と内蔵機能は欲しいが、システムに食い込ませたくない人向けです。</p>
         <p class="hero__note">インストーラーは Microsoft 公式 CDP フィードから取得。バージョンは Edge Stable と一致します。</p>
@@ -163,6 +187,28 @@
             </dl>
             <div class="build-card__actions">
               <a class="btn btn--primary" href="https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.42/Edge_Portable_Win64_157.0.4341.42_2026-11-06.7z" target="_blank" rel="noopener">Download .7z<span class="build-card__version">v157.0.4341.42</span></a>
+              <a class="btn btn--soft" href="https://github.com/Piracola/Edge_Portable" target="_blank" rel="noopener">リポジトリ</a>
+              <a class="btn btn--quiet" href="https://github.com/Piracola/Edge_Portable/actions/workflows/build.yml" target="_blank" rel="noopener">ビルドログ</a>
+            </div>
+          </article>
+          <article class="build-card" data-family="Edge" style="--accent: #1d7c84">
+            <div class="build-card__head">
+              <img class="build-card__icon" src="../../assets/edge.svg" alt="" width="40" height="40" loading="lazy" />
+              <div class="build-card__title">
+                <h3>Edge ポータブル ARM64</h3>
+                <p>Stable · ARM64 PC 向け</p>
+              </div>
+              <span class="pill">Stable</span>
+            </div>
+            <p class="build-card__summary">Windows on Arm 向けのポータブル版 Edge。Microsoft 公式の ARM64 インストーラーからビルド。</p>
+            <dl class="build-card__meta">
+              <div><dt>バージョン</dt><dd>157.0.4341.42</dd></div>
+              <div><dt>サイズ</dt><dd>178 MB</dd></div>
+              <div><dt>更新</dt><dd>2026-11-06</dd></div>
+              <div><dt>プラットフォーム</dt><dd>Windows ARM64</dd></div>
+            </dl>
+            <div class="build-card__actions">
+              <a class="btn btn--primary" href="https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.42/Edge_Portable_arm64_157.0.4341.42_2026-11-08.7z" target="_blank" rel="noopener">Download .7z<span class="build-card__version">v157.0.4341.42</span></a>
               <a class="btn btn--soft" href="https://github.com/Piracola/Edge_Portable" target="_blank" rel="noopener">リポジトリ</a>
               <a class="btn btn--quiet" href="https://github.com/Piracola/Edge_Portable/actions/workflows/build.yml" target="_blank" rel="noopener">ビルドログ</a>
             </div>
@@ -209,7 +255,8 @@
           <h2>ダウンロードを検証する</h2>
           <p>各 Release にはアーカイブごとの SHA256 が記載されています。ダウンロード後に PowerShell で 1 コマンド実行し、一致すればビルド出力とバイト単位で同一です。</p>
         </div>
-        <pre class="code"><code>certutil -hashfile .\Edge_Portable_Win64_version_date.7z SHA256</code></pre>
+        <pre class="code"><code>certutil -hashfile .\Edge_Portable_Win64_version_date.7z SHA256
+      certutil -hashfile .\Edge_Portable_arm64_version_date.7z SHA256</code></pre>
         <p class="note">ビルドログは GitHub Actions で公開されており、その実行が作ったアーカイブであることを確認できます。</p>
       </section>
 

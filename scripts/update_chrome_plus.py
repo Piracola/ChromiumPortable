@@ -12,8 +12,15 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SETDLL_DIR = REPO_ROOT / "setdll"
 UPSTREAM_API = "https://api.github.com/repos/Bush2021/chrome_plus/releases/latest"
-REQUIRED_FILES = ("version-x64.dll", "setdll-x64.exe", "README.md", "chrome++.ini")
-REBUILD_TRIGGER_FILES = {"version-x64.dll", "setdll-x64.exe"}
+REQUIRED_FILES = (
+    "version-x64.dll",
+    "setdll-x64.exe",
+    "version-arm64.dll",
+    "setdll-arm64.exe",
+    "README.md",
+    "chrome++.ini",
+)
+REBUILD_TRIGGER_FILES = {"version-x64.dll", "setdll-x64.exe", "version-arm64.dll", "setdll-arm64.exe"}
 
 
 def github_headers():

@@ -492,23 +492,39 @@ fn assert_target_architecture(target: &Value, app_root: &Path, executable: &Path
     let expected = target
         .get("architecture")
         .and_then(Value::as_str)
-        .unwrap_or("x64");
+        .unwrap_or("x64")
+        .to_ascii_lowercase();
     let mut binaries = vec![executable.to_path_buf()];
+    let mut dirs = vec![app_root.to_path_buf()];
+    if let Some(parent) = executable.parent() {
+        dirs.push(parent.to_path_buf());
+    }
+    // version_dll_location is either the app root or the version directory, and
+    // the latter is not necessarily where the executable lives.
+    if let Some(version_dir) = find_version_dir(app_root, None) {
+        dirs.push(version_dir);
+    }
     let mut seen: Vec<PathBuf> = Vec::new();
-    for dir in [Some(app_root), executable.parent()].into_iter().flatten() {
+    for dir in dirs {
         let dll = dir.join("version.dll");
         if !dll.is_file() {
             continue;
         }
-        // app_root and the executable's directory can name the same file with
-        // different prefixes (the extracted tree carries one), so dedupe on the
-        // canonical path rather than on string equality.
+        // The same file can be reached with different prefixes (the extracted
+        // tree carries one), so dedupe on the canonical path, not on strings.
         let key = std::fs::canonicalize(&dll).unwrap_or_else(|_| dll.clone());
         if seen.contains(&key) {
             continue;
         }
         seen.push(key);
         binaries.push(dll);
+    }
+    if binaries.len() == 1 {
+        bail!(
+            "version.dll not found next to {} or in {}",
+            executable.display(),
+            app_root.display()
+        );
     }
     for binary in binaries {
         let actual = read_pe_machine(&binary)?;
@@ -688,25 +704,55 @@ mod tests {
     }
 
     #[test]
-    fn architecture_assertion_compares_peer_machines() {
+    fn architecture_assertion_checks_the_executable_and_the_dll() {
         let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-        let x64 = repo.join("setdll/setdll-x64.exe");
-        let arm64 = repo.join("setdll/version-arm64.dll");
-        if !x64.is_file() || !arm64.is_file() {
-            return;
+        let x64_exe = repo.join("setdll/setdll-x64.exe");
+        let x64_dll = repo.join("setdll/version-x64.dll");
+        let arm64_dll = repo.join("setdll/version-arm64.dll");
+        for fixture in [&x64_exe, &x64_dll, &arm64_dll] {
+            assert!(fixture.is_file(), "missing {}", fixture.display());
         }
-        assert_target_architecture(&serde_json::json!({"architecture": "x64"}), &repo, &x64)
+
+        let dir = std::env::temp_dir().join(format!("pb-verify-arch-{}", std::process::id()));
+        remove_path(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let exe = dir.join("chrome.exe");
+        let dll = dir.join("version.dll");
+        std::fs::copy(&x64_exe, &exe).unwrap();
+
+        std::fs::copy(&x64_dll, &dll).unwrap();
+        assert_target_architecture(&serde_json::json!({"architecture": "x64"}), &dir, &exe)
             .unwrap();
-        assert_target_architecture(&serde_json::json!({"architecture": "arm64"}), &repo, &arm64)
-            .unwrap();
+
+        // The DLL is a separate binary, so a swapped one must fail on its own.
+        std::fs::copy(&arm64_dll, &dll).unwrap();
         let err =
-            assert_target_architecture(&serde_json::json!({"architecture": "arm64"}), &repo, &x64)
+            assert_target_architecture(&serde_json::json!({"architecture": "x64"}), &dir, &exe)
+                .unwrap_err()
+                .to_string();
+        assert!(
+            err.contains("Architecture mismatch: expected x64, found arm64"),
+            "{err}"
+        );
+
+        let err =
+            assert_target_architecture(&serde_json::json!({"architecture": "arm64"}), &dir, &exe)
                 .unwrap_err()
                 .to_string();
         assert!(
             err.contains("Architecture mismatch: expected arm64, found x64"),
             "{err}"
         );
+
+        // A missing DLL would otherwise leave only the executable asserted.
+        std::fs::remove_file(&dll).unwrap();
+        let err =
+            assert_target_architecture(&serde_json::json!({"architecture": "x64"}), &dir, &exe)
+                .unwrap_err()
+                .to_string();
+        assert!(err.contains("version.dll not found"), "{err}");
+
+        remove_path(&dir);
     }
 
     #[test]

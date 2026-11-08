@@ -631,6 +631,30 @@ mod tests {
         }
     }
 
+    /// The chrome++ components are re-synced on every upstream release, so they
+    /// cannot pin version info — but their machine type is what the ARM64 build
+    /// depends on, and it never changes.
+    #[test]
+    fn shipped_component_machines_are_stable() {
+        let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        assert_eq!(
+            read_pe_machine(&repo.join("setdll/setdll-x64.exe")).unwrap(),
+            "x64"
+        );
+        assert_eq!(
+            read_pe_machine(&repo.join("setdll/version-x64.dll")).unwrap(),
+            "x64"
+        );
+        assert_eq!(
+            read_pe_machine(&repo.join("setdll/setdll-arm64.exe")).unwrap(),
+            "arm64"
+        );
+        assert_eq!(
+            read_pe_machine(&repo.join("setdll/version-arm64.dll")).unwrap(),
+            "arm64"
+        );
+    }
+
     #[test]
     fn golden_import_names_match_python() {
         let Some(repo) = golden_root() else { return };

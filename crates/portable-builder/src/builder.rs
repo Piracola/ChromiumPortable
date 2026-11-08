@@ -694,7 +694,9 @@ fn resolve_chrome_plus_ini(
 /// runner building an ARM64 package therefore must NOT pick setdll-arm64.exe
 /// (it fails with "not compatible with the version of Windows you're running").
 /// Use the target's own tool only when this host can run it; otherwise x64,
-/// which runs natively on x64 and under emulation on Windows on Arm.
+/// which runs natively on x64 and under emulation on Windows on Arm. Release
+/// bundles ship x64 only, so the native branch matters only for a source build
+/// on Windows on Arm.
 pub fn default_setdll_name(arch: &str) -> String {
     if arch == "arm64" && cfg!(target_arch = "aarch64") {
         "setdll-arm64.exe".to_string()
@@ -724,7 +726,7 @@ pub fn copy_chrome_plus(
         .get("setdll_name")
         .and_then(Value::as_str)
         .map(str::to_string)
-        .unwrap_or_else(|| default_setdll_name(&arch));
+        .unwrap_or_else(|| default_setdll_name(arch));
 
     let (setdll_src_dir, version_dll_src, setdll_src) = if let Some(builder_dir) = builder_dir {
         let setdll_src_dir = builder_dir.join("setdll");

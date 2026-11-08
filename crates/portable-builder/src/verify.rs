@@ -431,7 +431,7 @@ pub fn verify_target(
         .or_else(|| target.get("name"))
         .and_then(Value::as_str)
         .unwrap_or("Browser");
-    let app_root = extracted_root.join(output_dir_name);
+    let app_root = crate::builder::output_dir_path(&extracted_root, target);
     if !app_root.is_dir() {
         let mut present: Vec<String> = std::fs::read_dir(&extracted_root)?
             .filter_map(|entry| entry.ok())

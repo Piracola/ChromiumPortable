@@ -497,10 +497,7 @@ pub fn stage_app(target: &Value, workdir: &Path, prepared: &Prepared) -> Result<
     remove_path(&stage_dir);
     std::fs::create_dir_all(&stage_dir)?;
 
-    let output_dir_name = target_str(target, "output_dir")
-        .or_else(|| target_str(target, "name"))
-        .unwrap_or_else(|| "Browser".to_string());
-    let app_root = stage_dir.join(&output_dir_name);
+    let app_root = output_dir_path(&stage_dir, target);
     let layout = target
         .get("layout")
         .and_then(Value::as_str)
@@ -1061,14 +1058,25 @@ pub fn inject_dll(target: &Value, staged: &mut Staged) -> Result<()> {
     Ok(())
 }
 
+/// `output_dir` doubles as a relative path (Edge needs `Microsoft\Edge\Application`
+/// for its Stable-channel detection). Split both separators explicitly instead of
+/// leaning on the host's path semantics: `PathBuf::join` only treats `\` as a
+/// separator on Windows, so a Linux runner would otherwise stage a single
+/// directory literally named `Microsoft\Edge\Application`.
+pub fn output_dir_path(base: &Path, target: &Value) -> PathBuf {
+    let name = target_str(target, "output_dir")
+        .or_else(|| target_str(target, "name"))
+        .unwrap_or_else(|| "Browser".to_string());
+    name.split(['\\', '/'])
+        .filter(|part| !part.is_empty())
+        .fold(base.to_path_buf(), |path, part| path.join(part))
+}
+
 /// builder.py::finalize - move the staged app into build/release, write
 /// version.txt, copy the start script beside it (release root, not app dir).
 pub fn finalize(target: &Value, workdir: &Path, staged: &Staged) -> Result<PathBuf> {
     let release_dir = workdir.join("build").join("release");
-    let output_dir_name = target_str(target, "output_dir")
-        .or_else(|| target_str(target, "name"))
-        .unwrap_or_else(|| "Browser".to_string());
-    let final_app_dir = release_dir.join(&output_dir_name);
+    let final_app_dir = output_dir_path(&release_dir, target);
 
     std::fs::create_dir_all(&release_dir)?;
     // output_dir 允许是相对路径：Edge 必须落在 `Microsoft\Edge\Application`

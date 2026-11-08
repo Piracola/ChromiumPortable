@@ -634,10 +634,27 @@ mod tests {
         }
 
         let settings = parse_settings(&baseline_text);
+        // Upstream grows this file with every release, so the invariant is
+        // "every real assignment parses, no commented example does" - not a
+        // fixed count or fixed line numbers.
+        let assignments = py_splitlines(&baseline_text)
+            .iter()
+            .filter(|line| {
+                let trimmed = py_trim(line);
+                !trimmed.starts_with(';')
+                    && trimmed.split_once('=').is_some_and(|(key, _)| {
+                        let key = py_trim(key);
+                        !key.is_empty()
+                            && key.chars().all(|c| {
+                                c.is_ascii_alphanumeric() || c == '_' || c == '[' || c == ']'
+                            })
+                    })
+            })
+            .count();
         assert_eq!(
             settings.len(),
-            22,
-            "golden: 22 real assignments; the commented command_line examples are skipped"
+            assignments,
+            "commented command_line examples must not parse as assignments"
         );
         assert_eq!(settings["data_dir"], "%app%\\..\\Data");
         assert_eq!(
@@ -650,11 +667,6 @@ mod tests {
                 "every override key exists in the baseline (unknown-key rule)"
             );
         }
-
-        let baseline_lines: Vec<&str> = baseline_text.lines().collect();
-        assert_eq!(baseline_lines.len(), 172);
-        assert_eq!(baseline_lines[114], "suppress_false_upgrade_notification=0");
-        assert_eq!(baseline_lines[148], "open_url_new_tab=0");
 
         // No-op merge: the merged text is the baseline with line endings
         // normalized to "\n", and writing it back with the
@@ -684,12 +696,27 @@ mod tests {
             ]
         );
         let lines: Vec<&str> = merged.lines().collect();
-        assert_eq!(lines.len(), 172);
-        assert_eq!(lines[25], "data_dir=%app%\\..\\Data");
-        assert_eq!(lines[114], "suppress_false_upgrade_notification=1");
-        assert_eq!(lines[147], "wheel_tab_when_press_rbutton=0");
-        assert_eq!(lines[148], "open_url_new_tab=1");
-        assert_eq!(lines[149], "open_bookmark_new_tab=1");
+        // Values are rewritten in place, so merging never adds or drops a line
+        // and each override replaces exactly one baseline assignment.
+        assert_eq!(lines.len(), baseline_text.lines().count());
+        for applied_line in &applied {
+            let (key, _) = applied_line.split_once('=').unwrap();
+            let hits = lines
+                .iter()
+                .filter(|line| {
+                    let trimmed = line.trim_start();
+                    !trimmed.starts_with(';')
+                        && trimmed
+                            .split_once('=')
+                            .is_some_and(|(declared, _)| declared.trim() == key.trim())
+                })
+                .count();
+            assert_eq!(hits, 1, "{key} must be declared exactly once after merging");
+            assert!(
+                lines.contains(&applied_line.as_str()),
+                "missing {applied_line}"
+            );
+        }
 
         // The merge emits "\n" only (no "\r"); the write path re-materializes
         // CRLF, and re-encoding with the detected encoding gives the expected

@@ -47,6 +47,8 @@
 //! | start_script            | `"开始.bat"` (builder.py:372)                     | `String = "开始.bat"`                 |
 //! | archive_name            | `"{display_name}_Portable_{version}_{date}.7z"`| `Option<String> = None`            |
 //! |                         | (builder.py:479)                                |                                            |
+//! | repack_layout           | absent (only `version_root` uses it)            | `Option<String> = None`              |
+//! | repack_exe_name         | absent; exe located inside the repacked tree    | `Option<String> = None`              |
 //! | release                 | `{}` (multi.py:153, release.py:100)              | `Option<Value> = None`               |
 //! | env_prefix              | `or env_name(target_name)` (multi.py:48)         | `Option<String> = None`              |
 //! | remove_setdll           | `True` (builder.py:356)                          | `bool = true`                        |
@@ -124,6 +126,31 @@ pub fn load_config(path: impl AsRef<Path>) -> Result<Value, ConfigError> {
     }
 }
 
+/// `load_config` plus a schema check of every target mapping.
+///
+/// Every consumer reads keys through `target.get(key)` with a fallback, so a
+/// misspelled key would otherwise degrade silently into the default (`x64`,
+/// `Browser`, ...). Commands load their config through here; the tests pin the
+/// shipped configs.
+pub fn load_validated_config(path: impl AsRef<Path>) -> Result<Value, ConfigError> {
+    let config = load_config(path)?;
+    validate_targets(&config)?;
+    Ok(config)
+}
+
+/// Deserializes every entry under `targets` into [`Target`], so unknown or
+/// wrongly typed keys fail with the target name attached instead of being
+/// ignored at build time.
+pub fn validate_targets(config: &Value) -> Result<(), ConfigError> {
+    let Some(targets) = config.get("targets").and_then(Value::as_object) else {
+        return Ok(());
+    };
+    for name in targets.keys() {
+        Target::from_config(config, name)?;
+    }
+    Ok(())
+}
+
 /// The returned
 /// mapping is a **copy** with a `"target"` key injected via setdefault
 /// semantics; the loaded `config` is left untouched (see module docs).
@@ -186,7 +213,14 @@ pub fn get_target(config: &Value, target_name: &str) -> Result<Value, ConfigErro
 
 /// serde Target schema: every key consumed downstream, with defaults exactly as
 /// in the key → default table in the module docs.
+///
+/// `deny_unknown_fields` is the point of this struct existing at all: every
+/// consumer reads through `target.get(key)` with a fallback, so a misspelled
+/// key (`archtecture`, `output_dirs`) is silently ignored and the build quietly
+/// falls back to the x64 / `Browser` defaults. Deserializing here is the only
+/// place where the file is still to blame, so unknown keys are rejected.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Target {
     /// Injected by get_target.
     #[serde(default = "default_empty_string")]
@@ -263,6 +297,13 @@ pub struct Target {
     pub start_script: String,
     #[serde(default)]
     pub archive_name: Option<String>,
+    /// Flattens the archive layout when the upstream zip is already a bare
+    /// version tree (Helium): `repack_layout: "version_root"` plus the exe to
+    /// look for inside it.
+    #[serde(default)]
+    pub repack_layout: Option<String>,
+    #[serde(default)]
+    pub repack_exe_name: Option<String>,
     #[serde(default)]
     pub release: Option<Value>,
     /// `target.get("env_prefix") or env_name(target_name)`.
@@ -526,6 +567,45 @@ name = "Chrome"
         assert_eq!(target.output_dir, None);
         assert_eq!(target.archive_name, None);
         assert_eq!(target.env_prefix, None);
+    }
+
+    #[test]
+    fn unknown_target_key_is_rejected_with_the_key_and_target() {
+        let config = json!({
+            "targets": { "chrome_stable": { "name": "Chrome", "archtecture": "arm64" } }
+        });
+        let err = validate_targets(&config).expect_err("a typo must not pass");
+        let message = err.to_string();
+        assert!(message.contains("chrome_stable"), "{message}");
+        assert!(message.contains("archtecture"), "{message}");
+    }
+
+    #[test]
+    fn repack_keys_are_schema_fields() {
+        let config = json!({
+            "targets": { "helium_arm64": {
+                "name": "Helium",
+                "layout": "version_root",
+                "repack_layout": "version_root",
+                "repack_exe_name": "chrome.exe"
+            } }
+        });
+        validate_targets(&config).expect("Helium's repack keys belong to the schema");
+    }
+
+    #[test]
+    fn shipped_configs_validate() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        for rel in [
+            "catalog/browser_catalog.json",
+            "examples/chrome.browser.json",
+            "examples/edge.browser.json",
+            "examples/script-provider.browser.json",
+        ] {
+            let config = load_validated_config(root.join(rel))
+                .unwrap_or_else(|err| panic!("{rel} must validate: {err}"));
+            assert!(config.get("targets").is_some(), "{rel} has no targets");
+        }
     }
 
     #[test]

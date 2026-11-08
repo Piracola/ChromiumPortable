@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use clap::{Parser, Subcommand};
-use portable_builder::config::load_config;
+use portable_builder::config::load_validated_config;
 use serde_json::{json, Map, Value};
 use std::path::{Path, PathBuf};
 
@@ -174,7 +174,8 @@ fn run(cli: &Cli) -> Result<()> {
             Path::new(output),
         ),
         Cmd::Build => {
-            let config = load_config(&cli.config).map_err(|err| anyhow::anyhow!("{err}"))?;
+            let config =
+                load_validated_config(&cli.config).map_err(|err| anyhow::anyhow!("{err}"))?;
             let target =
                 portable_builder::config::get_target(&config, cli.target.as_deref().unwrap_or(""))
                     .map_err(|err| anyhow::anyhow!("{err}"))?;
@@ -189,7 +190,8 @@ fn run(cli: &Cli) -> Result<()> {
             Ok(())
         }
         Cmd::Archive => {
-            let config = load_config(&cli.config).map_err(|err| anyhow::anyhow!("{err}"))?;
+            let config =
+                load_validated_config(&cli.config).map_err(|err| anyhow::anyhow!("{err}"))?;
             let target =
                 portable_builder::config::get_target(&config, cli.target.as_deref().unwrap_or(""))
                     .map_err(|err| anyhow::anyhow!("{err}"))?;
@@ -198,7 +200,8 @@ fn run(cli: &Cli) -> Result<()> {
             Ok(())
         }
         Cmd::Verify { archive, no_smoke } => {
-            let config = load_config(&cli.config).map_err(|err| anyhow::anyhow!("{err}"))?;
+            let config =
+                load_validated_config(&cli.config).map_err(|err| anyhow::anyhow!("{err}"))?;
             let target =
                 portable_builder::config::get_target(&config, cli.target.as_deref().unwrap_or(""))
                     .map_err(|err| anyhow::anyhow!("{err}"))?;
@@ -213,7 +216,8 @@ fn run(cli: &Cli) -> Result<()> {
             Ok(())
         }
         Cmd::VerifyTargets { no_smoke } => {
-            let config = load_config(&cli.config).map_err(|err| anyhow::anyhow!("{err}"))?;
+            let config =
+                load_validated_config(&cli.config).map_err(|err| anyhow::anyhow!("{err}"))?;
             let workdir = PathBuf::from(&cli.workdir);
             let targets =
                 portable_builder::multi::split_targets(cli.target.as_deref().unwrap_or(""));
@@ -300,7 +304,7 @@ fn run_release_command(cli: &Cli) -> Result<()> {
     use portable_builder::release::{check_updates, render_release, update_release};
 
     let workdir = PathBuf::from(&cli.workdir);
-    let config = portable_builder::config::load_config(&cli.config)
+    let config = portable_builder::config::load_validated_config(&cli.config)
         .map_err(|err| anyhow::anyhow!("{err}"))?;
 
     let targets: Vec<String> = match &cli.command {
@@ -772,7 +776,7 @@ fn prepare_target(
 /// Load the catalog and return the selected target, deep-copied and unmutated.
 /// Error text: `Unknown browser '<id>'. Known: <sorted list>`.
 fn select_target_from_catalog(catalog_path: &Path, browser: &str) -> Result<Value> {
-    let catalog = load_config(catalog_path).map_err(|err| anyhow::anyhow!("{err}"))?;
+    let catalog = load_validated_config(catalog_path).map_err(|err| anyhow::anyhow!("{err}"))?;
     let targets = catalog
         .get("targets")
         .and_then(Value::as_object)

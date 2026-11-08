@@ -501,13 +501,15 @@ mod tests {
         std::fs::remove_dir_all(&dir).ok();
     }
 
+    // Only the third-party installers belong here: they are frozen migration
+    // references. setdll/version-x64.dll and setdll/setdll-x64.exe are bumped by
+    // the chrome++ sync workflow, so pinning their version info to a one-time
+    // Python snapshot fails on every component update without any parser change.
     const GOLDEN_SAMPLES: &[(&str, &str)] = &[
         ("csex", "bin/360csex_23.1.1253.64.exe"),
         ("installer", "bin/BraveBrowserStandaloneSetup.exe"),
         ("opera", "bin/Opera_135.0.5973.92_Setup_x64.exe"),
-        ("setdll_exe", "setdll/setdll-x64.exe"),
         ("thorium", "bin/thorium_AVX2_mini_installer.exe"),
-        ("version_dll", "setdll/version-x64.dll"),
         ("vivaldi", "bin/Vivaldi.8.2.4133.52.x64.exe"),
     ];
 

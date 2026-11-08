@@ -42,12 +42,14 @@ jobs:
 
 workflow 的版本检查运行在 Linux，只有需要重新构建时才启动 Windows runner。Windows job 会依次执行构建、打包、成品验证和 Release 更新。
 
+要发布多种架构或渠道（x64 + ARM64、Stable + Beta）时不能用这个只接受单个 `target` 的 reusable workflow，参考 Chrome-Portable / Edge_Portable / Helium_Portable 的 `build.yml`：自己下载引擎包，用 `check-targets` / `build-targets` / `verify-targets` 一次处理多个 target，所有资产发布到同一条 Release，架构靠 `archive_name`（`…_arm64_…`）区分。
+
 ## browser.json
 
 配置支持 JSON、TOML 和 YAML。常用字段可参考 [examples](../examples/)：
 
 - `name`、`display_name`、`output_dir`：项目及产物名称。`output_dir` 可以是相对路径：Edge 设为 `Microsoft\Edge\Application`，因为 Edge 按主程序路径识别渠道，只有官方形态才会被认作 Stable。
-- `architecture`：目标架构，目前核心自带的 Chrome++ 文件为 x64。
+- `architecture`：目标架构，`x64`（默认）或 `arm64`，决定注入哪个 Chrome++ DLL。两种架构的组件都由引擎包提供（`version-x64.dll` / `version-arm64.dll`），不需要子仓库自己下载。ARM64 包在 x64 runner 上构建并静态校验（`verify --no-smoke` 会断言主程序与 `version.dll` 的 PE 机器类型），真正的启动测试只有 ARM64 真机能做。
 - `provider`：上游版本和安装包来源。
 - `version_root`、`inner_archive`、`layout`：安装包解压结构。
 - `exe_name`：相对于版本目录的浏览器主程序路径，也可以包含 `..`。

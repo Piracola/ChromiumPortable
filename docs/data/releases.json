@@ -33,21 +33,21 @@
       ]
     },
     "edge": {
-      "tag": "v157.0.4341.42",
+      "tag": "v157.0.4341.46",
       "publishedAt": "2026-11-06T04:46:40Z",
-      "htmlUrl": "https://github.com/Piracola/Edge_Portable/releases/tag/v157.0.4341.42",
+      "htmlUrl": "https://github.com/Piracola/Edge_Portable/releases/tag/v157.0.4341.46",
       "assets": [
         {
-          "name": "Edge_Portable_arm64_157.0.4341.42_2026-11-08.7z",
-          "size": 186864589,
-          "url": "https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.42/Edge_Portable_arm64_157.0.4341.42_2026-11-08.7z",
-          "digest": "sha256:55c9ad5275802e769896c14765be48b83827db17ac86af9b453cc571f25f377c"
+          "name": "Edge_Portable_arm64_157.0.4341.46_2026-11-10.7z",
+          "size": 186860852,
+          "url": "https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.46/Edge_Portable_arm64_157.0.4341.46_2026-11-10.7z",
+          "digest": "sha256:92f2d97c3a25a4e6ede9fff25bdd47d8fa957a20ce6058f33a1e7f6075093c1e"
         },
         {
-          "name": "Edge_Portable_Win64_157.0.4341.42_2026-11-06.7z",
-          "size": 203080720,
-          "url": "https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.42/Edge_Portable_Win64_157.0.4341.42_2026-11-06.7z",
-          "digest": "sha256:02029dda7728fc9c0bde4a27befc1eb2b531e8926327a2e829e305613958ed33"
+          "name": "Edge_Portable_Win64_157.0.4341.46_2026-11-10.7z",
+          "size": 203303539,
+          "url": "https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.46/Edge_Portable_Win64_157.0.4341.46_2026-11-10.7z",
+          "digest": "sha256:22761f7fb763614e15272e66d323493e535ba67bcefc33eef68330f451543a86"
         }
       ]
     },
@@ -105,19 +105,19 @@
       "publishedAt": "2026-11-04T16:13:18Z"
     },
     "edge-stable": {
-      "version": "157.0.4341.42",
-      "assetName": "Edge_Portable_Win64_157.0.4341.42_2026-11-06.7z",
-      "size": 203080720,
-      "url": "https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.42/Edge_Portable_Win64_157.0.4341.42_2026-11-06.7z",
-      "sha256": "02029dda7728fc9c0bde4a27befc1eb2b531e8926327a2e829e305613958ed33",
+      "version": "157.0.4341.46",
+      "assetName": "Edge_Portable_Win64_157.0.4341.46_2026-11-10.7z",
+      "size": 203303539,
+      "url": "https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.46/Edge_Portable_Win64_157.0.4341.46_2026-11-10.7z",
+      "sha256": "22761f7fb763614e15272e66d323493e535ba67bcefc33eef68330f451543a86",
       "publishedAt": "2026-11-06T04:46:40Z"
     },
     "edge-stable-arm64": {
-      "version": "157.0.4341.42",
-      "assetName": "Edge_Portable_arm64_157.0.4341.42_2026-11-08.7z",
-      "size": 186864589,
-      "url": "https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.42/Edge_Portable_arm64_157.0.4341.42_2026-11-08.7z",
-      "sha256": "55c9ad5275802e769896c14765be48b83827db17ac86af9b453cc571f25f377c",
+      "version": "157.0.4341.46",
+      "assetName": "Edge_Portable_arm64_157.0.4341.46_2026-11-10.7z",
+      "size": 186860852,
+      "url": "https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.46/Edge_Portable_arm64_157.0.4341.46_2026-11-10.7z",
+      "sha256": "92f2d97c3a25a4e6ede9fff25bdd47d8fa957a20ce6058f33a1e7f6075093c1e",
       "publishedAt": "2026-11-06T04:46:40Z"
     },
     "helium-stable": {

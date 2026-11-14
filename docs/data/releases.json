@@ -7,16 +7,16 @@
       "htmlUrl": "https://github.com/Piracola/Chrome-Portable/releases/tag/v157.0.8103.79",
       "assets": [
         {
-          "name": "Chrome++_beta_158.0.8127.18_2026-11-08.7z",
-          "size": 158003212,
-          "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v157.0.8103.79/Chrome%2B%2B_beta_158.0.8127.18_2026-11-08.7z",
-          "digest": "sha256:6b2d34692a5bb0859538c5b246b68a8555cadc85ac6169ea27b2c296eb9f3105"
+          "name": "Chrome++_beta_159.0.8154.6_2026-11-13.7z",
+          "size": 158682916,
+          "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v157.0.8103.79/Chrome%2B%2B_beta_159.0.8154.6_2026-11-13.7z",
+          "digest": "sha256:6b40218cea281b31f71aa211deebc157fe3ce6036765595ac109658cd944eed1"
         },
         {
-          "name": "Chrome++_beta_arm64_158.0.8127.18_2026-11-08.7z",
-          "size": 141989117,
-          "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v157.0.8103.79/Chrome%2B%2B_beta_arm64_158.0.8127.18_2026-11-08.7z",
-          "digest": "sha256:bc3adee08bac05c018c3953548e8edecf73259f24a43945bb73cbf982a95f776"
+          "name": "Chrome++_beta_arm64_159.0.8154.6_2026-11-13.7z",
+          "size": 142968523,
+          "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v157.0.8103.79/Chrome%2B%2B_beta_arm64_159.0.8154.6_2026-11-13.7z",
+          "digest": "sha256:7317442dc813a6bd2dc7985087b3b31a3af260ff4ede7077bbc79232df5de9f2"
         },
         {
           "name": "Chrome++_stable_157.0.8103.79_2026-11-12.7z",
@@ -33,21 +33,21 @@
       ]
     },
     "edge": {
-      "tag": "v157.0.4341.57",
+      "tag": "v157.0.4341.60",
       "publishedAt": "2026-11-06T04:46:40Z",
-      "htmlUrl": "https://github.com/Piracola/Edge_Portable/releases/tag/v157.0.4341.57",
+      "htmlUrl": "https://github.com/Piracola/Edge_Portable/releases/tag/v157.0.4341.60",
       "assets": [
         {
-          "name": "Edge_Portable_arm64_157.0.4341.57_2026-11-13.7z",
-          "size": 187411523,
-          "url": "https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.57/Edge_Portable_arm64_157.0.4341.57_2026-11-13.7z",
-          "digest": "sha256:fdeb00554176ae18ab0cbab066c81df75812703297beaef59c3d699e48516c62"
+          "name": "Edge_Portable_arm64_157.0.4341.60_2026-11-14.7z",
+          "size": 187420565,
+          "url": "https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.60/Edge_Portable_arm64_157.0.4341.60_2026-11-14.7z",
+          "digest": "sha256:f167e261da26143e4ebaa8ff0eda558e6667582411f43f546eddc04fdb8ee60e"
         },
         {
-          "name": "Edge_Portable_Win64_157.0.4341.57_2026-11-13.7z",
-          "size": 203209484,
-          "url": "https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.57/Edge_Portable_Win64_157.0.4341.57_2026-11-13.7z",
-          "digest": "sha256:52cc75f51ccb6004756966499808784a9c443089fc49946eee4a9a1bbc04f982"
+          "name": "Edge_Portable_Win64_157.0.4341.60_2026-11-14.7z",
+          "size": 203172774,
+          "url": "https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.60/Edge_Portable_Win64_157.0.4341.60_2026-11-14.7z",
+          "digest": "sha256:d266edc2424531eaf7f038ff74492488e97c7be7e7d01cda0dea62d5912189c1"
         }
       ]
     },
@@ -89,35 +89,35 @@
       "publishedAt": "2026-11-04T16:13:18Z"
     },
     "chrome-beta": {
-      "version": "158.0.8127.18",
-      "assetName": "Chrome++_beta_158.0.8127.18_2026-11-08.7z",
-      "size": 158003212,
-      "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v157.0.8103.79/Chrome%2B%2B_beta_158.0.8127.18_2026-11-08.7z",
-      "sha256": "6b2d34692a5bb0859538c5b246b68a8555cadc85ac6169ea27b2c296eb9f3105",
+      "version": "159.0.8154.6",
+      "assetName": "Chrome++_beta_159.0.8154.6_2026-11-13.7z",
+      "size": 158682916,
+      "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v157.0.8103.79/Chrome%2B%2B_beta_159.0.8154.6_2026-11-13.7z",
+      "sha256": "6b40218cea281b31f71aa211deebc157fe3ce6036765595ac109658cd944eed1",
       "publishedAt": "2026-11-04T16:13:18Z"
     },
     "chrome-beta-arm64": {
-      "version": "158.0.8127.18",
-      "assetName": "Chrome++_beta_arm64_158.0.8127.18_2026-11-08.7z",
-      "size": 141989117,
-      "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v157.0.8103.79/Chrome%2B%2B_beta_arm64_158.0.8127.18_2026-11-08.7z",
-      "sha256": "bc3adee08bac05c018c3953548e8edecf73259f24a43945bb73cbf982a95f776",
+      "version": "159.0.8154.6",
+      "assetName": "Chrome++_beta_arm64_159.0.8154.6_2026-11-13.7z",
+      "size": 142968523,
+      "url": "https://github.com/Piracola/Chrome-Portable/releases/download/v157.0.8103.79/Chrome%2B%2B_beta_arm64_159.0.8154.6_2026-11-13.7z",
+      "sha256": "7317442dc813a6bd2dc7985087b3b31a3af260ff4ede7077bbc79232df5de9f2",
       "publishedAt": "2026-11-04T16:13:18Z"
     },
     "edge-stable": {
-      "version": "157.0.4341.57",
-      "assetName": "Edge_Portable_Win64_157.0.4341.57_2026-11-13.7z",
-      "size": 203209484,
-      "url": "https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.57/Edge_Portable_Win64_157.0.4341.57_2026-11-13.7z",
-      "sha256": "52cc75f51ccb6004756966499808784a9c443089fc49946eee4a9a1bbc04f982",
+      "version": "157.0.4341.60",
+      "assetName": "Edge_Portable_Win64_157.0.4341.60_2026-11-14.7z",
+      "size": 203172774,
+      "url": "https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.60/Edge_Portable_Win64_157.0.4341.60_2026-11-14.7z",
+      "sha256": "d266edc2424531eaf7f038ff74492488e97c7be7e7d01cda0dea62d5912189c1",
       "publishedAt": "2026-11-06T04:46:40Z"
     },
     "edge-stable-arm64": {
-      "version": "157.0.4341.57",
-      "assetName": "Edge_Portable_arm64_157.0.4341.57_2026-11-13.7z",
-      "size": 187411523,
-      "url": "https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.57/Edge_Portable_arm64_157.0.4341.57_2026-11-13.7z",
-      "sha256": "fdeb00554176ae18ab0cbab066c81df75812703297beaef59c3d699e48516c62",
+      "version": "157.0.4341.60",
+      "assetName": "Edge_Portable_arm64_157.0.4341.60_2026-11-14.7z",
+      "size": 187420565,
+      "url": "https://github.com/Piracola/Edge_Portable/releases/download/v157.0.4341.60/Edge_Portable_arm64_157.0.4341.60_2026-11-14.7z",
+      "sha256": "f167e261da26143e4ebaa8ff0eda558e6667582411f43f546eddc04fdb8ee60e",
       "publishedAt": "2026-11-06T04:46:40Z"
     },
     "helium-stable": {

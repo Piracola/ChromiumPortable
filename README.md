@@ -40,7 +40,7 @@
 
 ## 图形构建器
 
-[Releases](../../releases) 提供 `ChromiumPortableBuilder-windows-x64.zip`，包含构建引擎与图形界面，目标机不需要 Python。解压后运行 `builder-app.exe`，将浏览器安装包放入 `installers\`，即可在界面中选择来源、架构与输出目录并启动构建。界面提供简体中文与 English 两种语言。完整操作步骤、工具箱命令与命令行用法见 [开发文档](./docs/DEVELOPMENT.md)。
+[Releases](https://github.com/Piracola/ChromiumPortable/releases) 提供 `ChromiumPortableBuilder-windows-x64.zip`，包含构建引擎与图形界面，目标机不需要 Python。解压后运行 `builder-app.exe`，将浏览器安装包放入 `installers\`，即可在界面中选择来源、架构与输出目录并启动构建。界面提供简体中文与 English 两种语言。完整操作步骤、工具箱命令与命令行用法见 [开发文档](./docs/DEVELOPMENT.md)。
 
 ## 注意事项
 

@@ -40,7 +40,7 @@ Browsing data is usually stored next to the browser folder in `Data` and `Cache`
 
 ## Graphical builder
 
-[Releases](../../releases) provides `ChromiumPortableBuilder-windows-x64.zip`, which contains the build engine and the graphical interface; the target machine does not need Python. Extract it, run `builder-app.exe`, and place browser installers in `installers\` to select the source, architecture, and output directory and start a build. The interface offers Simplified Chinese and English. Full operating steps, toolbox commands, and command-line usage are in the [development docs](./docs/DEVELOPMENT.md).
+[Releases](https://github.com/Piracola/ChromiumPortable/releases) provides `ChromiumPortableBuilder-windows-x64.zip`, which contains the build engine and the graphical interface; the target machine does not need Python. Extract it, run `builder-app.exe`, and place browser installers in `installers\` to select the source, architecture, and output directory and start a build. The interface offers Simplified Chinese and English. Full operating steps, toolbox commands, and command-line usage are in the [development docs](./docs/DEVELOPMENT.md).
 
 ## Notes
 

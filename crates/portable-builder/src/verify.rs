@@ -447,8 +447,11 @@ pub fn verify_target(
     }
 
     let executable = locate_executable(target, &app_root)?;
-    assert_portable_version_import(&executable)?;
-    assert_no_setdll_backup(&extracted_root, &executable)?;
+    // The import table belongs to the module setdll patched: the browser
+    // executable by default, `msedge_elf.dll` for Edge.
+    let injected = crate::builder::inject_module_path(target, &app_root, &executable)?;
+    assert_portable_version_import(&injected)?;
+    assert_no_setdll_backup(&extracted_root, &injected)?;
     let forbidden = target
         .get("forbidden_file_names")
         .and_then(Value::as_array)
@@ -461,7 +464,7 @@ pub fn verify_target(
         })
         .unwrap_or_default();
     assert_no_forbidden_files(&extracted_root, &forbidden)?;
-    assert_target_architecture(target, &app_root, &executable)?;
+    assert_target_architecture(target, &app_root, &executable, &injected)?;
 
     if smoke {
         smoke_test(target, &extracted_root, &app_root, &executable)?;
@@ -488,13 +491,22 @@ pub fn verify_target(
 /// config and the release body all say arm64 while the bytes are x64, and the
 /// mistake only surfaces when someone runs it on real hardware. Assert the two
 /// binaries this project controls carry the target's machine type.
-fn assert_target_architecture(target: &Value, app_root: &Path, executable: &Path) -> Result<()> {
+fn assert_target_architecture(
+    target: &Value,
+    app_root: &Path,
+    executable: &Path,
+    injected: &Path,
+) -> Result<()> {
     let expected = target
         .get("architecture")
         .and_then(Value::as_str)
         .unwrap_or("x64")
         .to_ascii_lowercase();
     let mut binaries = vec![executable.to_path_buf()];
+    if injected != executable {
+        binaries.push(injected.to_path_buf());
+    }
+    let base_len = binaries.len();
     let mut dirs = vec![app_root.to_path_buf()];
     if let Some(parent) = executable.parent() {
         dirs.push(parent.to_path_buf());
@@ -519,7 +531,7 @@ fn assert_target_architecture(target: &Value, app_root: &Path, executable: &Path
         seen.push(key);
         binaries.push(dll);
     }
-    if binaries.len() == 1 {
+    if binaries.len() == base_len {
         bail!(
             "version.dll not found next to {} or in {}",
             executable.display(),
@@ -753,24 +765,37 @@ mod tests {
         std::fs::copy(&x64_exe, &exe).unwrap();
 
         std::fs::copy(&x64_dll, &dll).unwrap();
-        assert_target_architecture(&serde_json::json!({"architecture": "x64"}), &dir, &exe)
-            .unwrap();
+        assert_target_architecture(
+            &serde_json::json!({"architecture": "x64"}),
+            &dir,
+            &exe,
+            &exe,
+        )
+        .unwrap();
 
         // The DLL is a separate binary, so a swapped one must fail on its own.
         std::fs::copy(&arm64_dll, &dll).unwrap();
-        let err =
-            assert_target_architecture(&serde_json::json!({"architecture": "x64"}), &dir, &exe)
-                .unwrap_err()
-                .to_string();
+        let err = assert_target_architecture(
+            &serde_json::json!({"architecture": "x64"}),
+            &dir,
+            &exe,
+            &exe,
+        )
+        .unwrap_err()
+        .to_string();
         assert!(
             err.contains("Architecture mismatch: expected x64, found arm64"),
             "{err}"
         );
 
-        let err =
-            assert_target_architecture(&serde_json::json!({"architecture": "arm64"}), &dir, &exe)
-                .unwrap_err()
-                .to_string();
+        let err = assert_target_architecture(
+            &serde_json::json!({"architecture": "arm64"}),
+            &dir,
+            &exe,
+            &exe,
+        )
+        .unwrap_err()
+        .to_string();
         assert!(
             err.contains("Architecture mismatch: expected arm64, found x64"),
             "{err}"
@@ -778,10 +803,14 @@ mod tests {
 
         // A missing DLL would otherwise leave only the executable asserted.
         std::fs::remove_file(&dll).unwrap();
-        let err =
-            assert_target_architecture(&serde_json::json!({"architecture": "x64"}), &dir, &exe)
-                .unwrap_err()
-                .to_string();
+        let err = assert_target_architecture(
+            &serde_json::json!({"architecture": "x64"}),
+            &dir,
+            &exe,
+            &exe,
+        )
+        .unwrap_err()
+        .to_string();
         assert!(err.contains("version.dll not found"), "{err}");
 
         remove_path(&dir);

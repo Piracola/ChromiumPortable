@@ -884,6 +884,30 @@ fn relpath_from(dll: &Path, from_dir: &Path) -> String {
     }
 }
 
+/// The module setdll patches. `inject_target` names one (Edge: `msedge_elf.dll`,
+/// so the browser executable keeps its Authenticode signature); without it the
+/// browser executable itself is the target.
+pub fn inject_module_path(target: &Value, app_root: &Path, executable: &Path) -> Result<PathBuf> {
+    let Some(name) = target.get("inject_target").and_then(Value::as_str) else {
+        return Ok(executable.to_path_buf());
+    };
+    if let Some(parent) = executable.parent() {
+        let candidate = parent.join(name);
+        if candidate.is_file() {
+            return Ok(candidate);
+        }
+    }
+    let candidate = app_root.join(name);
+    if candidate.is_file() {
+        return Ok(candidate);
+    }
+    bail!(
+        "inject_target '{name}' not found beside {} or in {}",
+        executable.display(),
+        app_root.display()
+    )
+}
+
 pub fn inject_dll(target: &Value, staged: &mut Staged) -> Result<()> {
     let target_exe = match &staged.executable {
         Some(exe) => exe.clone(),
@@ -927,6 +951,10 @@ pub fn inject_dll(target: &Value, staged: &mut Staged) -> Result<()> {
     let target_exe = target_exe
         .canonicalize()
         .unwrap_or_else(|_| target_exe.clone());
+    let setdll_target = inject_module_path(target, &staged.app_root, &target_exe)?;
+    let setdll_target = setdll_target
+        .canonicalize()
+        .unwrap_or_else(|_| setdll_target.clone());
     let setdll = staged
         .setdll
         .clone()
@@ -946,14 +974,14 @@ pub fn inject_dll(target: &Value, staged: &mut Staged) -> Result<()> {
         .unwrap_or(true)
     {
         if let Ok(output) = Command::new(&setdll_abs)
-            .args(["/t", &target_exe.to_string_lossy()])
+            .args(["/t", &setdll_target.to_string_lossy()])
             .output()
         {
             print!("{}", decode_oem_output(&output.stdout));
         }
     }
 
-    let exe_parent = target_exe
+    let exe_parent = setdll_target
         .parent()
         .map(Path::to_path_buf)
         .unwrap_or_else(|| PathBuf::from("."));
@@ -998,10 +1026,10 @@ pub fn inject_dll(target: &Value, staged: &mut Staged) -> Result<()> {
 
     info(format!(
         "Injecting version.dll into {}",
-        target_exe.display()
+        setdll_target.display()
     ));
     let output = Command::new(&setdll_abs)
-        .args([&dll_arg, target_exe.to_string_lossy().as_ref()])
+        .args([&dll_arg, setdll_target.to_string_lossy().as_ref()])
         .current_dir(&exe_parent)
         .output()
         .map_err(|exc| anyhow!("DLL injection failed. ({exc})"))?;
@@ -1016,24 +1044,24 @@ pub fn inject_dll(target: &Value, staged: &mut Staged) -> Result<()> {
             "DLL injection failed. exit={:?} cmd={} args=[{dll_arg}, {}] cwd={}",
             output.status.code(),
             setdll_abs.display(),
-            target_exe.to_string_lossy(),
+            setdll_target.to_string_lossy(),
             exe_parent.display(),
         );
     }
 
-    assert_portable_version_import(&target_exe)?;
+    assert_portable_version_import(&setdll_target)?;
     info(format!(
         "Portable import verified: {}",
-        target_exe.display()
+        setdll_target.display()
     ));
 
     // setdll leaves an un-injected backup beside the target. Shipping it
     // wastes space and hands users a copy that writes to their profile.
-    let exe_name = target_exe
+    let exe_name = setdll_target
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_default();
-    let backup = target_exe
+    let backup = setdll_target
         .parent()
         .unwrap_or(Path::new("."))
         .join(format!("{exe_name}~"));
@@ -1445,6 +1473,45 @@ fn env_non_empty(name: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn inject_target_selects_the_patched_module() {
+        let root = std::env::temp_dir().join(format!(
+            "inject-target-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        let version_dir = root
+            .join("Microsoft")
+            .join("Edge")
+            .join("Application")
+            .join("157.0.0.0");
+        std::fs::create_dir_all(&version_dir).expect("mkdir");
+        let exe = version_dir.join("msedge.exe");
+        let module = version_dir.join("msedge_elf.dll");
+        std::fs::write(&exe, b"stub").expect("exe");
+        std::fs::write(&module, b"stub").expect("module");
+
+        let plain = json!({ "exe_name": "msedge.exe" });
+        assert_eq!(
+            inject_module_path(&plain, &root, &exe).expect("default is the executable"),
+            exe
+        );
+
+        let elf = json!({ "exe_name": "msedge.exe", "inject_target": "msedge_elf.dll" });
+        assert_eq!(
+            inject_module_path(&elf, &root, &exe).expect("sibling module"),
+            module
+        );
+
+        let missing = json!({ "inject_target": "nope.dll" });
+        let err = inject_module_path(&missing, &root, &exe)
+            .expect_err("absent module must fail")
+            .to_string();
+        assert!(err.contains("nope.dll"), "{err}");
+
+        std::fs::remove_dir_all(&root).ok();
+    }
 
     #[test]
     fn relpath_from_matches_os_path_relpath() {

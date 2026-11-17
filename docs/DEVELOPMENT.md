@@ -57,6 +57,7 @@ workflow 的版本检查运行在 Linux，只有需要重新构建时才启动 W
 - `version_root`、`inner_archive`、`layout`：安装包解压结构。
 - `exe_name`：相对于版本目录的浏览器主程序路径，也可以包含 `..`。
 - `ini_location`、`version_dll_location`：Chrome++ 配置和 DLL 的放置位置。
+- `inject_target`：要被 setdll 改写导入表的模块，省略时是主程序本身。Edge 设成 `msedge_elf.dll`，这样 `msedge.exe` 的数字签名保持有效（主程序文件一个字节都不动），`verify` 也改为断言这个模块的导入表。
 - `archive_name`：最终压缩包名称。
 - `release`：Release 标题、正文、版本提取和资产匹配规则。
 

@@ -34,6 +34,7 @@
 //! | version_dll_name        | `f"version-{arch}.dll"` (builder.py:257)         | `Option<String> = None` (arch-derived)|
 //! | setdll_name             | `f"setdll-{arch}.exe"` (builder.py:258)          | `Option<String> = None` (arch-derived)|
 //! | version_dll_location    | `"app_root"` (builder.py:279)                    | `String = "app_root"`                |
+//! | inject_target           | absent; Rust-era key, setdll patches exe by default | `Option<String> = None`        |
 //! | ini_location            | `"app_root"` (builder.py:296)                    | `String = "app_root"`                |
 //! | allow_7z_download       | `not auto_layout` (builder.py:99)                | `Option<bool> = None` (computed)     |
 //! | allow_7z_system_install | `not auto_layout` (builder.py:100)               | `Option<bool> = None` (computed)     |
@@ -270,6 +271,12 @@ pub struct Target {
     pub setdll_name: Option<String>,
     #[serde(default = "default_version_dll_location")]
     pub version_dll_location: String,
+    /// Module whose import table gets the injected payload. Absent means the
+    /// browser executable itself (Chrome, Helium). Edge sets `msedge_elf.dll`
+    /// so `msedge.exe` keeps its Authenticode signature: setdll only rewrites
+    /// the named module's import descriptor.
+    #[serde(default)]
+    pub inject_target: Option<String>,
     #[serde(default = "default_ini_location")]
     pub ini_location: String,
     /// Default is `not auto_layout`, computed downstream.

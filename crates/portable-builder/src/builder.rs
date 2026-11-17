@@ -642,7 +642,7 @@ fn resolve_chrome_plus_ini(
 
     if !baseline_path.exists() {
         if let Some(override_path) = &override_path {
-            bail!("{} needs a baseline chrome++.ini at {}. Point --builder-dir (or PYTHONPATH) at the ChromiumPortable checkout.", override_path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(), baseline_path.display());
+            bail!("{} needs a baseline chrome++.ini at {}. Point --builder-dir at the ChromiumPortable checkout.", override_path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default(), baseline_path.display());
         }
         return Ok(None);
     }

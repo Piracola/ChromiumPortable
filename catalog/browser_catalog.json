@@ -81,12 +81,18 @@
       "display_name": "Helium",
       "product": true,
       "output_dir": "Helium",
+      "exe_name": "..\\chrome.exe",
       "architecture": "x64",
       "provider": {
-        "type": "script",
-        "command": ["python", "scripts/upstream/resolve.py", "--browser", "helium"]
+        "type": "github_release",
+        "repo": "imputnet/helium-windows",
+        "channel": "stable",
+        "asset_pattern": "helium_(?P<version>\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?)_x64-windows\\.zip"
       },
-      "layout": "auto",
+      "version_root": "Helium-bin",
+      "layout": "move_version_root",
+      "repack_layout": "version_root",
+      "repack_exe_name": "chrome.exe",
       "ini_location": "app_root",
       "version_dll_location": "app_root",
       "start_script": "开始.bat",
@@ -95,6 +101,7 @@
         "tag": "v{version}",
         "title": "Helium {version}",
         "asset_match": "Helium_",
+        "version_pattern": "Helium(?:\\s+Stable)?\\s*版本[:：]\\s*(\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?)",
         "body": "自动构建的 Helium 便携版。\n\n## 版本\n- Helium 版本: {version}\n"
       }
     },
@@ -105,8 +112,7 @@
       "output_dir": "Brave Browser",
       "architecture": "x64",
       "provider": {
-        "type": "script",
-        "command": ["python", "scripts/upstream/resolve.py", "--browser", "brave"]
+        "type": "direct"
       },
       "layout": "auto",
       "ini_location": "app_root",
@@ -125,8 +131,7 @@
       "output_dir": "Vivaldi",
       "architecture": "x64",
       "provider": {
-        "type": "script",
-        "command": ["python", "scripts/upstream/resolve.py", "--browser", "vivaldi"]
+        "type": "direct"
       },
       "layout": "auto",
       "ini_location": "app_root",
@@ -145,8 +150,7 @@
       "output_dir": "Opera Internet Browser",
       "architecture": "x64",
       "provider": {
-        "type": "script",
-        "command": ["python", "scripts/upstream/resolve.py", "--browser", "opera"]
+        "type": "direct"
       },
       "layout": "auto",
       "ini_location": "app_root",
@@ -165,8 +169,7 @@
       "output_dir": "Thorium",
       "architecture": "x64",
       "provider": {
-        "type": "script",
-        "command": ["python", "scripts/upstream/resolve.py", "--browser", "thorium"]
+        "type": "direct"
       },
       "layout": "auto",
       "ini_location": "app_root",
@@ -185,8 +188,7 @@
       "output_dir": "360极速浏览器X",
       "architecture": "x64",
       "provider": {
-        "type": "script",
-        "command": ["python", "scripts/upstream/resolve.py", "--browser", "cse360"]
+        "type": "direct"
       },
       "layout": "auto",
       "ini_location": "app_root",

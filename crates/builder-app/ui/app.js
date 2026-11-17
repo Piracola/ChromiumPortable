@@ -38,7 +38,6 @@ const STR = {
     toolInspect: "识别安装包", toolInspectDesc: "不运行安装包，解析结构并定位主程序。",
     toolResearch: "批量巡检", toolResearchDesc: "文件夹里每个安装包各识别一次。",
     toolPrepare: "生成单目标配置", toolPrepareDesc: "按所选目标写出 build\\selected.browser.json。",
-    toolResolve: "解析上游地址", toolResolveDesc: "取目标最新安装包的直链与校验值。",
     toolVerify: "校验产物压缩包", toolVerifyDesc: "按 build\\selected.browser.json 校验产物。",
     run: "运行",
     logTitle: "运行日志", autoscroll: "自动滚动",
@@ -61,7 +60,6 @@ const STR = {
     step_tool_inspect: "识别安装包",
     step_tool_research: "批量巡检",
     step_tool_prepare: "生成单目标配置",
-    step_tool_resolve: "解析上游地址",
     step_tool_verify: "校验产物压缩包",
 
     need_installer: "请先选择一个安装包。",
@@ -113,7 +111,6 @@ const STR = {
     toolInspect: "Inspect an installer", toolInspectDesc: "Parse the package without running it; locate the main executable.",
     toolResearch: "Batch research", toolResearchDesc: "Identify every installer in a folder in one pass.",
     toolPrepare: "Write single-target config", toolPrepareDesc: "Writes build\\selected.browser.json for the target.",
-    toolResolve: "Resolve upstream URL", toolResolveDesc: "Fetch the latest installer URL and digest.",
     toolVerify: "Verify an archive", toolVerifyDesc: "Verify the artifact described by build\\selected.browser.json.",
     run: "Run",
     logTitle: "Log", autoscroll: "Auto-scroll",
@@ -136,7 +133,6 @@ const STR = {
     step_tool_inspect: "Inspect an installer",
     step_tool_research: "Batch research",
     step_tool_prepare: "Write single-target config",
-    step_tool_resolve: "Resolve upstream URL",
     step_tool_verify: "Verify an archive",
 
     need_installer: "Pick an installer package first.",

@@ -235,9 +235,12 @@ cab/msi/rar 本来就需要完整 7z，换库只省一次子进程却引入解�
 - `script`：命令执行 → stdout 里**从后往前**找第一个 `{...}` JSON 行的解析语义；
   该 provider 是 catalog 非内置上游的通用口子，必须保留。
 - `direct`：`version_regex` 从 URL 提版本、缺省 `0.0.0.0`。
-- `resolve.py`（350 行 Omaha/CDP 解析）不再作为外部脚本：移植为引擎子命令
+- `resolve.py`（350 行 Omaha/CDP 解析）不再作为外部脚本：原计划移植为引擎子命令
   `resolve-upstream`，`script` provider 继续可用（语义不变），catalog 里指向
   自身的调用改为内置。见 §5。
+  **2026-11-17 更新**：`resolve-upstream` 的 S9 波次从未落地，子命令与图形界面的
+  「解析上游地址」一起删除；非产品目标改为 `direct` provider，构建时用
+  `package_url` / `package_path` 指定安装包。
 
 ### 4.4 ini_overlay.rs —— 语义 1:1 + 黄金测试
 

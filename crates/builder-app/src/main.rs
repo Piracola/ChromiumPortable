@@ -526,16 +526,6 @@ fn plan_tool(
                 &rest.iter().map(String::as_str).collect::<Vec<_>>(),
             )
         }
-        "resolve" => {
-            if req.target.trim().is_empty() {
-                return Err("need_target");
-            }
-            engine_step(
-                "step_tool_resolve",
-                workdir,
-                &["resolve-upstream", "--browser", req.target.trim(), "--json"],
-            )
-        }
         "verify" => {
             if req.target.trim().is_empty() {
                 return Err("need_target");

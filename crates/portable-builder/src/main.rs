@@ -141,12 +141,6 @@ pub enum Cmd {
         #[arg(long)]
         architecture: Option<String>,
     },
-    /// Resolve a browser's latest upstream installer
-    ResolveUpstream {
-        /// Pass-through arguments for upstream resolution
-        #[arg(allow_hyphen_values = true, trailing_var_arg = true)]
-        args: Vec<String>,
-    },
 }
 
 fn main() {
@@ -289,11 +283,6 @@ fn run(cli: &Cli) -> Result<()> {
         | Cmd::BuildTargets { .. }
         | Cmd::RenderReleaseTargets { .. }
         | Cmd::UpdateReleaseTargets { .. } => run_release_command(cli),
-        _ => bail!(
-            "subcommand '{}' is not implemented yet (migration in progress; \
-             see docs/MIGRATION_RUST_TAURI.md S9 for the owning wave)",
-            cli.command.name()
-        ),
     }
 }
 
@@ -692,32 +681,13 @@ fn resolve_builder_dir(builder_dir: Option<&str>) -> Result<Option<PathBuf>> {
             }
         }
     }
-    if let Ok(pythonpath) = std::env::var("PYTHONPATH") {
-        for entry in std::env::split_paths(&pythonpath) {
-            if entry.exists() && entry.join("setdll").exists() {
-                println!(
-                    "[INFO] Auto-detected builder directory from PYTHONPATH: {}",
-                    entry.display()
-                );
-                return Ok(Some(entry));
-            }
-        }
-    }
-    let default_path = PathBuf::from("_portable_builder");
-    if default_path.exists() && default_path.join("setdll").exists() {
-        println!(
-            "[INFO] Using default builder directory: {}",
-            default_path.display()
-        );
-        return Ok(Some(default_path));
-    }
     let package_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
         .canonicalize()
         .unwrap_or_else(|_| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."));
     if package_root.join("setdll").exists() {
         println!(
-            "[INFO] Using builder files beside the Python package: {}",
+            "[INFO] Using builder files from the source checkout: {}",
             package_root.display()
         );
         return Ok(Some(package_root));
@@ -735,7 +705,6 @@ fn resolve_catalog_path(builder_dir: Option<&str>) -> Result<PathBuf> {
             candidates.push(PathBuf::from(dir));
         }
         candidates.push(PathBuf::from("."));
-        candidates.push(PathBuf::from("_portable_builder"));
         if let Ok(exe) = std::env::current_exe() {
             if let Some(parent) = exe.parent() {
                 candidates.push(parent.to_path_buf());
@@ -871,29 +840,6 @@ fn write_selected(
     Ok(())
 }
 
-impl Cmd {
-    fn name(&self) -> &'static str {
-        match self {
-            Cmd::Check => "check",
-            Cmd::Build => "build",
-            Cmd::Archive => "archive",
-            Cmd::Verify { .. } => "verify",
-            Cmd::VerifyTargets { .. } => "verify-targets",
-            Cmd::InspectPackage { .. } => "inspect-package",
-            Cmd::BuildPackage { .. } => "build-package",
-            Cmd::BuildPackages { .. } => "build-packages",
-            Cmd::ResearchPackages { .. } => "research-packages",
-            Cmd::RenderRelease => "render-release",
-            Cmd::UpdateRelease => "update-release",
-            Cmd::CheckTargets { .. } => "check-targets",
-            Cmd::BuildTargets { .. } => "build-targets",
-            Cmd::RenderReleaseTargets { .. } => "render-release-targets",
-            Cmd::UpdateReleaseTargets { .. } => "update-release-targets",
-            Cmd::PrepareTarget { .. } => "prepare-target",
-            Cmd::ResolveUpstream { .. } => "resolve-upstream",
-        }
-    }
-}
 #[cfg(test)]
 mod tests {
     use super::*;

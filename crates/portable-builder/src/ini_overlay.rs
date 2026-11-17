@@ -65,16 +65,6 @@ impl IniEncoding {
         }
     }
 
-    /// Inverse of [IniEncoding::name].
-    pub fn from_name(name: &str) -> Option<Self> {
-        match name {
-            "utf-16" => Some(Self::Utf16),
-            "utf-8-sig" => Some(Self::Utf8Sig),
-            "utf-8" => Some(Self::Utf8),
-            _ => None,
-        }
-    }
-
     /// Strict Python decode; [Option::None] stands in for UnicodeDecodeError
     /// (the probe then falls through to the next encoding).
     fn decode(self, data: &[u8]) -> Option<String> {

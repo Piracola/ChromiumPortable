@@ -13,7 +13,7 @@ ChromiumPortable 统一处理上游版本检查、安装包下载、解压、Chr
 - 非产品浏览器的 Release **必须**使用 `Unofficial` 标题前缀与免责声明正文（见 `catalog/browser_catalog.json`），**不得**在下载站做成产品卡片或使用商标 logo。
 - 根因是降低「产品化 / 商标观感」风险，而不是宣称再分发已被上游许可允许。再分发判断见 [NOTICE](../NOTICE)。
 
-浏览器成品由独立子仓库维护。每个子仓库主要保存 `browser.json`、必要的上游查询脚本、Chrome++ 覆盖配置和启动脚本，并通过 reusable workflow 调用本仓库。
+浏览器成品由独立子仓库维护。每个子仓库主要保存 `browser.json`、Chrome++ 覆盖配置和启动脚本，并通过 reusable workflow 调用本仓库。
 
 当前生产项目：
 
@@ -121,20 +121,27 @@ fork 用户无需额外 secret 即可对公开上游使用；请自行评估再�
 
 ### 在线 target（catalog）
 
-`catalog/browser_catalog.json` 中非产品 target（`Unofficial` 发布用）：
+产品 target 用内置 provider，不需要安装包，`check` 自己去上游取最新版本：
 
-| target | 浏览器 | 自动取包 |
+| target | 浏览器 | provider |
 | --- | --- | --- |
-| `brave_stable` | Brave | CDN / Omaha |
-| `vivaldi_stable` | Vivaldi | 官网下载页 CDN |
-| `opera_stable` | Opera | FTP 版本目录 + sha256sum |
-| `thorium_stable` | Thorium | GitHub（gz83/thorium） |
-| `cse360_stable` | 360 极速浏览器 X | `browser.360.cn/browser_download_link.js`（仅 csex） |
-| `helium_stable` | Helium | 可能需 `package_url` |
+| `chrome_stable` / `chrome_beta` | Chrome | `google_omaha` |
+| `edge_stable` | Edge | `microsoft_edge` |
+| `helium_stable` | Helium | `github_release`（`imputnet/helium-windows`） |
+
+非产品 target（`Unofficial` 发布用）不再解析上游，改为 `direct` provider：必须用 `package_url` 或 `package_path` 指定安装包，否则 `check` 会直接报 `direct provider requires 'url' or 'path'`。
+
+| target | 浏览器 |
+| --- | --- |
+| `brave_stable` | Brave |
+| `vivaldi_stable` | Vivaldi |
+| `opera_stable` | Opera |
+| `thorium_stable` | Thorium |
+| `cse360_stable` | 360 极速浏览器 X |
 
 图形构建器：`builder-app.exe`（Release 下载或 `cargo run -p builder-app`；来源三选一：本机安装包 / 整个文件夹 / 在线目标，架构与是否打包 7z 在选项区）。
 安装包请放入专用目录 `installers\`（GUI 默认识别该目录；`bin\` 仍是开发用回归样本，不是用户投放目录）。
-GitHub 系解析（Thorium / Helium）建议设置 `GITHUB_TOKEN`，避免未认证 API 限流；Helium 常无公开 Windows 资产，请自备安装包。
+Helium 走 GitHub API 取资产，建议设置 `GITHUB_TOKEN` 避免未认证限流。
 批量：`portable-builder.exe --workdir . build-packages <目录> [--archive]`。
 单包：`portable-builder.exe --workdir . build-package <安装包> [--archive]`。
 
@@ -209,7 +216,7 @@ Release 正文中的版本号会被 `version_pattern` 重新读取，因此正�
 
 构建核心发布新版本时应创建 tag，并让子仓库逐个升级 `uses` 和 `builder-ref`。涉及目录解析、注入或验证的改动，应先用 Chrome、Edge 和 Helium 的实际配置完成回归测试。
 
-智能结构解析器的安装包调研结果见 [常见浏览器安装包结构](./PACKAGE_ANALYSIS.md)。
+智能结构解析器的安装包调研结果见 [常见浏览器安装包结构](./PACKAGE_ANALYSIS.md)。四个仓库的提交史、架构转折与历史包袱盘点见 [架构沿革](./ARCHITECTURE_HISTORY.md)。
 
 ## 下载站
 
@@ -231,7 +238,6 @@ Release 正文中的版本号会被 `version_pattern` 重新读取，因此正�
 - 静态识别安装包
 - 批量静态巡检
 - 生成单目标配置
-- 解析上游下载地址
 - 校验产物压缩包
 
 运行期间「开始构建」切换为「取消」；日志支持自动滚动，并可清空、复制或保存。`7zr.exe` 会自动补齐到工作目录。工作目录决定 `installers\`、`build\release\`、`build\assets\` 的落点，默认取 exe 所在目录，可随时更改。界面语言为简体中文 / English，在右上角切换。

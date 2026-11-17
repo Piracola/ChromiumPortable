@@ -54,25 +54,25 @@
 
 ## 五、可以安全移除的清单
 
-### A · 立即可删（零引用、零 CI 依赖、用户不可见）
+### A · 立即可删（零引用、零 CI 依赖、用户不可见）——已于 2026-11-17 执行
 
 | 路径 | 证据 |
 | --- | --- |
-| `.github/actions/build/action.yml` | 未入库 + 被 `.gitignore` 误伤；同时把 `.gitignore:4` 的 `build/` 改成 `/build/` |
-| `main.rs:695-713`（PYTHONPATH 与 `_portable_builder` 探测）+ `:720` 文案、`builder.rs:645` 文案 | 引擎已无 Python 包 |
-| `log_fmt::done`（`log_fmt.rs:17`）、`IniEncoding::from_name`（`ini_overlay.rs:69`）、`release::asset_matches_target`（`release.rs:525`）、`release::delete_assets_by_pattern`（`release.rs:992`） | 全仓 0 调用（`pub` 让 clippy 也不会报） |
-| `_migration/pe-golden/` 下 15 个零引用文件（`i18n_parity.json`、`ini_reference.json`、`providers_reference.json`、`release_body_golden.txt`、`wizard_parity_check.md`、`7z/*` 等） | 代码 / docs / CI / scripts 全 0 命中 |
+| ~~`.github/actions/build/action.yml`~~ | 已删。`.gitignore` 的 `build/` 已改成 `/build/`（顺带补 `/target/`） |
+| ~~`main.rs` 的 PYTHONPATH / `_portable_builder` 探测，`builder.rs` 里的 PYTHONPATH 文案~~ | 已删。引擎已无 Python 包 |
+| ~~`log_fmt::done`、`IniEncoding::from_name`、`release::asset_matches_target`、`release::delete_assets_by_pattern`~~ | 已删。全仓 0 调用（`pub` 让 clippy 也不会报） |
+| ~~`_migration/pe-golden/` 下 15 个零引用文件~~ | 已删。代码 / docs / CI / scripts 全 0 命中 |
 | 三子仓库 `.gitignore` 里的 Python 条目 | 仓库内已无 `.py` |
 
 ### B · 需一次验证后删
 
 | 路径 | 说明 |
 | --- | --- |
-| `resolve-upstream` 全套（引擎子命令 + GUI 按钮 + `app.js`/`index.html` 的键） | 目前是一个必然失败的按钮；删引擎那半必须同时删 UI，否则点了报错文案都找不到 |
-| catalog 6 个 `script` target | 二选一：`helium_stable` 按真身改成 `github_release`；其余 5 个要么删，要么补回真实解析脚本。删了要同步 `build-browser.yml:16-25` 的下拉与 `docs/DEVELOPMENT.md:128-133`、`docs/PACKAGE_ANALYSIS.md` |
-| `providers/script.rs` | 只有上面 6 条 catalog 与 `examples/script-provider.browser.json` 在用它；产品线 0 使用。留作逃生口还是删，取决于 catalog 的决定 |
-| `update-release`（单目标） | 要么删，要么在文档里写清「仅手动单目标」 |
-| `chrome++/injectpe.bat` × 3 | 构建路径不用；保留最多一个（Edge 形态最贴近真实路径），Helium 版可直接删 |
+| ~~`resolve-upstream` 全套~~ | 已删：引擎子命令 + GUI 工具卡片 + `app.js`/`index.html` 的 i18n 键同时移除 |
+| ~~catalog 6 个 `script` target~~ | 已修：`helium_stable` 改成真身 `github_release`；其余 5 个改成 `direct`，必须给 `package_url` / `package_path`。`docs/DEVELOPMENT.md` 已同步 |
+| `providers/script.rs` | 保留：只有 `examples/script-provider.browser.json` 与自写配置在用，产品线 0 使用，是自定义上游的通用口子 |
+| `update-release`（单目标） | 保留：文档已标为手动单目标用，CI 走 `update-release-targets` |
+| `chrome++/injectpe.bat` × 3 | 构建路径不读它；保留最多一个（Edge 形态最贴近真实路径），Helium 版可直接删 |
 | `_migration/pe-golden/{build_context_reference.json, config_toml_errors_golden.json, verify_archive_locate_golden.json}` | 只在注释里点名，期望值已内联；删文件要顺手改注释 |
 
 ### C · 不要动（像包袱，其实承重）
@@ -85,11 +85,12 @@
 
 ## 六、建议的处理顺序
 
-1. **catalog 先修**：`helium_stable` 现在是坏的，而它是 `build-browser.yml` 下拉里的一项。改 provider 或删 target，顺手把 `docs/DEVELOPMENT.md` 里描述已删脚本的段落一起改。
-2. **删 `resolve-upstream`**：引擎 + GUI + i18n 键三处同时删，消掉一个必然失败的按钮。
-3. **清 Python 残迹**：`PYTHONPATH` 分支与文案、`.gitignore` 的 `build/` 改成 `/build/`、本地 stray action 文件、子仓库 `.gitignore` 条目。
-4. **清零引用**：4 个 `pub fn` + 15 个 golden 文件。
-5. **`injectpe.bat`**：确认没人手工依赖后删。
+1–4 已于 2026-11-17 执行：catalog 修好、`resolve-upstream` 三处同删、Python 残迹清掉、
+4 个 `pub fn` 与 15 个零引用 golden 删除。剩下的：
+
+1. **`injectpe.bat`**：确认没人手工依赖后删（三子仓库各一份）。
+2. **三子仓库 `.gitignore`** 的 Python 条目。
+3. 三个只在注释里点名的 golden（B 表最后一行）：删文件时顺手改注释。
 
 ## 七、事实与推断
 

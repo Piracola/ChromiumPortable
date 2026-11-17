@@ -521,13 +521,6 @@ pub fn matching_assets_for_target<'a>(
     Ok((Vec::new(), None))
 }
 
-/// Port of release.py::asset_matches_target.
-pub fn asset_matches_target(target: &Value, asset_name: &str) -> Result<bool> {
-    Ok(asset_matchers(target)?
-        .iter()
-        .any(|m| (m.predicate)(asset_name)))
-}
-
 /// Port of release.py::target_match_description - ", "-joined descriptions or
 /// "(none)" for an empty chain.
 pub fn target_match_description(target: &Value) -> Result<String> {
@@ -985,23 +978,6 @@ pub fn download_release_asset(asset: &Value, destination: &Path) -> Result<PathB
     std::io::copy(&mut response, &mut file)?;
 
     Ok(destination.to_path_buf())
-}
-
-/// Port of release.py::delete_assets_by_pattern - substring,
-/// case-insensitive (pattern.lower() in name.lower()).
-pub fn delete_assets_by_pattern(release_id: i64, pattern: &str) -> Result<()> {
-    let mut deleted = 0usize;
-    for asset in get_release_assets(release_id)? {
-        let name = asset.get("name").and_then(Value::as_str).unwrap_or("");
-        if name.to_lowercase().contains(&pattern.to_lowercase()) {
-            info(format!("Deleting old asset: {name}"));
-            let id = asset.get("id").and_then(Value::as_i64).unwrap_or_default();
-            delete_release_asset(id)?;
-            deleted += 1;
-        }
-    }
-    info(format!("Deleted {deleted} old assets."));
-    Ok(())
 }
 
 /// Port of release.py::delete_target_assets - matcher-hit sweep plus the

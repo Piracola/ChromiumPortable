@@ -189,7 +189,7 @@ portable-builder.exe prepare-target --browser brave_stable --output build\select
 
 子仓库仍可提供完整 `chrome++.ini`，但它会覆盖上游基线，构建时会显示警告。覆盖文件中的键必须已经存在于基线中，拼写错误会直接导致构建失败。
 
-`scripts/update_chrome_plus.py` 和 `.github/workflows/update-chrome-plus.yml` 负责同步 Chrome++ 文件。目前自动同步 `version-x64.dll`、`setdll-x64.exe`、`README.md` 和 `chrome++.ini`。
+`scripts/update_chrome_plus.py` 和 `.github/workflows/update-chrome-plus.yml` 负责同步 Chrome++ 文件。目前自动同步 `version-x64.dll`、`setdll-x64.exe`、`version-arm64.dll`、`setdll-arm64.exe`、`README.md` 和 `chrome++.ini`，并把上游 tag 记进 `version.txt`。二进制有变化时，工作流会把滚动的 `v2` tag 推到该提交；`release-engine.yml` 上传完引擎包后自己派发三个子仓库的构建——子仓库的 `setdll/` 只存在于引擎包里，派发早于上传就会拿到上一版。
 
 ## 注入和成品验证
 
@@ -217,7 +217,7 @@ Release 正文中的版本号会被 `version_pattern` 重新读取，因此正�
 
 ## 图形构建器与渠道说明
 
-图形构建器 `builder-app.exe` 随 [Releases](../../releases) 的 `ChromiumPortableBuilder-windows-x64.zip` 发布，包含构建引擎与图形界面，目标机不需要 Python。解压后运行，把浏览器安装包复制进 `installers\`（该目录内有一份 `README.txt` 说明）。
+图形构建器 `builder-app.exe` 随 [Releases](https://github.com/Piracola/ChromiumPortable/releases) 的 `ChromiumPortableBuilder-windows-x64.zip` 发布，包含构建引擎与图形界面，目标机不需要 Python。解压后运行，把浏览器安装包复制进 `installers\`（该目录内有一份 `README.txt` 说明）。
 
 页面自上而下分为四步：
 

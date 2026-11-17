@@ -88,6 +88,7 @@ jobs:
     needs: [windows, linux]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
         with:
           path: dist
@@ -96,3 +97,14 @@ jobs:
         with:
           files: dist/*.zip*
           fail_on_unmatched_files: true
+      # Children download this bundle by tag, so they can only be dispatched
+      # after the assets are up: dispatching from update-chrome-plus.yml would
+      # race the upload and hand them the previous bundle. Only the rolling v2
+      # ships production; a v2.x cut stays a manual dispatch with
+      # builder_ref=<that tag>.
+      - name: Dispatch child builds
+        if: github.event_name == 'push' && github.ref_name == 'v2'
+        env:
+          CHILD_REPO_TOKEN: ${{ secrets.CHILD_REPO_TOKEN }}
+          BUILDER_REF: v2
+        run: python3 scripts/dispatch_child_builds.py

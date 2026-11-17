@@ -15,16 +15,16 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    env:
-      CHILD_WORKFLOWS: >-
-        [
-          {"repository":"Piracola/Chrome-Portable","workflow":"build.yml","ref":"main"},
-          {"repository":"Piracola/Edge_Portable","workflow":"build.yml","ref":"main"},
-          {"repository":"Piracola/Helium_Portable","workflow":"build.yml","ref":"main"}
-        ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+        with:
+          # A tag pushed with GITHUB_TOKEN never triggers another workflow, so the
+          # re-point below would go unnoticed by release-engine.yml. Persisting
+          # the cross-repo PAT as the git credential makes the push an event of
+          # the PAT's owner. That PAT needs contents:write here and
+          # actions:write on the three child repositories.
+          token: ${{ secrets.CHILD_REPO_TOKEN }}
 
       - name: Ensure 7-Zip is available
         shell: bash
@@ -55,9 +55,12 @@ jobs:
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           git push
 
-      - name: Dispatch child repository builds
+      - name: Re-point the rolling v2 tag
         if: steps.update.outputs.rebuild_needed == 'true'
-        env:
-          BUILDER_REF: ${{ steps.commit.outputs.sha }}
-          CHILD_REPO_TOKEN: ${{ secrets.CHILD_REPO_TOKEN }}
-        run: python3 scripts/dispatch_child_builds.py
+        run: |
+          # Children consume setdll/ from the engine bundle, which only exists as
+          # a Release asset, so the new chrome++ binaries reach them through a v2
+          # re-cut. release-engine.yml dispatches the child builds once its
+          # assets are up; no dispatch belongs here.
+          git tag -f v2 "${{ steps.commit.outputs.sha }}"
+          git push -f origin refs/tags/v2

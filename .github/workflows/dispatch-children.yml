@@ -1,0 +1,25 @@
+name: Dispatch child builds
+
+# Manual knob for re-dispatching the three product repos without re-cutting v2.
+# release-engine.yml does this automatically once its assets are up; this
+# workflow exists for retries (a broken CHILD_REPO_TOKEN, a transient 5xx) and
+# for pushing the current bundle to the children after a docs-only change.
+
+on:
+  workflow_dispatch:
+    inputs:
+      builder_ref:
+        description: Engine release tag the children should build against.
+        required: false
+        default: v2
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Dispatch child builds
+        env:
+          CHILD_REPO_TOKEN: ${{ secrets.CHILD_REPO_TOKEN }}
+          BUILDER_REF: ${{ inputs.builder_ref }}
+        run: python3 scripts/dispatch_child_builds.py

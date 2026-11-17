@@ -163,7 +163,7 @@ cargo build --release -p portable-builder
 target\release\portable-builder.exe --config examples\edge.browser.json --target edge_stable --workdir . check
 ```
 
-主要命令包括 `check`、`build`、`archive`、`verify`、`render-release` 和 `update-release`。多目标项目可以使用对应的 `*-targets` 命令。
+主要命令包括 `check`、`build`、`archive`、`verify`、`render-release` 和 `update-release`。多目标项目可以使用对应的 `*-targets` 命令；CI 只走 `*-targets`，单目标的 `update-release` 留给手动排查用。
 
 自动模式还提供三个本地命令：
 

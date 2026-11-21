@@ -4,19 +4,8 @@
 //!   a broken certificate chain. `danger_accept_invalid_certs` is only ever
 //!   enabled inside this provider (migration doc S3).
 //! - UA spoof "Microsoft Edge Update/1.3.183.29;winhttp", timeout 60 both calls.
-//! - Version selection: ms_version (CDP ContentId.Version) or repo_version
-//!   (installer_repo latest tag regex \d+\.\d+\.\d+\.\d+); when BOTH are
-//!   present the GREATER wins (`compare_versions(repo, ms) > 0`); both fail =>
-//!   "Unable to determine Microsoft Edge version."
-//! - Download pick: sort items by SizeInBytes DESC, take [0]; FileId + ".exe"
-//!   appended when the suffix is missing; fallback FileId
-//!   "MicrosoftEdgeSetup.exe"; empty items => "Microsoft Edge download API
-//!   returned no files."
 //! - Digest: Hashes.Sha256 is BASE64 - normalize_sha256's base64 branch
 //!   handles it.
-//! - get_version_from_release_repo returns None on non-200 (not an error) and
-//!   searches tag_name only; ContentId null => version None (falls through to
-//!   the repo path).
 
 use anyhow::{bail, Result};
 use serde_json::{json, Value};
@@ -106,9 +95,6 @@ pub fn get_version_from_release_repo(config: &Value) -> Result<Option<String>> {
         .map(|m| m.as_str().to_string()))
 }
 
-/// Sort by SizeInBytes DESC (missing SizeInBytes sorts as 0), take the first,
-/// append ".exe" when the FileId suffix is missing, fallback FileId
-/// "MicrosoftEdgeSetup.exe".
 pub fn pick_download_item(items: &[Value]) -> Result<DownloadPick> {
     if items.is_empty() {
         bail!("Microsoft Edge download API returned no files.");
@@ -166,9 +152,6 @@ pub fn get_download_info(config: &Value, version: &str) -> Result<DownloadPick> 
     pick_download_item(&items)
 }
 
-/// Two-source version selection (greater wins), then download info
-/// passthrough with verify_ssl defaulting to FALSE. Upstream failures
-/// degrade to warnings exactly like Python's try/except + print.
 pub fn get_package(config: &Value) -> Result<Value> {
     let mut ms_version: Option<String> = None;
     let mut repo_version: Option<String> = None;

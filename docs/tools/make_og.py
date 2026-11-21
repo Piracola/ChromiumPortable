@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""生成 assets/og.png（1200×630 社交分享预览图）。
-
-og:image 不支持 SVG，所以这里用 Pillow 画一张位图并提交进仓库。
+"""og:image 不支持 SVG，所以这里用 Pillow 画一张位图并提交进仓库。
 """
 
 from __future__ import annotations

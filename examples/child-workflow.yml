@@ -7,7 +7,6 @@ on:
   schedule:
     - cron: "0 0 * * *"
 
-# 整条流水线在 ChromiumPortable 的 reusable workflow 里；这里只声明触发条件和目标列表。
 jobs:
   build:
     permissions:

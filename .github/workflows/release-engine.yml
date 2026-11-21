@@ -1,6 +1,3 @@
-# 引擎与 GUI 的发布产物（M5）。tag v2* 触发；子仓库的 portable-browser.yml@v2
-# 从这里下载自包含 zip（引擎 exe + catalog + setdll + 7zr.exe），
-# 产品线构建因此不再需要 checkout 构建器仓库、setup-python、pip install。
 name: release-engine
 
 on:
@@ -40,11 +37,9 @@ jobs:
       - name: Stage GUI directory build
         shell: pwsh
         run: |
-          # 目录版而非单文件：GUI 要派发引擎子进程，目录版更稳（沿用旧的 onedir 决定）
           $stage = "dist/ChromiumPortableBuilder-windows-x64"
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
           & ./scripts/stage-dist.ps1 -Stage $stage -Bin target/release -Gui
-          # 同上：压目录本身，保持 zip 内的顶层目录结构
           Compress-Archive -Path "$stage" -DestinationPath dist/ChromiumPortableBuilder-windows-x64.zip -Force
 
       - name: Write checksums
@@ -99,11 +94,7 @@ jobs:
           fail_on_unmatched_files: true
       # Children download this bundle by tag, so they can only be dispatched
       # after the assets are up: dispatching from update-chrome-plus.yml would
-      # race the upload and hand them the previous bundle. Only the rolling v2
-      # ships production; a v2.x cut stays a manual dispatch with
-      # builder_ref=<that tag>. A manual `gh workflow run release-engine.yml
-      # --ref v2` also lands here, which is the retry path when the dispatch
-      # itself failed.
+      # race the upload and hand them the previous bundle.
       - name: Dispatch child builds
         if: github.ref_name == 'v2'
         env:

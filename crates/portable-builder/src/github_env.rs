@@ -7,9 +7,6 @@ use std::path::Path;
 
 const DELIMITER: &str = "PORTABLE_BUILDER_EOF";
 
-/// `None` maps to the empty string. Values containing a newline become a
-/// `KEY<<PORTABLE_BUILDER_EOF` heredoc block; all other values stay a plain
-/// `KEY=value` line.
 pub fn format_pair(key: &str, value: Option<&str>) -> Vec<String> {
     let text = value.unwrap_or("");
     if text.contains('\n') {
@@ -23,9 +20,6 @@ pub fn format_pair(key: &str, value: Option<&str>) -> Vec<String> {
     }
 }
 
-/// Opens the file in append mode (creating it when missing) and writes the
-/// lines joined with `\n` plus one trailing newline, as UTF-8 bytes.
-///
 /// Python opens in text mode, which turns `\n` into CRLF on Windows; we
 /// always write LF, matching Python's behavior on Linux CI where these files
 /// are consumed (the Actions runner accepts both line endings).
@@ -39,12 +33,6 @@ pub fn append_lines(path: impl AsRef<Path>, lines: &[String]) -> std::io::Result
     file.write_all(payload.as_bytes())
 }
 
-/// Link back to the Actions run that produced the artifacts, when in CI.
-/// Missing or empty `GITHUB_REPOSITORY`/`GITHUB_RUN_ID` yields "".
-///
-/// A set-but-empty `GITHUB_SERVER_URL` is used verbatim - Python's
-/// `os.getenv` default only applies when the variable is unset, producing a
-/// server-less URL.
 pub fn build_run_url() -> String {
     let repo = non_empty_env("GITHUB_REPOSITORY");
     let run_id = non_empty_env("GITHUB_RUN_ID");
@@ -60,15 +48,10 @@ fn non_empty_env(name: &str) -> Option<String> {
     std::env::var(name).ok().filter(|value| !value.is_empty())
 }
 
-/// Publishes values to GITHUB_ENV (later steps) and GITHUB_OUTPUT (later
-/// jobs). With neither variable set (local/non-CI path) every pair is printed
-/// to stdout as `KEY=value` and nothing is written.
-///
 /// The frozen Rust signature takes pre-stringified `String` values — the
 /// caller decides how a `None` from the Python dict renders (contract:
 /// _migration/pe-golden/write_env_contract.md). The input slice mirrors
 /// Python dict insertion order and is preserved end to end.
-///
 /// When GITHUB_OUTPUT is set it additionally receives an `env_json` line
 /// carrying every key as one compact JSON blob so a downstream job can
 /// restore them all, including the per-target keys whose names come from the
@@ -114,14 +97,6 @@ fn build_lines(values: &[(String, String)]) -> Vec<String> {
     lines
 }
 
-/// Compact, order-preserving JSON for the `env_json` output, byte-for-byte
-/// equal to Python's
-/// `json.dumps(values, ensure_ascii=False, separators=(",", ":"))`.
-///
-/// Hand-assembled from the ordered slice instead of serde_json's Map: the
-/// default Map is a sorted BTreeMap and would silently reorder keys (the
-/// "preserve_order" feature would fix that but also changes Map semantics for
-/// every other module in the crate, so it was deliberately not enabled).
 fn env_json_blob(values: &[(String, String)]) -> String {
     let body = values
         .iter()
@@ -289,7 +264,6 @@ mod tests {
         std::env::set_var("GITHUB_RUN_ID", "");
         assert_eq!(build_run_url(), "");
 
-        // Quirk: set-but-empty server is used verbatim, no default fallback.
         std::env::set_var("GITHUB_RUN_ID", "99");
         std::env::set_var("GITHUB_SERVER_URL", "");
         assert_eq!(build_run_url(), "/owner/repo/actions/runs/99");
@@ -412,8 +386,6 @@ mod tests {
 
     #[test]
     fn envjson_ci_golden_file_replay() {
-        // Byte-level replay of the Python write_env output captured in
-        // _migration/pe-golden/envjson_ci_golden.json (round 23).
         let golden_path = std::path::Path::new("_migration/pe-golden/envjson_ci_golden.json");
         if !golden_path.exists() {
             eprintln!("golden not present in this checkout; skipping");

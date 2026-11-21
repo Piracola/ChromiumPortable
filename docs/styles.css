@@ -1,10 +1,3 @@
-/* Chromium 便携版构建 — 站点样式
-   设计要点：
-   - 全部使用系统字体，不引入任何外部资源（国内访问 fonts.googleapis.com 基本超时）
-   - 亮色 / 暗色双主题：跟随系统，并允许右上角按钮覆盖（[data-theme] 必须赢过媒体查询）
-   - 每个浏览器的品牌色通过 --accent 注入到卡片，负责描边、顶线、徽标与图标底色
-*/
-
 :root {
   color-scheme: light;
 
@@ -45,7 +38,6 @@
   --font-mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, "Liberation Mono", monospace;
 }
 
-/* 暗色令牌：抽成一个自定义属性块，供媒体查询与显式主题共用 */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
@@ -170,7 +162,6 @@ p {
   left: 16px;
 }
 
-/* ---------------------------------------------------------------- 页头 */
 
 .site-header {
   position: sticky;
@@ -310,7 +301,6 @@ p {
   }
 }
 
-/* ---------------------------------------------------------------- 布局 */
 
 main {
   width: min(100%, var(--page));
@@ -346,7 +336,6 @@ main {
   text-transform: uppercase;
 }
 
-/* ---------------------------------------------------------------- 首屏 */
 
 .hero {
   padding: clamp(56px, 9vw, 96px) 0 0;
@@ -423,7 +412,6 @@ main {
   line-height: 1.55;
 }
 
-/* ---------------------------------------------------------------- 按钮 */
 
 .btn {
   display: inline-flex;
@@ -480,7 +468,6 @@ main {
   font-size: 0.96rem;
 }
 
-/* ---------------------------------------------------------------- 构建卡片 */
 
 .filters {
   display: flex;
@@ -602,7 +589,6 @@ main {
   font-size: 0.94rem;
 }
 
-/* 两列而不是四列：版本号是 14 个字符的点分四段串，四列会把它折成两行 */
 .build-card__meta {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -627,8 +613,6 @@ main {
   overflow-wrap: anywhere;
 }
 
-/* 固定成「主按钮独占一行 + 两个次级按钮并排」，避免不同版本号长度
-   导致每张卡片的按钮换行位置各不相同 */
 .build-card__actions {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -648,7 +632,6 @@ main {
   font-weight: 600;
 }
 
-/* ---------------------------------------------------------------- 信任 / 特性 / 仓库 */
 
 .trust-grid {
   display: grid;
@@ -765,7 +748,6 @@ main {
   border-color: var(--accent);
 }
 
-/* ---------------------------------------------------------------- 正文 */
 
 .breadcrumb {
   display: flex;
@@ -882,7 +864,6 @@ main {
   font-size: 0.88rem;
 }
 
-/* ---------------------------------------------------------------- FAQ */
 
 .faq {
   max-width: 76ch;
@@ -934,7 +915,6 @@ main {
   font-size: 0.95rem;
 }
 
-/* ---------------------------------------------------------------- 页脚 */
 
 .site-footer {
   border-top: 1px solid var(--border);
@@ -1006,7 +986,6 @@ main {
   font-size: 0.76rem;
 }
 
-/* ---------------------------------------------------------------- 响应式 */
 
 @media (max-width: 900px) {
   .stats {

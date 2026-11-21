@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""从 data/site.json 生成整站静态页面（中英双语）。
-
-站点部署在 GitHub Pages（Deploy from a branch，目录 /docs），没有服务端构建步骤，
+"""站点部署在 GitHub Pages（Deploy from a branch，目录 /docs），没有服务端构建步骤，
 因此生成结果必须提交进仓库。
 """
 
@@ -54,7 +52,6 @@ def indent(block: str, spaces: int) -> str:
     return "\n".join(pad + line if line.strip() else line for line in block.splitlines())
 
 
-# 多语言路径
 
 
 def locales(site: dict) -> list[dict]:
@@ -141,7 +138,6 @@ def lang_switch_html(site: dict, locale: dict, slug: str | None) -> str:
 
 
 def arch_label(ui: dict, architecture: str) -> str:
-    """架构的展示名（x64 / ARM64），由各语言的 ui.archLabels 提供。"""
     return (ui.get("archLabels") or {}).get(architecture, architecture)
 
 
@@ -172,11 +168,9 @@ def all_pages(site: dict, code: str) -> list[dict]:
     return [merged_page(site, p, code) for p in site["pages"]]
 
 
-# Release 抓取
 
 
 def fetch_releases(site: dict) -> dict:
-    """按 assetPattern 匹配到具体构建目标。"""
     headers = {
         "Accept": "application/vnd.github+json",
         "User-Agent": "ChromiumPortable-docs-generator",
@@ -251,7 +245,6 @@ def fetch_releases(site: dict) -> dict:
     }
 
 
-# 页面片段
 
 
 def nav_html(site: dict, locale: dict, code: str, slug: str | None) -> str:
@@ -452,7 +445,6 @@ def sections_html(page: dict) -> str:
     return "\n\n".join(blocks)
 
 
-# 结构化数据
 
 
 def software_application(
@@ -590,7 +582,6 @@ def page_jsonld(site: dict, locale: dict, code: str, page: dict, builds: list[di
     }
 
 
-# 页面渲染
 
 
 def head_html(
@@ -937,7 +928,6 @@ def render_sitemap(site: dict, releases: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
-# 入口
 
 
 def build_outputs(site: dict, releases: dict) -> dict[Path, str]:

@@ -1,21 +1,5 @@
-//! This provider is the generic escape hatch for catalog entries with
-//! non-builtin upstreams (Helium/Brave/Vivaldi/Opera/Thorium/CSE): it runs a
-//! command and parses JSON out of stdout.
-//!
-//! Exact rules (direct_script_contract.json + mod_contract.json tail):
-//! - empty stdout => "Script provider returned empty stdout."
-//! - full-text JSON parse first; on failure scan lines REVERSED, first line
-//!   starting { and ending } is parsed;
-//! - all fail => "Script provider stdout must contain a JSON object.";
-//! - missing 'version' => "Script provider JSON requires 'version'.";
-//! - no url/installer_path/path =>
-//!   "Script provider JSON requires one of 'url', 'installer_path', or 'path'.";
-//! - exit code != 0 => "Script provider failed with exit code {code}.";
 //! - str command => shlex.split(posix=False) (Windows rules: quotes retained,
 //!   no backslash escapes); list => as-is;
-//! - installer_path aliases to path; verify_ssl defaults True; file_name from
-//!   URL's last segment when absent; sha256 normalized eagerly (fail fast),
-//!   missing sha256 prints the WARN.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -35,7 +19,6 @@ pub fn parse_json_output(stdout: &str) -> Result<Value> {
         return Ok(value);
     }
 
-    // Scan lines REVERSED: first line that starts { and ends } is parsed.
     for line in text.lines().rev() {
         let line = line.trim();
         if line.starts_with('{') && line.ends_with('}') {
@@ -104,8 +87,6 @@ pub fn shlex_split_non_posix(command: &str) -> Result<Vec<String>> {
     Ok(tokens)
 }
 
-/// Run the command, parse JSON from stdout, apply the passthrough key
-/// semantics from the mod_contract.json tail.
 pub fn get_package(config: &Value) -> Result<Value> {
     let Some(command) = config.get("command").cloned() else {
         bail!("script provider requires 'command'");
@@ -297,8 +278,6 @@ mod tests {
 
     #[test]
     fn get_package_applies_mod_contract_tail_semantics() {
-        // The mod_contract.json script_get_package_source_tail semantics,
-        // exercised via the subprocess path with a real command.
         let json_out = r#"{"version": "135.0.5973.92", "url": "https://example.invalid/op.exe", "installer_path": "C:/local/op.exe"}"#;
         let config = json!({
             "command": ["cmd", "/c", "echo", "placeholder"],

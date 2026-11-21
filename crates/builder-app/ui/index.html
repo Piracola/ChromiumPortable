@@ -1,12 +1,4 @@
 <!DOCTYPE html>
-<!--
-  ChromiumPortableBuilder 渲染层（2026-10 重写版）。
-  静态资产：无构建步骤、无 CDN、无外部字体；脚本只有同目录 app.js。
-  排版原则（第一性）：一次构建 = 来源 → 选项 → 输出 → 计划执行，四问垂直排列；
-  日志是唯一弹性区域；状态常驻底栏。文案集中在 app.js 的 STR 表。
-  区块结构：<fieldset class="sect"> 保留表单分组语义（legend 是分组名），
-  视觉卡片挂在里面的 <div class="sect-box"> 上——所以标题在卡片**上方**，不压边框。
--->
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
@@ -18,7 +10,6 @@
 <body>
   <div class="frame">
 
-    <!-- ═══ 页眉：品牌 / 状态 / 页签 / 语言 / 窗口钮（原生标题栏已关，自绘） ═══ -->
     <header class="top" data-drag>
       <div class="brand">
         <span class="brand-name">ChromiumPortable</span>
@@ -54,10 +45,8 @@
     <div id="warn-engine" class="banner" hidden
          data-i18n="warnEngine">同目录没有 portable-builder.exe，构建不可用。</div>
 
-    <!-- ═══ 主区 ═══ -->
     <main class="body">
 
-      <!-- ── 页：构建 ── -->
       <section id="page-build" class="page">
         <div class="page-head">
           <h1 data-i18n="buildTitle">构建便携版</h1>
@@ -65,7 +54,6 @@
         </div>
 
         <div class="cols">
-          <!-- 左列：来源 / 选项 / 输出 -->
           <div class="col-form">
             <fieldset class="sect" id="fs-source">
               <legend class="sect-k" data-i18n="sectSource">1 · 来源</legend>
@@ -77,7 +65,6 @@
                   <label><input type="radio" name="mode" value="online"><span data-i18n="modeOnline">在线目标</span></label>
                 </div>
 
-                <!-- 来源：本机安装包 -->
                 <div class="source" id="source-one">
                   <div class="row-head">
                     <span class="label" data-i18n="installerList">installers 文件夹</span>
@@ -93,7 +80,6 @@
                          placeholder="installers\ChromeSetup.exe">
                 </div>
 
-                <!-- 来源：整个文件夹 -->
                 <div class="source" id="source-folder" hidden>
                   <label class="label" for="in-folder" data-i18n="folderLabel">安装包目录</label>
                   <div class="row">
@@ -104,7 +90,6 @@
                   <p class="hint" data-i18n="folderHint">每个安装包各自出一份产物，互不影响。</p>
                 </div>
 
-                <!-- 来源：在线目标 -->
                 <div class="source" id="source-online" hidden>
                   <label class="label" for="target-build" data-i18n="targetLabel">目标</label>
                   <div class="row">
@@ -163,7 +148,6 @@
             </fieldset>
           </div>
 
-          <!-- 右列：计划与执行 -->
           <aside class="col-run">
             <fieldset class="sect sect-run" id="fs-run">
               <legend class="sect-k" data-i18n="sectRun">4 · 计划与执行</legend>
@@ -180,7 +164,6 @@
         </div>
       </section>
 
-      <!-- ── 页：调试台（单步跑引擎命令，维护/排错用） ── -->
       <section id="page-tools" class="page" hidden>
         <div class="page-head">
           <h1 data-i18n="toolsTitle">调试台</h1>
@@ -249,7 +232,6 @@
         </div>
       </section>
 
-      <!-- ── 日志（两页共用，默认折叠，运行时自动展开） ── -->
       <section class="logbox folded" id="logbox">
         <div class="log-head">
           <button type="button" class="log-toggle" id="btn-log-fold" aria-expanded="true">

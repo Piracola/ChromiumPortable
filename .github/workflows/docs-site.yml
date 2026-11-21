@@ -1,9 +1,6 @@
 name: 站点生成与校验
 
-# docs/ 是 GitHub Pages 的静态站点（Deploy from a branch，目录 /docs），没有服务端构建步骤，
-# 所以产物必须提交进仓库。这个工作流做两件事：
-#   verify  —— 有人改了 docs/ 就检查产物是否与 data/site.json 同步（防止手改 index.html 造成漂移）
-#   refresh —— 每天抓一次各子仓库的最新 Release，把真实版本号烘焙进页面并刷新 sitemap 的 lastmod
+# docs/ 是 GitHub Pages 的静态站点（Deploy from a branch，目录 /docs），没有服务端构建步骤，所以产物必须提交进仓库。
 on:
   push:
     branches: [main]

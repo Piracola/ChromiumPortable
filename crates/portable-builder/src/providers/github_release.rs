@@ -1,8 +1,3 @@
-//! github_release provider — resolve a browser package from a GitHub
-//! Releases page. Replaces child-repo script providers whose upstream
-//! publishes on GitHub (Helium today; catalog browsers like Brave follow).
-//!
-
 use anyhow::{bail, Result};
 use serde_json::{json, Value};
 
@@ -149,8 +144,6 @@ pub fn get_package(config: &Value) -> Result<Value> {
     }))
 }
 
-/// /releases?per_page=20 for stable/prerelease; /releases/latest for the
-/// latest channel (both kinds allowed).
 fn list_releases(repo: &str, channel: &str, verify_ssl: bool) -> Result<Vec<Value>> {
     let client = reqwest::blocking::Client::builder()
         .user_agent(crate::release::DEFAULT_USER_AGENT)

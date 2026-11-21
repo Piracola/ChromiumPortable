@@ -1,14 +1,4 @@
-//! JSON/TOML config loading + serde Target schema.
-//!
 //! Contract of record: docs/MIGRATION_RUST_TAURI.md §4.1.
-//!
-//! `get_target` injection semantics:
-//! `target = dict(targets[target_name])` **copies** the target mapping out of the
-//! loaded config; `target.setdefault("target", target_name)` then injects the
-//! queried name into that **copy** only. The loaded `config` value is never
-//! mutated. If the target already carries a `"target"` key, its own value is
-//! kept (setdefault semantics = entry().or_insert_with()).
-//!
 //! Key → default table (every `target.get(key, default)` chain in builder.py /
 //! verify.py / tools.py / multi.py / release.py; the table IS the documentation
 //! required by §4.1):
@@ -54,17 +44,11 @@
 //! | env_prefix              | `or env_name(target_name)` (multi.py:48)         | `Option<String> = None`              |
 //! | remove_setdll           | `True` (builder.py:356)                          | `bool = true`                        |
 //!
-//! Fields typed `Option<_>` are exactly those whose Python default is computed
-//! downstream (from other keys or module constants): the port stores the
-//! configured value verbatim and lets the consumer apply the fallback, which
-//! preserves the distinction between "absent" and "explicitly set" that the
-//! Python `.get(key, default)` chains rely on.
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::path::Path;
 
-/// Supported config formats.
 pub const SUPPORTED_FORMATS: &str = ".json, .toml";
 
 #[derive(Debug, thiserror::Error)]
@@ -86,8 +70,6 @@ pub enum ConfigError {
         suffix: String,
         supported: &'static str,
     },
-    /// Display string is byte-identical to the Python KeyError message
-    /// (`Target 'nope' not found. Available targets: chrome_stable`).
     #[error("Target '{name}' not found. Available targets: {available}")]
     UnknownTarget { name: String, available: String },
     #[error("target '{name}' does not match the Target schema: {detail}")]
@@ -118,7 +100,6 @@ pub fn load_config(path: impl AsRef<Path>) -> Result<Value, ConfigError> {
             format: "TOML",
             detail: source.to_string(),
         }),
-        // .yml / .yaml and everything else: no YAML path at all.
         _ => Err(ConfigError::UnsupportedFormat {
             path: path_str,
             suffix,
@@ -128,20 +109,12 @@ pub fn load_config(path: impl AsRef<Path>) -> Result<Value, ConfigError> {
 }
 
 /// `load_config` plus a schema check of every target mapping.
-///
-/// Every consumer reads keys through `target.get(key)` with a fallback, so a
-/// misspelled key would otherwise degrade silently into the default (`x64`,
-/// `Browser`, ...). Commands load their config through here; the tests pin the
-/// shipped configs.
 pub fn load_validated_config(path: impl AsRef<Path>) -> Result<Value, ConfigError> {
     let config = load_config(path)?;
     validate_targets(&config)?;
     Ok(config)
 }
 
-/// Deserializes every entry under `targets` into [`Target`], so unknown or
-/// wrongly typed keys fail with the target name attached instead of being
-/// ignored at build time.
 pub fn validate_targets(config: &Value) -> Result<(), ConfigError> {
     let Some(targets) = config.get("targets").and_then(Value::as_object) else {
         return Ok(());
@@ -156,8 +129,6 @@ pub fn validate_targets(config: &Value) -> Result<(), ConfigError> {
 /// mapping is a **copy** with a `"target"` key injected via setdefault
 /// semantics; the loaded `config` is left untouched (see module docs).
 pub fn get_target(config: &Value, target_name: &str) -> Result<Value, ConfigError> {
-    // A missing/empty "targets" key
-    // is an empty mapping, and "(none)" is reported when it holds no targets.
     let targets = config.get("targets").and_then(Value::as_object);
 
     let source = match targets.and_then(|t| t.get(target_name)) {
@@ -166,7 +137,6 @@ pub fn get_target(config: &Value, target_name: &str) -> Result<Value, ConfigErro
             let mut available: Vec<&str> = targets
                 .map(|t| t.keys().map(String::as_str).collect())
                 .unwrap_or_default();
-            // Python sorted() over str keys == UTF-8 byte order == Rust str Ord.
             available.sort_unstable();
             let available = if available.is_empty() {
                 "(none)".to_string()
@@ -180,15 +150,9 @@ pub fn get_target(config: &Value, target_name: &str) -> Result<Value, ConfigErro
         }
     };
 
-    // A copy, never a reference.
-    // dict() RAISES on non-mapping values (ValueError for str, TypeError for
-    // None/bool/list); a scalar target entry must be rejected here, not passed
-    // through (review-B1 finding 1, migration doc S4.1 entry validation).
     let mut target = source.clone();
     match &mut target {
         Value::Object(map) => {
-            // Keep an existing
-            // value, inject the queried name only when the key is absent.
             map.entry("target".to_string())
                 .or_insert_with(|| Value::String(target_name.to_string()));
         }
@@ -212,14 +176,6 @@ pub fn get_target(config: &Value, target_name: &str) -> Result<Value, ConfigErro
     Ok(target)
 }
 
-/// serde Target schema: every key consumed downstream, with defaults exactly as
-/// in the key → default table in the module docs.
-///
-/// `deny_unknown_fields` is the point of this struct existing at all: every
-/// consumer reads through `target.get(key)` with a fallback, so a misspelled
-/// key (`archtecture`, `output_dirs`) is silently ignored and the build quietly
-/// falls back to the x64 / `Browser` defaults. Deserializing here is the only
-/// place where the file is still to blame, so unknown keys are rejected.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Target {
@@ -232,7 +188,6 @@ pub struct Target {
     /// Chain `display_name → name → ""`.
     #[serde(default)]
     pub display_name: Option<String>,
-    /// Product targets (Chrome / Edge / Helium) set this explicitly; absent = falsy.
     #[serde(default = "default_false")]
     pub product: bool,
     /// Chain `output_dir → name → "Browser"`. May contain path separators when
@@ -242,14 +197,12 @@ pub struct Target {
     /// directory under that prefix instead of a single folder name.
     #[serde(default)]
     pub output_dir: Option<String>,
-    /// No default; auto layout derives it from the PE.
     #[serde(default)]
     pub exe_name: Option<String>,
     #[serde(default = "default_architecture")]
     pub architecture: String,
     #[serde(default = "default_layout")]
     pub layout: String,
-    /// Edge-style inner archive name; absent for plain layouts.
     #[serde(default)]
     pub inner_archive: Option<String>,
     #[serde(default = "default_version_root")]
@@ -266,7 +219,6 @@ pub struct Target {
     /// so `None` means "compute from `architecture`".
     #[serde(default)]
     pub version_dll_name: Option<String>,
-    /// Default depends on architecture.
     #[serde(default)]
     pub setdll_name: Option<String>,
     #[serde(default = "default_version_dll_location")]
@@ -279,10 +231,8 @@ pub struct Target {
     pub inject_target: Option<String>,
     #[serde(default = "default_ini_location")]
     pub ini_location: String,
-    /// Default is `not auto_layout`, computed downstream.
     #[serde(default)]
     pub allow_7z_download: Option<bool>,
-    /// Default is `not auto_layout`, computed downstream.
     #[serde(default)]
     pub allow_7z_system_install: Option<bool>,
     #[serde(default = "default_true")]
@@ -291,13 +241,10 @@ pub struct Target {
     pub forbidden_file_names: Vec<String>,
     #[serde(default = "default_smoke_data_dir")]
     pub smoke_data_dir: String,
-    /// 120 for the `--version` probe and 180
-    /// for the GUI smoke run; `None` keeps both split defaults available.
     #[serde(default)]
     pub smoke_timeout: Option<u64>,
     #[serde(default = "default_smoke_data_timeout")]
     pub smoke_data_timeout: u64,
-    /// Default is `DEFAULT_SMOKE_ARGS` (owned by verify).
     #[serde(default)]
     pub smoke_args: Option<Vec<String>>,
     #[serde(default = "default_start_script")]
@@ -313,7 +260,6 @@ pub struct Target {
     pub repack_exe_name: Option<String>,
     #[serde(default)]
     pub release: Option<Value>,
-    /// `target.get("env_prefix") or env_name(target_name)`.
     #[serde(default)]
     pub env_prefix: Option<String>,
     #[serde(default = "default_true")]
@@ -364,8 +310,6 @@ fn default_start_script() -> String {
 }
 
 impl Target {
-    /// Convenience: `get_target` + `Target::deserialize`
-    /// with the schema error wrapped as `ConfigError::Schema`.
     pub fn from_config(config: &Value, target_name: &str) -> Result<Target, ConfigError> {
         let value = get_target(config, target_name)?;
         serde_json::from_value(value).map_err(|source| ConfigError::Schema {
@@ -380,9 +324,6 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    /// Isolated temp dir keyed by pid + test-unique file name.
-    /// The returned guard removes the whole directory on drop (review-B1
-    /// finding 3: no %TEMP% residue across repeated test runs).
     struct TempGuard {
         dir: std::path::PathBuf,
     }
@@ -401,9 +342,6 @@ mod tests {
     }
 
     fn temp_file(name: &str, content: &str) -> (TempGuard, std::path::PathBuf) {
-        // 目录名带递增计数：并行测试各自独立目录，一个测试的 Drop 不会删掉
-        // 另一个正在写的目录（CI 快机上真发生过：unknown_target_error_text_is_exact
-        // 的 expect("write temp test file") 因共享目录被并发 Drop 删除而 panic）。
         static SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
         let seq = SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         let dir =
@@ -534,8 +472,6 @@ name = "Chrome"
 
     #[test]
     fn non_object_target_entry_is_rejected() {
-        // review-B1 finding 1: Python dict(targets[name]) raises on non-mapping
-        // entries; the port must reject scalars/null/arrays with a Schema error.
         for bad in [json!("a string"), json!(null), json!(true), json!([1, 2])] {
             let config = json!({ "targets": { "bad": bad } });
             let err = get_target(&config, "bad").expect_err("non-object target");
@@ -628,7 +564,6 @@ name = "Chrome"
             chrome.archive_name.as_deref(),
             Some("Chrome++_stable_{version}_{date}.7z")
         );
-        // Serialize back: the boolean survives the round trip.
         let round = serde_json::to_value(&chrome).expect("serialize");
         assert_eq!(round["product"], json!(true));
 
@@ -649,12 +584,11 @@ name = "Chrome"
         let golden = i18n_golden();
         let config = json!({ "targets": { "edge_stable": golden["target_edge_stable"].clone() } });
         let edge = Target::from_config(&config, "edge_stable").expect("edge schema");
-        assert_eq!(edge.target, "edge_stable"); // injected by get_target
+        assert_eq!(edge.target, "edge_stable");
         assert_eq!(edge.inner_archive.as_deref(), Some("MSEDGE.7Z"));
         assert_eq!(edge.layout, "move_version_dir");
         assert_eq!(edge.version_dll_location, "version_dir");
 
-        // The "target" key was injected into the copy, not the source dict.
         assert!(config["targets"]["edge_stable"].get("target").is_none());
     }
 }

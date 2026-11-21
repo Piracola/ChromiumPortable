@@ -46,7 +46,6 @@ struct Snapshot {
 struct Step {
     /// 前端文案表的键（step_*），标题由前端按语言渲染。
     title_key: String,
-    /// 完整参数（含 --workdir），既是执行依据也是前端展示的透明命令行。
     args: Vec<String>,
 }
 
@@ -108,10 +107,6 @@ impl Default for PlanRequest {
         }
     }
 }
-
-// ---------------------------------------------------------------------------
-// 共享状态
-// ---------------------------------------------------------------------------
 
 struct JobHandle {
     cancel: AtomicBool,
@@ -573,17 +568,12 @@ fn spawn_reader<R: std::io::Read + Send + 'static>(stream: Option<R>, tx: mpsc::
     });
 }
 
-/// 跨步骤事实（`KEY=value`）。CI 里 GITHUB_ENV 负责落盘并在下一步自动继承；
-/// 本地子进程模式下没有 GITHUB_ENV，引擎就把它们打到 stdout，
-/// 承接这份契约的是调用方——也就是这里。
 type Facts = Arc<Mutex<HashMap<String, String>>>;
 
 fn collect_facts(line: &str, facts: &mut HashMap<String, String>) {
     let Some((key, value)) = line.split_once('=') else {
         return;
     };
-    // 只认环境变量样子的键：大写字母开头，其余是大写字母/数字/下划线。
-    // 日志行（`[INFO] ...`）和 7-Zip 的输出都过不了这一关。
     let mut bytes = key.bytes();
     let starts_upper = bytes.next().is_some_and(|b| b.is_ascii_uppercase());
     let rest_env_like = bytes.all(|b| b.is_ascii_uppercase() || b.is_ascii_digit() || b == b'_');
@@ -736,10 +726,6 @@ fn run_plan(
     let _ = shared.job.lock().unwrap().take();
 }
 
-// ---------------------------------------------------------------------------
-// Tauri 命令
-// ---------------------------------------------------------------------------
-
 #[tauri::command]
 fn app_snapshot(shared: State<'_, Arc<Shared>>) -> Snapshot {
     let workdir = shared.workdir();
@@ -845,7 +831,6 @@ fn chrono_like_now() -> String {
     let days = secs / 86400;
     let rem = secs % 86400;
     let (h, m, s) = (rem / 3600, (rem % 3600) / 60, rem % 60);
-    // 民用日期换算（Howard Hinnant 算法，公历）。
     let z = days as i64 + 719_468;
     let era = z.div_euclid(146_097);
     let doe = z.rem_euclid(146_097);

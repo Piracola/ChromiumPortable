@@ -1,11 +1,3 @@
-//! Post-archive verification.
-//!
-//! Smoke semantics (AGENTS.md lesson, codeified): the browser exit code
-//! alone proves little - msedge.exe is a launcher stub - so the real
-//! assertion is the Chrome++-redirected portable Data directory appearing
-//! inside the archive, polled at 0.5s because detached children set the
-//! profile up long after the launcher exits.
-
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{Duration, Instant};
@@ -33,21 +25,13 @@ pub const DEFAULT_SMOKE_ARGS: [&str; 6] = [
     "about:blank",
 ];
 
-/// Build the anchored regex for
-/// the target's archive_name and fullmatch candidate names (addendum 1:
-/// fullmatch, NOT search). Returns the compiled pattern.
 fn archive_name_regex(target: &Value) -> Result<regex::Regex> {
-    // archive_name_regex_text already returns a ^...$ anchored pattern
-    // (re.IGNORECASE in Python); wrap for case-insensitive fullmatch.
     let pattern = crate::release::archive_name_regex_text(target)?;
     Ok(regex::RegexBuilder::new(&pattern)
         .case_insensitive(true)
         .build()?)
 }
 
-/// Glob *.7z, fullmatch the archive_name
-/// regex, pick the newest by mtime. No match: error listing every archive
-/// present.
 pub fn find_target_archive(target: &Value, workdir: &Path) -> Result<PathBuf> {
     let assets_dir = workdir.join("build").join("assets");
     if !assets_dir.exists() {
@@ -115,8 +99,6 @@ pub fn find_target_archive(target: &Value, workdir: &Path) -> Result<PathBuf> {
     Ok(newest)
 }
 
-/// Auto layout re-runs the static analysis,
-/// fixed layouts use find_version_dir + exe_name with normpath semantics.
 pub fn locate_executable(target: &Value, app_root: &Path) -> Result<PathBuf> {
     if target.get("layout").and_then(Value::as_str) == Some("auto") {
         let result = analyze_extracted_app(
@@ -149,7 +131,6 @@ pub fn locate_executable(target: &Value, app_root: &Path) -> Result<PathBuf> {
     Ok(executable)
 }
 
-/// Lexical normalisation (no FS access), like os.path.normpath on Windows.
 fn normalize_path(path: &Path) -> PathBuf {
     let mut out = PathBuf::new();
     for component in path.components() {
@@ -174,7 +155,6 @@ pub fn wait_for_directory(path: &Path, timeout: Duration, interval: Duration) ->
     }
 }
 
-/// Sorted relative paths at depth <= 2 for the failure diagnostics.
 pub fn describe_tree(root: &Path, depth: usize) -> String {
     let mut entries: Vec<String> = Vec::new();
     let mut all: Vec<PathBuf> = Vec::new();
@@ -213,8 +193,6 @@ pub fn describe_tree(root: &Path, depth: usize) -> String {
     }
 }
 
-/// Launch and wait for the direct child. The exit
-/// code alone proves little: zero is not proof, non-zero is failure.
 pub fn run_browser(
     executable: &Path,
     args: &[String],
@@ -251,8 +229,6 @@ pub fn run_browser(
     Ok(())
 }
 
-/// Only the exact <exe>~ path, no
-/// globbing (a tree-wide *~ scan would false-positive on unrelated files).
 pub fn assert_no_setdll_backup(extracted_root: &Path, executable: &Path) -> Result<()> {
     let exe_name = executable
         .file_name()
@@ -272,9 +248,6 @@ pub fn assert_no_setdll_backup(extracted_root: &Path, executable: &Path) -> Resu
     Ok(())
 }
 
-/// The four-step judgement: no pre-shipped Data
-/// dir, version.txt readout, --version probe, DEFAULT_SMOKE_ARGS run, then
-/// the portable Data directory poll (0.5s x 60s).
 pub fn smoke_test(
     target: &Value,
     extracted_root: &Path,
@@ -306,8 +279,6 @@ pub fn smoke_test(
         .and_then(Value::as_u64)
         .unwrap_or(120);
 
-    // Chromium is a GUI-subsystem binary, so a captured pipe stays empty;
-    // the exit code is the signal that the patched PE loaded our DLL.
     run_browser(
         executable,
         &["--version".to_string()],
@@ -333,8 +304,6 @@ pub fn smoke_test(
         app_root,
     )?;
 
-    // Poll rather than check once: the launcher exits long before its
-    // detached children have set the profile up.
     let data_timeout = target
         .get("smoke_data_timeout")
         .and_then(Value::as_u64)
@@ -353,8 +322,6 @@ pub fn smoke_test(
     Ok(())
 }
 
-/// Browser subprocesses outlive the parent briefly and
-/// hold DLL handles: 4 attempts x 3s delay.
 pub fn cleanup(extracted_root: &Path, attempts: u32, delay: Duration) -> bool {
     for attempt in 0..attempts {
         let result = if extracted_root.is_dir() {
@@ -381,8 +348,6 @@ pub fn cleanup(extracted_root: &Path, attempts: u32, delay: Duration) -> bool {
     false
 }
 
-/// Extract the archive, run the assertion chain,
-/// optionally smoke, then clean up.
 pub fn verify_target(
     target: &Value,
     workdir: &Path,
@@ -447,8 +412,6 @@ pub fn verify_target(
     }
 
     let executable = locate_executable(target, &app_root)?;
-    // The import table belongs to the module setdll patched: the browser
-    // executable by default, `msedge_elf.dll` for Edge.
     let injected = crate::builder::inject_module_path(target, &app_root, &executable)?;
     assert_portable_version_import(&injected)?;
     assert_no_setdll_backup(&extracted_root, &injected)?;
@@ -487,10 +450,6 @@ pub fn verify_target(
     }))
 }
 
-/// A wrong-architecture payload passes every other check: the file name, the
-/// config and the release body all say arm64 while the bytes are x64, and the
-/// mistake only surfaces when someone runs it on real hardware. Assert the two
-/// binaries this project controls carry the target's machine type.
 fn assert_target_architecture(
     target: &Value,
     app_root: &Path,
@@ -511,8 +470,6 @@ fn assert_target_architecture(
     if let Some(parent) = executable.parent() {
         dirs.push(parent.to_path_buf());
     }
-    // version_dll_location is either the app root or the version directory, and
-    // the latter is not necessarily where the executable lives.
     if let Some(version_dir) = find_version_dir(app_root, None) {
         dirs.push(version_dir);
     }
@@ -522,8 +479,6 @@ fn assert_target_architecture(
         if !dll.is_file() {
             continue;
         }
-        // The same file can be reached with different prefixes (the extracted
-        // tree carries one), so dedupe on the canonical path, not on strings.
         let key = std::fs::canonicalize(&dll).unwrap_or_else(|_| dll.clone());
         if seen.contains(&key) {
             continue;
@@ -557,22 +512,10 @@ fn assert_target_architecture(
     Ok(())
 }
 
-/// True when this host can launch a browser of `arch`.
-///
-/// CI builds ARM64 on x64 runners: pe/lib checks still apply, but launching an
-/// arm64 `chrome.exe` there cannot work, so the smoke run is skipped per target
-/// instead of per invocation (callers used to split one call into an x64 step
-/// and an `--no-smoke` step).
 pub fn host_can_run(arch: &str) -> bool {
-    match arch.to_ascii_lowercase().as_str() {
-        "arm64" => cfg!(target_arch = "aarch64"),
-        // x64/x86 payloads run natively on x64 and under emulation on arm64.
-        _ => true,
-    }
+    !arch.eq_ignore_ascii_case("arm64") || cfg!(target_arch = "aarch64")
 }
 
-/// Per-target verification with the env-prefix
-/// skip logic, then VERIFIED_TARGETS written through write_env.
 pub fn verify_targets(
     config: &Value,
     target_names: &[String],
@@ -632,9 +575,6 @@ mod tests {
         assert_eq!(host_can_run("arm64"), cfg!(target_arch = "aarch64"));
         assert_eq!(host_can_run("Arm64"), cfg!(target_arch = "aarch64"));
     }
-    /// Golden: verify_archive_locate_golden.json - the regex is a fullmatch
-    /// over ProbeBrowser_{version}_{date}.7z, the newest mtime wins, and the
-    /// no-match error lists every archive present ("(none)" when empty).
     #[test]
     fn find_target_archive_fullmatch_and_mtime() {
         let dir = std::env::temp_dir().join(format!("pb-verify-locate-{}", std::process::id()));
@@ -681,7 +621,6 @@ mod tests {
         remove_path(&empty_dir);
     }
 
-    /// The golden regex itself (verify_archive_locate_golden.json).
     #[test]
     fn archive_regex_matches_golden_pattern() {
         let dir = std::env::temp_dir().join(format!("pb-verify-regex-{}", std::process::id()));
@@ -773,7 +712,6 @@ mod tests {
         )
         .unwrap();
 
-        // The DLL is a separate binary, so a swapped one must fail on its own.
         std::fs::copy(&arm64_dll, &dll).unwrap();
         let err = assert_target_architecture(
             &serde_json::json!({"architecture": "x64"}),
@@ -801,7 +739,6 @@ mod tests {
             "{err}"
         );
 
-        // A missing DLL would otherwise leave only the executable asserted.
         std::fs::remove_file(&dll).unwrap();
         let err = assert_target_architecture(
             &serde_json::json!({"architecture": "x64"}),

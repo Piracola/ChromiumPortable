@@ -221,7 +221,6 @@ fn numeric_children(directory: &Path) -> Vec<PathBuf> {
     children
 }
 
-/// One scored candidate.
 #[derive(Debug, Clone)]
 pub struct Candidate {
     pub path: PathBuf,
@@ -648,7 +647,6 @@ pub struct AnalyzeResult {
     pub version: String,
     pub product: String,
     pub architecture: String,
-    /// None for analyze_extracted_app (no layer concept there).
     pub layer_root: Option<PathBuf>,
 }
 

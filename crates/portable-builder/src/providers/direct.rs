@@ -1,11 +1,3 @@
-//! Keys consumed: url, path/installer_path, version, version_regex, file_name,
-//! verify_ssl (default true), sha256, size. Exact rules (direct_script_contract.json):
-//! - url XOR path required, else `direct provider requires 'url' or 'path'`,
-//! - version_regex extracts group(1) from the URL when version is absent,
-//! - no version at all => "0.0.0.0",
-//! - file_name fallback chain: config file_name > URL last segment >
-//!   "browser-installer.exe".
-
 use anyhow::{bail, Result};
 use serde_json::{json, Value};
 

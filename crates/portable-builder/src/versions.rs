@@ -1,19 +1,5 @@
-//! Version comparison and upgrade/release policy.
-//!
-//! Semantics follow the Python source exactly, including its quirks:
-//! - any non-numeric segment makes `compare_versions` report equality (Python
-//!   catches the `ValueError` and returns 0 for the whole comparison),
-//! - shorter versions are zero-padded, so `1.2 == 1.2.0`,
-//! - `is_major_update`/`is_minor_update` compare segments as strings, not
-//!   numbers (see the NOTE comments on each function).
-//!
-//! Porting notes live in docs/MIGRATION_RUST_TAURI.md S4.6.
-
 use anyhow::{bail, Result};
 
-/// Returns 1 when `v1 > v2`, -1 when `v1 < v2`, 0 otherwise. Empty inputs and
-/// versions containing any non-numeric segment compare as equal: Python's
-/// falsy-input guard and its caught `ValueError` both return 0.
 pub fn compare_versions(v1: &str, v2: &str) -> i32 {
     if v1.is_empty() || v2.is_empty() {
         return 0;
@@ -34,10 +20,6 @@ pub fn compare_versions(v1: &str, v2: &str) -> i32 {
     0
 }
 
-/// Python `int()` strips surrounding whitespace per segment and accepts signs,
-/// which `i64::from_str` mirrors for the common cases. Python ints are
-/// arbitrary precision; here an overflowing segment is treated as non-numeric
-/// (whole comparison returns 0), and unicode-digit segments are rejected.
 fn parse_parts(version: &str) -> Option<Vec<i64>> {
     version
         .split('.')
@@ -45,9 +27,6 @@ fn parse_parts(version: &str) -> Option<Vec<i64>> {
         .collect()
 }
 
-/// Returns the first dot-separated segment, or `None` for an empty version.
-/// The segment is returned verbatim: it may be non-numeric ("beta") or empty
-/// (".5" yields Some("")).
 pub fn major_version(version: &str) -> Option<&str> {
     if version.is_empty() {
         return None;
@@ -59,8 +38,6 @@ pub fn is_upgrade(new_version: &str, old_version: &str) -> bool {
     compare_versions(new_version, old_version) > 0
 }
 
-/// Majors are compared as strings, so "01" != "1" counts as a major change.
-/// An empty first segment (".5") is falsy in Python and yields false here too.
 pub fn is_major_update(new_version: &str, old_version: &str) -> bool {
     let (Some(new_major), Some(old_major)) =
         (major_version(new_version), major_version(old_version))
@@ -70,8 +47,6 @@ pub fn is_major_update(new_version: &str, old_version: &str) -> bool {
     !new_major.is_empty() && !old_major.is_empty() && new_major != old_major
 }
 
-/// The comparison is on the raw version strings, so "1.2" vs "1.2.0" counts
-/// as a minor update even though `compare_versions` calls them equal.
 pub fn is_minor_update(new_version: &str, old_version: &str) -> bool {
     let (Some(new_major), Some(old_major)) =
         (major_version(new_version), major_version(old_version))
@@ -280,8 +255,6 @@ mod tests {
 
     #[test]
     fn versions_reference_matrix_replay() {
-        // Golden replay of the live-Python decision table captured in
-        // _migration/pe-golden/versions_reference.json (round 36).
         let golden_path = std::path::Path::new("_migration/pe-golden/versions_reference.json");
         if !golden_path.exists() {
             eprintln!("golden not present in this checkout; skipping");

@@ -31,7 +31,6 @@ pub fn env_name(value: &str) -> String {
     trimmed.to_uppercase()
 }
 
-/// Comma split + strip + drop empties, order preserved (no dedup, no sort).
 pub fn split_targets(targets: &str) -> Vec<String> {
     targets
         .split(',')
@@ -41,8 +40,6 @@ pub fn split_targets(targets: &str) -> Vec<String> {
         .collect()
 }
 
-/// Python re.search(pattern, text, re.IGNORECASE) group(1); None either when
-/// there is no text/pattern or no match.
 pub fn extract_with_pattern(text: &str, pattern: Option<&str>) -> Option<String> {
     let pattern = pattern?;
     if text.is_empty() || pattern.is_empty() {
@@ -71,9 +68,6 @@ fn env_or_empty(name: &str) -> String {
     std::env::var(name).unwrap_or_default()
 }
 
-/// Archive / digest / size for a target, however this run produced them. A
-/// digest-less target with a release falls back to the release's latest
-/// matching asset.
 pub fn asset_facts(config: &Value, target_name: &str, release_id: Option<i64>) -> Result<Value> {
     let target = get_target(config, target_name)?;
     let prefix = env_prefix_of(&target, target_name);
@@ -143,7 +137,6 @@ fn asset_string_or_json(value: &Value) -> String {
     }
 }
 
-/// The lowercase-prefixed flat context feeding multi release body templates.
 pub fn build_flat_context(
     config: &Value,
     target_names: &[String],
@@ -200,9 +193,6 @@ pub fn release_asset_present(
     Ok(find_latest_target_asset(release_id, &target)?.is_some())
 }
 
-/// Dry-run sample render of every target's archive_name, cross-tested against
-/// the other targets' matchers. Overlap = RuntimeError (protects against one
-/// target's release sweeping another target's assets).
 pub fn validate_target_asset_matchers(config: &Value, target_names: &[String]) -> Result<()> {
     let mut sample_names: Vec<(String, String)> = Vec::new();
     for target_name in target_names {
@@ -280,8 +270,6 @@ pub fn validate_target_asset_matchers(config: &Value, target_names: &[String]) -
     Ok(())
 }
 
-/// The multi-target check loop. Writes the shared keys plus per-target
-/// {prefix}_UPDATE and UPSTREAM_{prefix}.
 pub fn check_targets(
     config: &Value,
     target_names: &[String],
@@ -442,9 +430,6 @@ fn bool_py(value: bool) -> String {
     }
 }
 
-/// The build loop. Reads {prefix}_UPDATE from the environment (cross-step
-/// GITHUB_ENV protocol), workflow_dispatch forces every target, writes the
-/// six result keys per built target, and ends with ensure_shared_release_assets.
 pub fn build_selected_targets(
     config: &Value,
     target_names: &[String],
@@ -519,9 +504,6 @@ pub fn build_selected_targets(
     Ok(built)
 }
 
-/// Only targets NOT rebuilt this run ({prefix}_UPDATE != true) carry their
-/// previous release asset forward into build/assets, then publish the carried
-/// facts.
 pub fn ensure_shared_release_assets(
     config: &Value,
     target_names: &[String],
@@ -586,10 +568,6 @@ pub fn ensure_shared_release_assets(
     Ok(carried)
 }
 
-/// Config-level release block missing => degrade to the single-target
-/// render_release; version fallback {prefix}_PACKAGE_VERSION >
-/// {prefix}_VERSION > UPSTREAM_{prefix}; tag / title / body defaults
-/// "v{date}" / "{date}" / "" (different from single!).
 pub fn render_multi_release(
     config: &Value,
     target_names: &[String],
@@ -671,9 +649,6 @@ pub fn render_multi_release(
     }))
 }
 
-/// Only rebuilt targets get their old assets deleted (UPDATE=true); PATCH
-/// body semantics match the single-target path (MINOR_UPDATE adds
-/// name+tag_name).
 pub fn update_multi_release(config: &Value, target_names: &[String], workdir: &Path) -> Result<()> {
     let release_id = env_or_empty("RELEASE_ID");
     if release_id.is_empty() {
@@ -727,7 +702,6 @@ mod tests {
 
     #[test]
     fn env_name_matches_multi_reference() {
-        // Golden: _migration/pe-golden/multi_reference.json env_name_cases.
         let golden_path = std::path::Path::new("_migration/pe-golden/multi_reference.json");
         if !golden_path.exists() {
             eprintln!("golden not present in this checkout; skipping");
@@ -747,7 +721,6 @@ mod tests {
 
     #[test]
     fn split_targets_matches_multi_reference() {
-        // Golden: multi_reference.json split_targets (order preserved).
         let golden_path = std::path::Path::new("_migration/pe-golden/multi_reference.json");
         if !golden_path.exists() {
             eprintln!("golden not present in this checkout; skipping");
@@ -815,8 +788,6 @@ mod tests {
 
     #[test]
     fn build_flat_context_matches_multi_reference() {
-        // Golden: multi_reference.json flat_context (no env facts, no release
-        // id -> dashes for archive/sha256/size).
         let golden_path = std::path::Path::new("_migration/pe-golden/multi_reference.json");
         if !golden_path.exists() {
             eprintln!("golden not present in this checkout; skipping");
@@ -934,9 +905,6 @@ mod render_tests {
 
     #[test]
     fn render_multi_release_matches_golden() {
-        // Golden: _migration/pe-golden/multi_render_golden.json - the config-
-        // level release render (flat context, byte-level body with run_url
-        // empty locally). Env facts stand in for the built targets.
         let golden_path = std::path::Path::new("_migration/pe-golden/multi_render_golden.json");
         if !golden_path.exists() {
             eprintln!("golden not present in this checkout; skipping");
@@ -988,7 +956,6 @@ mod render_tests {
         }
         std::env::set_var("CHROME_PLUS_VERSION", "1.18.2");
         std::env::set_var("BUILD_DATE", "2026-07-01");
-        // 941.9 MB in bytes -> human_size renders the golden value.
         std::env::set_var("CHROME_STABLE_PACKAGE_VERSION", "153.1.95.102");
         std::env::set_var("CHROME_STABLE_SIZE", "987653734");
 

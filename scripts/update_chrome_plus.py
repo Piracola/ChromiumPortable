@@ -121,8 +121,6 @@ def main():
             else:
                 print(f"[INFO] Unchanged {destination.relative_to(REPO_ROOT)}")
 
-    # Record the upstream tag so builds can report which chrome++ they bundled.
-    # Not in REQUIRED_FILES: it is ours, not part of upstream's archive.
     version_path = SETDLL_DIR / "version.txt"
     previous_version = version_path.read_text(encoding="utf-8").strip() if version_path.exists() else ""
     if version and previous_version != version:

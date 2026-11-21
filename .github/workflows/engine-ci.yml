@@ -1,6 +1,3 @@
-# Rust engine CI (docs/MIGRATION_RUST_TAURI.md S8.1)
-# - ubuntu: fmt + clippy + pure-logic tests (1x minutes)
-# - windows: full workspace tests + release build (7z/PE integration later in M2+)
 name: engine-ci
 
 on:

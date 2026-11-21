@@ -1,9 +1,5 @@
 name: Dispatch child builds
 
-# Manual knob for re-dispatching the three product repos without re-cutting v2.
-# release-engine.yml does this automatically once its assets are up; this
-# workflow exists for retries (a broken CHILD_REPO_TOKEN, a transient 5xx) and
-# for pushing the current bundle to the children after a docs-only change.
 
 on:
   workflow_dispatch:

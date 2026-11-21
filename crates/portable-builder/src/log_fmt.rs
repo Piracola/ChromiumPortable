@@ -1,7 +1,3 @@
-//! Log prefix helpers. The prefixes are a CI-facing contract (migration doc S1):
-//! `[INFO] / [WARN] / [OK] / [DONE]` go to stdout, `[FAIL]` goes to stderr.
-//! Keep byte-identical with the Python engine so Actions logs stay diffable.
-
 pub fn info(msg: impl AsRef<str>) {
     println!("[INFO] {}", msg.as_ref());
 }

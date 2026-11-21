@@ -1,4 +1,3 @@
-# 发行包暂存：build.ps1 与 release-engine.yml 共用这一份清单
 param(
     [Parameter(Mandatory = $true)] [string] $Stage,
     [Parameter(Mandatory = $true)] [string] $Bin,

@@ -27,7 +27,6 @@ impl<W: std::io::Write> std::io::Write for HashingWriter<'_, W> {
     }
 }
 
-/// Mirror order is semantic (official source first).
 pub const SEVEN_ZIP_URLS: [&str; 2] = [
     "https://www.7-zip.org/a/7zr.exe",
     "https://raw.githubusercontent.com/develar/7zip-bin/master/win/x64/7za.exe",
@@ -44,8 +43,6 @@ pub const ABSOLUTE_VERSION_DLL_PATTERN: &str = r"[A-Za-z]:\\[^\x00]*version\.dll
 
 const CHUNK_SIZE: usize = 1024 * 1024;
 
-/// Format bytes the way Windows Explorer does (1024-based, labelled B/KB/MB/GB).
-/// `None`/`""` render as the empty string.
 pub fn human_size(size: Option<f64>) -> String {
     let Some(mut value) = size else {
         return String::new();
@@ -77,10 +74,6 @@ pub fn sha256_file(path: &Path) -> Result<String> {
     Ok(hex::encode(digest.finalize()))
 }
 
-/// Accept hex, `sha256:<hex>` and base64 digests; return lowercase hex.
-///
-/// `None`/`""` map to `None`. The error text is byte-identical to Python's:
-/// `Unrecognized SHA256 digest: {value!r}`.
 pub fn normalize_sha256(value: Option<&str>) -> Result<Option<String>> {
     let Some(value) = value else {
         return Ok(None);
@@ -121,9 +114,6 @@ fn unrecognized_sha256_error(value: &str) -> anyhow::Error {
     anyhow!("Unrecognized SHA256 digest: {}", py_repr(value))
 }
 
-/// Python `repr()` of a str: single quotes by default, but double quotes when
-/// the string contains ' and no " (repr's quote-selection rule); escapes \\,
-/// \\n, \\r, \\t, the chosen quote, and non-printables as \\xNN.
 fn py_repr(value: &str) -> String {
     let use_double = value.contains('\'') && !value.contains('"');
     let (quote, escaped_quote): (char, String) = if use_double {
@@ -150,8 +140,6 @@ fn py_repr(value: &str) -> String {
     out
 }
 
-/// Size is checked against the on-disk file; digest against its content.
-/// Prints `[INFO] SHA256 verified: ...` on success.
 pub fn verify_file_digest(path: &Path, sha256: Option<&str>, size: Option<u64>) -> Result<()> {
     if let Some(size) = size {
         let actual_size = fs::metadata(path)?.len();
@@ -198,12 +186,6 @@ pub fn verify_file_digest(path: &Path, sha256: Option<&str>, size: Option<u64>) 
     Ok(())
 }
 
-/// Streaming 1 MiB chunks, digest computed while downloading, size check,
-/// and the cache-reject-resync semantics: an existing file is verified first
-/// and deleted for re-download when the digest check rejects it.
-///
-/// `verify_ssl=false` maps to reqwest's `danger_accept_invalid_certs`.
-/// NOTE: only the Edge provider may pass false (contract S3/S4.3).
 pub fn download_file(
     url: &str,
     path: &Path,
@@ -234,10 +216,6 @@ pub fn download_file(
     }
     info(format!("Downloading {url}"));
 
-    // Python requests timeout=120 is PER-SOCKET-OP, not a total deadline. A total
-    // timeout aborts slow multi-hundred-MB downloads mid-body (review-Wave2 finding 1).
-    // Match the contract: no total limit; 120s connect timeout + TCP keepalive keep
-    // dead-connection detection while allowing slow links to finish.
     let client = reqwest::blocking::Client::builder()
         .user_agent(crate::release::DEFAULT_USER_AGENT)
         .danger_accept_invalid_certs(!verify_ssl)
@@ -323,7 +301,6 @@ fn install_7z_with_chocolatey() -> Result<Option<String>> {
     Ok(None)
 }
 
-/// shutil.which equivalent over PATH (+ PATHEXT semantics for .exe on Windows).
 fn which(name: &str) -> Option<PathBuf> {
     let is_windows = cfg!(windows);
     let candidate_has_ext = name.contains('.') && !name.ends_with('.');
@@ -345,24 +322,11 @@ fn which(name: &str) -> Option<PathBuf> {
     None
 }
 
-/// Whether `find_7z_tool` may fetch 7-Zip itself. `Never` is the
-/// inspect-package path: static inspection must not download or install.
 pub enum SevenZipDownload {
     Never,
     Allowed,
 }
 
-/// Locate an extractor without changing the machine unless explicitly allowed.
-///
-/// The six-level discovery order is the contract (tools_7z_contract.md):
-/// 1. system installs (both Program Files paths),
-/// 2. workdir 7zr.exe,
-/// 3. 7z on PATH,
-/// 4. `allow_download=false` => hard error (inspect-package path: never
-///    downloads or installs anything),
-/// 5. download SEVEN_ZIP_URLS in order, deleting a failed attempt before
-///    trying the next mirror,
-/// 6. Chocolatey install when `allow_system_install` and choco is present.
 pub fn find_7z_tool(
     workdir: &Path,
     allow_download: SevenZipDownload,
@@ -422,8 +386,6 @@ pub fn find_7z_tool(
     );
 }
 
-/// Command is fixed: [7z, x, <archive>, -y, -o<outdir>]. Non-zero exit prints
-/// the tool's stdout+stderr and raises `Extraction failed: <archive>`.
 pub fn extract_with_7z(archive: &Path, output_dir: &Path, seven_zip_path: &str) -> Result<()> {
     fs::create_dir_all(output_dir)?;
     let cmd = [
@@ -446,8 +408,6 @@ pub fn extract_with_7z(archive: &Path, output_dir: &Path, seven_zip_path: &str) 
     Ok(())
 }
 
-/// Direct child first, then a recursive case-insensitive search. Returns None
-/// when nothing matches.
 pub fn find_child_dir(root: &Path, name: &str) -> Option<PathBuf> {
     let direct = root.join(name);
     if direct.exists() {
@@ -462,8 +422,6 @@ pub fn find_child_dir(root: &Path, name: &str) -> Option<PathBuf> {
     })
 }
 
-/// Direct child first, then a recursive case-insensitive search. Returns None
-/// when nothing matches.
 pub fn find_child_file(root: &Path, name: &str) -> Option<PathBuf> {
     let direct = root.join(name);
     if direct.exists() {
@@ -486,8 +444,6 @@ fn walk_entries(root: &Path) -> Vec<PathBuf> {
             continue;
         };
         let mut entries: Vec<PathBuf> = read_dir.filter_map(|e| e.ok()).map(|e| e.path()).collect();
-        // rglob yields directory entries in os-scandir order; sort for a
-        // deterministic result without changing the set of candidates.
         entries.sort();
         for entry in entries {
             if entry.is_dir() {
@@ -499,8 +455,6 @@ fn walk_entries(root: &Path) -> Vec<PathBuf> {
     out
 }
 
-/// The preferred version dir when it exists, else the first direct child
-/// whose name is dotted digits starting with a digit (e.g. "135.0.5973.92").
 pub fn find_version_dir(root: &Path, preferred_version: Option<&str>) -> Option<PathBuf> {
     if let Some(preferred) = preferred_version {
         let candidate = root.join(preferred);
@@ -544,9 +498,6 @@ pub fn remove_path(path: &Path) {
     }
 }
 
-/// Reject exact file names that a portable target must never ship.
-/// `forbidden` is the target's "forbidden_file_names" list (casefolded
-/// comparison, posix relative paths in the error, sorted).
 pub fn assert_no_forbidden_files(root: &Path, forbidden: &[String]) -> Result<()> {
     let forbidden: std::collections::HashSet<String> =
         forbidden.iter().map(|name| name.to_lowercase()).collect();
@@ -582,7 +533,6 @@ mod tests {
 
     #[test]
     fn human_size_matches_python_output() {
-        // Golden values captured from tools.py::human_size on this machine.
         assert_eq!(human_size(None), "");
         assert_eq!(human_size(Some(0.0)), "0 B");
         assert_eq!(human_size(Some(1.0)), "1 B");
@@ -662,7 +612,6 @@ mod tests {
         let path = dir.join("sha.bin");
         fs::write(&path, vec![0x61u8; 5 * 1024 * 1024 + 17]).unwrap();
         let digest = sha256_file(&path).unwrap();
-        // Python golden: hashlib.sha256(b"a" * (5 * 1024 * 1024 + 17)).hexdigest()
         assert_eq!(
             digest,
             "f760459c08a89a1221abf8cc1a84d8a9af6af826fe173e94bbc51ffe9d83e2b9"
@@ -809,14 +758,6 @@ mod tests {
 
     #[test]
     fn find_7z_tool_order_system_paths_first() {
-        // The system paths cannot be created from a test (they need admin);
-        // instead verify that a workdir 7zr.exe is found at level 2. Create a
-        // fake 7zr.exe - find_7z_tool only stats it.
-        //
-        // Levels 1-3 depend on the host: a CI runner (or dev box) with a real
-        // system 7-Zip legitimately resolves at level 1. So assert the
-        // contract that holds everywhere: a tool IS found, and it is either
-        // the host's system 7z or our workdir stub — never a download.
         let dir = std::env::temp_dir().join("pb-tools-7z");
         fs::create_dir_all(&dir).unwrap();
         let local = dir.join("7zr.exe");
@@ -843,8 +784,6 @@ mod tests {
         let local = empty.join("7zr.exe");
         fs::remove_file(&local).ok();
 
-        // Only run the no-download assertion; levels 1-3 depend on the host
-        // (a system 7-Zip or PATH 7z is legitimate). So gate on them missing.
         let host_has_tool =
             SYSTEM_7Z_PATHS.iter().any(|p| Path::new(p).exists()) || which("7z").is_some();
         if !host_has_tool {
@@ -909,7 +848,6 @@ mod tests {
         assert!(!file.exists());
         remove_path(&dir);
         assert!(!dir.exists());
-        // Missing path: no-op, no error.
         remove_path(&dir);
         remove_path(&file);
     }

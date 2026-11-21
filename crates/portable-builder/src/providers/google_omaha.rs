@@ -1,12 +1,6 @@
 //! The XML POST body, channel appid/ap table and the `nextversion=""` field
 //! are frozen verbatim - the Omaha server is sensitive to those exact strings
 //! (migration doc S4.3).
-//!
-//! Exact error texts (omaha_expected.json quirk_notes):
-//! - "No manifest found in Google Omaha response."
-//! - "No package found in Google Omaha response."
-//! - "No download URL found in Google Omaha response."
-//! - channel unknown => `Google Omaha channel '<ch>' is not configured.`
 
 use anyhow::{bail, Result};
 use serde_json::{json, Value};

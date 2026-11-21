@@ -1,10 +1,5 @@
 name: Build single browser
 
-# On-demand: download one browser's latest (or overridden) installer, inject
-# Chrome++ via auto layout, optionally publish to this repo's Releases.
-# Productized releases for Chrome / Edge / Helium still live in their child
-# repositories; this workflow is the core's generic capability path.
-# Fork-friendly: no secrets required for public upstreams.
 
 on:
   workflow_dispatch:
@@ -118,7 +113,6 @@ jobs:
           CHECK_ENV: ${{ steps.check.outputs.env_json }}
         run: |
           if (-not $env:CHECK_ENV) {
-            # Single-target check may only write GITHUB_ENV; that is fine for dispatch.
             Write-Host "No env_json payload; continuing with GITHUB_ENV."
             return
           }

@@ -1,5 +1,3 @@
-//! Package source providers (contract S4.3).
-
 pub mod direct;
 pub mod github_release;
 pub mod google_omaha;
@@ -9,9 +7,6 @@ pub mod script;
 use anyhow::{bail, Result};
 use serde_json::Value;
 
-/// Resolve a provider config into a package descriptor. Dispatch on
-/// provider["type"]; unknown types must list the available provider names in
-/// the error (KeyError text byte-mapped, carry-forward item 11).
 pub fn get_package(provider_config: &Value) -> Result<Value> {
     let provider_type = provider_config
         .get("type")

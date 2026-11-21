@@ -501,7 +501,6 @@ function bindEvents() {
   const unfoldLog = () => {
     $("logbox").classList.remove("folded");
     $("btn-log-fold").setAttribute("aria-expanded", "true");
-    // 日志在全部选项的下方，跑起来时把它滚进视野（真在窗外才动，别乱跳）
     $("logbox").scrollIntoView({ block: "nearest" });
   };
 

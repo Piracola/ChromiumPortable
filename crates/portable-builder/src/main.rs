@@ -742,8 +742,6 @@ fn prepare_target(
     write_selected(&catalog_path, browser, url, path, architecture, output)
 }
 
-/// Load the catalog and return the selected target, deep-copied and unmutated.
-/// Error text: `Unknown browser '<id>'. Known: <sorted list>`.
 fn select_target_from_catalog(catalog_path: &Path, browser: &str) -> Result<Value> {
     let catalog = load_validated_config(catalog_path).map_err(|err| anyhow::anyhow!("{err}"))?;
     let targets = catalog
@@ -938,8 +936,6 @@ mod tests {
         let catalog = mini_catalog_file(&guard);
         let target = select_target_from_catalog(&catalog, "chrome_stable").expect("selected");
 
-        // Deep-equal against the golden full record (all fields present, byte
-        // semantics for the Chinese release body preserved via serde).
         assert_eq!(target, golden["chrome_stable_full"]);
         assert_eq!(target["product"], json!(true));
 
@@ -954,8 +950,6 @@ mod tests {
             .keys()
             .collect();
         assert_eq!(target_ids, ["chrome_stable"]);
-        // The written record carries the injected "target" key; the golden full
-        // record is the raw catalog dict without it. Compare after removing it.
         let written = payload["targets"]["chrome_stable"].clone();
         let mut raw = written.as_object().expect("target object").clone();
         let injected = raw.remove("target").expect("injected target key");
@@ -1014,7 +1008,6 @@ mod tests {
             payload["targets"]["chrome_stable"]["architecture"],
             json!("arm64")
         );
-        // Untouched fields stay as in the catalog.
         assert_eq!(
             payload["targets"]["chrome_stable"]["provider"]["type"],
             json!("google_omaha")

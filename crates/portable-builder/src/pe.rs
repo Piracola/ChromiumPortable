@@ -1,11 +1,3 @@
-//! Error texts are pe.py's RuntimeErrors, verbatim:
-//! "Not a PE image (missing MZ signature)." /
-//! "Not a PE image (missing PE signature)." /
-//! "Unsupported PE optional header magic 0x{:x}.".
-//! pelite folds all three into Error variants, so load_pe pre-validates with the
-//! same raw-offset logic pe.py uses (_pe_layout) before handing bytes to pelite;
-//! pelite then enforces the stricter bounds it needs (validated headers).
-
 use std::collections::{BTreeMap, HashSet};
 use std::path::Path;
 
@@ -19,7 +11,6 @@ const MACHINE_ARM64: u16 = 0xAA64;
 const FALLBACK_TRANSLATIONS: [(u16, u16); 3] =
     [(0x0409, 0x04B0), (0x0409, 0x04E4), (0x0804, 0x04B0)];
 
-/// The six VS_VERSIONINFO fields.
 const VERSION_FIELDS: [&str; 6] = [
     "CompanyName",
     "FileDescription",
@@ -29,9 +20,6 @@ const VERSION_FIELDS: [&str; 6] = [
     "ProductVersion",
 ];
 
-/// Raises the exact Python error texts. The machine/optional-magic reads and
-/// the section-table walk validate bounds exactly like pe.py; pelite re-parses
-/// the validated bytes afterwards, so nothing is returned.
 fn pe_layout(data: &[u8]) -> Result<()> {
     if data.len() < 0x40 || data.get(..2) != Some(b"MZ".as_slice()) {
         anyhow::bail!("Not a PE image (missing MZ signature).");
@@ -66,9 +54,6 @@ fn pe_layout(data: &[u8]) -> Result<()> {
     } else {
         optional + 96
     };
-    // Validate the data directory and section table with the same reads pe.py
-    // performs (bounds errors surface as the Python PE-signature text); pelite
-    // re-parses both from the validated bytes.
     for index in 0..16 {
         let entry = data_directories + index * 8;
         read_u32(entry)?;
@@ -77,8 +62,6 @@ fn pe_layout(data: &[u8]) -> Result<()> {
     let section_table = optional + optional_size as usize;
     for index in 0..section_count as usize {
         let entry = section_table + index * 40;
-        // Python reads name, virtual_size, virtual_address, raw_size,
-        // raw_pointer from each 40-byte entry; only the reads matter here.
         for probe in [0, 8, 12, 16, 20] {
             read_u32(entry + probe)?;
         }
@@ -86,10 +69,8 @@ fn pe_layout(data: &[u8]) -> Result<()> {
     Ok(())
 }
 
-/// Wrapper type alias: pelite's format-agnostic file handle (pe32 + pe64).
 type PeFile<'a> = pelite::PeFile<'a>;
 
-/// Parse bytes into pelite after the pe.py-compatible layout validation.
 fn parse_pe(data: &[u8]) -> Result<PeFile<'_>> {
     pe_layout(data)?;
     pelite::PeFile::from_bytes(data)
@@ -113,7 +94,6 @@ pub fn read_pe_import_names(path: &Path) -> Result<Vec<String>> {
     Ok(read_pe_import_names_with_section(path)?.0)
 }
 
-/// Full return: (names, host section name), for the INFO line naming it.
 fn read_pe_import_names_with_section(path: &Path) -> Result<(Vec<String>, Option<String>)> {
     let data = std::fs::read(path)?;
     let file = parse_pe(&data)?;
@@ -124,8 +104,6 @@ fn read_pe_import_names_with_section(path: &Path) -> Result<(Vec<String>, Option
     if dir.VirtualAddress == 0 {
         return Ok((Vec::new(), None));
     }
-    // tools.py: the import RVA must live in some section, else the exact
-    // "falls outside every section" error with the path appended.
     let import_section = section_for_rva(&file, dir.VirtualAddress).ok_or_else(|| {
         anyhow::anyhow!(
             "Import directory RVA 0x{:x} falls outside every section: {}",
@@ -138,11 +116,7 @@ fn read_pe_import_names_with_section(path: &Path) -> Result<(Vec<String>, Option
         .map_err(|err| anyhow::anyhow!("Not a PE image (missing PE signature). {err}"))?;
     let mut names = Vec::new();
     for desc in imports {
-        // tools.py skips descriptors whose name RVA has no host section and
-        // keeps walking; mirror that instead of failing the whole table.
         if let Ok(name) = desc.dll_name() {
-            // tools.py decodes with errors="replace"; CStr::to_str is strict
-            // utf-8, so fall back to lossy conversion over the raw bytes.
             let text = match name.to_str() {
                 Ok(text) => text.to_string(),
                 Err(_) => String::from_utf8_lossy(name.c_str()).into_owned(),
@@ -153,8 +127,6 @@ fn read_pe_import_names_with_section(path: &Path) -> Result<(Vec<String>, Option
     Ok((names, Some(import_section)))
 }
 
-/// tools.py::_section_for_rva over pelite's section headers (name rendered like
-/// pe.py: NUL-trimmed, ascii with replacement chars).
 fn section_for_rva(file: &PeFile<'_>, rva: u32) -> Option<String> {
     for header in file.section_headers() {
         let span = header.VirtualSize.max(header.SizeOfRawData);
@@ -182,7 +154,6 @@ fn section_for_rva(file: &PeFile<'_>, rva: u32) -> Option<String> {
     None
 }
 
-/// Case-insensitive byte regex matching rb"[A-Za-z]:\\[^\\x00]*version\\.dll" over the raw file bytes.
 static ABSOLUTE_VERSION_DLL: std::sync::LazyLock<regex::bytes::Regex> =
     std::sync::LazyLock::new(|| {
         regex::bytes::Regex::new(r#"(?i)[A-Za-z]:\\[^\x00]*version\.dll"#)
@@ -198,9 +169,7 @@ pub fn assert_portable_version_import(path: &Path) -> Result<Vec<String>> {
     assert_portable_version_import_named(path, "version.dll")
 }
 
-/// Explicit dll_name variant.
 pub fn assert_portable_version_import_named(path: &Path, dll_name: &str) -> Result<Vec<String>> {
-    // Python formats Path objects via f"{path}"; Path has no Display in Rust.
     let path_str = path.display();
     let (imports, import_section) = read_pe_import_names_with_section(path)?;
     let listed = if imports.is_empty() {
@@ -232,7 +201,6 @@ pub fn assert_portable_version_import_named(path: &Path, dll_name: &str) -> Resu
         anyhow::bail!("{path_str} imports {dll_name} through a non-portable path: {first}");
     }
 
-    // sorted(set(...)) over the raw-byte matches, ascii with replacement chars.
     let mut raw_matches: Vec<String> = ABSOLUTE_VERSION_DLL
         .find_iter(std::fs::read(path)?.as_slice())
         .map(|m| String::from_utf8_lossy(m.as_bytes()).into_owned())
@@ -250,22 +218,11 @@ pub fn assert_portable_version_import_named(path: &Path, dll_name: &str) -> Resu
     Ok(imports)
 }
 
-/// The six VS_VERSIONINFO fields.
-///
-/// Pure static parsing through pelite's resource tree + version_info; the file
-/// is never started and no Win32 version.dll is touched, so this works on every
-/// platform (Python returned {} off-Windows because of version.dll).
-///
-/// Fallback order: the file's Translation entries first (deduped,
-/// in file order), then the synthetic chain (0x0409,0x04B0) ->
-/// (0x0409,0x04E4) -> (0x0804,0x04B0). First hit wins per field.
 pub fn read_version_info(path: &Path) -> Result<BTreeMap<String, String>> {
     let data = std::fs::read(path)?;
     let file = parse_pe(&data)?;
     let mut result = BTreeMap::new();
 
-    // pe.py's Win32 path returns {} when size/queries fail; missing or corrupt
-    // resources degrade the same way instead of erroring.
     let Ok(resources) = file.resources() else {
         return Ok(result);
     };
@@ -319,8 +276,6 @@ pub fn read_version_info(path: &Path) -> Result<BTreeMap<String, String>> {
     Ok(result)
 }
 
-/// The StringFileInfo keys visible to a translation, in file order (used for
-/// case-insensitive field resolution; see read_version_info).
 fn version_info_keys<'a>(
     version_info: &pelite::resources::version_info::VersionInfo<'a>,
     lang: pelite::resources::version_info::Language,
@@ -330,7 +285,6 @@ fn version_info_keys<'a>(
     keys
 }
 
-/// One walked resource entry: (type, name, language) identifiers plus payload.
 pub struct PeResource {
     pub kind: String,
     pub name: String,
@@ -338,14 +292,6 @@ pub struct PeResource {
     pub data: Vec<u8>,
 }
 
-/// Every resource entry as
-/// ((type, name, language), bytes) in pe.py's walk order: depth-first, named
-/// entries before id entries in table order, identifiers padded with 0 to three
-/// and truncated to three, entries with unmappable or out-of-range payloads
-/// skipped silently.
-///
-/// Returns a Vec (Python yields lazily; every Rust caller materializes anyway)
-/// and never executes or maps the PE.
 pub fn iter_pe_resources(path: &Path) -> Result<Vec<PeResource>> {
     let data = std::fs::read(path)?;
     let file = parse_pe(&data)?;
@@ -355,7 +301,6 @@ pub fn iter_pe_resources(path: &Path) -> Result<Vec<PeResource>> {
     if dir.VirtualAddress == 0 || dir.Size == 0 {
         return Ok(Vec::new());
     }
-    // pe.py: resource_base None (no host section) => no resources at all.
     let Ok(resources) = file.resources() else {
         return Ok(Vec::new());
     };
@@ -368,25 +313,19 @@ pub fn iter_pe_resources(path: &Path) -> Result<Vec<PeResource>> {
     Ok(out)
 }
 
-/// Recursive walker mirroring pe.py's nested walk.
 fn walk_resource_dir(
     dir: &pelite::resources::Directory<'_>,
     parts: &mut Vec<String>,
     out: &mut Vec<PeResource>,
 ) {
-    // entries() yields named entries first then id entries - exactly the order
-    // pe.py sees iterating the raw entry array (named + numbered entries).
     for entry in dir.entries() {
-        // pe.py: ids pass through as Python ints and become str(id), names
-        // decode utf-16le (errors="replace"); pelite's Display prefixes ids
-        // with '#', so render id words bare and named entries via Name.
         let raw_name = entry.image().Name;
         let name = if raw_name & 0x8000_0000 == 0 {
             raw_name.to_string()
         } else {
             match entry.name() {
                 Ok(name) => name.to_string(),
-                Err(_) => continue, // unreadable name = unreadable subtree in Python too
+                Err(_) => continue,
             }
         };
         if entry.is_dir() {
@@ -398,23 +337,16 @@ fn walk_resource_dir(
             continue;
         }
         if let Ok(pelite::resources::Entry::DataEntry(data_entry)) = entry.entry() {
-            // pe.py checks payload_offset is Some and
-            // payload_offset + payload_size <= len(data), else continue.
             let size = data_entry.size();
             let bytes = data_entry.bytes().ok();
             if bytes.is_none_or(|b| b.len() != size) {
-                // pelite may hand back a clamped slice or fail entirely for
-                // out-of-range payloads; Python skips both cases.
                 continue;
             }
             let mut ids: [String; 3] = ["0".into(), "0".into(), "0".into()];
-            // Python pads with int 0 and truncates to 3; render whatever
-            // parts exist (max 3 deep here).
             for (i, part) in parts.iter().enumerate().take(3) {
                 ids[i] = part.clone();
             }
             if parts.len() < 3 {
-                // deepest level identifier comes from this entry's name
                 ids[parts.len()] = name;
             }
             out.push(PeResource {
@@ -434,19 +366,15 @@ mod tests {
     fn minimal_pe(machine: u16, magic: u16) -> Vec<u8> {
         let mut data = vec![0u8; 0x200];
         data[..2].copy_from_slice(b"MZ");
-        // e_lfanew = 0x80
         data[0x3C..0x40].copy_from_slice(&0x80u32.to_le_bytes());
         data[0x80..0x84].copy_from_slice(b"PE\0\0");
         data[0x84..0x86].copy_from_slice(&machine.to_le_bytes());
-        // NumberOfSections = 0
-        // SizeOfOptionalHeader = 240 (PE32+), NumberOfRvaAndSizes = 16
         data[0x94..0x96].copy_from_slice(&240u16.to_le_bytes());
         let optional = 0x98usize;
         data[optional..optional + 2].copy_from_slice(&magic.to_le_bytes());
-        // SizeOfHeaders <= len, SizeOfImage >= SizeOfHeaders for pelite
-        data[optional + 60..optional + 64].copy_from_slice(&0x200u32.to_le_bytes()); // SizeOfHeaders
-        data[optional + 56..optional + 60].copy_from_slice(&0x200u32.to_le_bytes()); // SizeOfImage
-        data[optional + 108..optional + 110].copy_from_slice(&16u16.to_le_bytes()); // NumberOfRvaAndSizes
+        data[optional + 60..optional + 64].copy_from_slice(&0x200u32.to_le_bytes());
+        data[optional + 56..optional + 60].copy_from_slice(&0x200u32.to_le_bytes());
+        data[optional + 108..optional + 110].copy_from_slice(&16u16.to_le_bytes());
         data
     }
 
@@ -472,19 +400,16 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("pe_rs_test2_{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
 
-        // missing MZ
         let p = dir.join("no_mz.bin");
         std::fs::write(&p, [0u8; 100]).unwrap();
         let err = read_pe_machine(&p).unwrap_err().to_string();
         assert_eq!(err, "Not a PE image (missing MZ signature).");
 
-        // truncated file (< 0x40 bytes)
         let p = dir.join("truncated.bin");
         std::fs::write(&p, [0u8; 10]).unwrap();
         let err = read_pe_machine(&p).unwrap_err().to_string();
         assert_eq!(err, "Not a PE image (missing MZ signature).");
 
-        // MZ but no PE signature
         let mut bad = vec![0u8; 0x100];
         bad[..2].copy_from_slice(b"MZ");
         let p = dir.join("no_pe_sig.bin");
@@ -492,7 +417,6 @@ mod tests {
         let err = read_pe_machine(&p).unwrap_err().to_string();
         assert_eq!(err, "Not a PE image (missing PE signature).");
 
-        // unsupported optional header magic (0x107 = ROM image)
         let p = dir.join("bad_magic.bin");
         std::fs::write(&p, minimal_pe(0x8664, 0x107)).unwrap();
         let err = read_pe_machine(&p).unwrap_err().to_string();
@@ -501,10 +425,6 @@ mod tests {
         std::fs::remove_dir_all(&dir).ok();
     }
 
-    // Only the third-party installers belong here: they are frozen migration
-    // references. setdll/version-x64.dll and setdll/setdll-x64.exe are bumped by
-    // the chrome++ sync workflow, so pinning their version info to a one-time
-    // Python snapshot fails on every component update without any parser change.
     const GOLDEN_SAMPLES: &[(&str, &str)] = &[
         ("csex", "bin/360csex_23.1.1253.64.exe"),
         ("installer", "bin/BraveBrowserStandaloneSetup.exe"),
@@ -514,7 +434,6 @@ mod tests {
     ];
 
     fn golden_root() -> Option<std::path::PathBuf> {
-        // Tests run with CWD = crate dir; the repo root is two levels up.
         let repo = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("..")
             .join("..");
@@ -525,10 +444,6 @@ mod tests {
         (golden.is_file() && samples_exist).then_some(repo)
     }
 
-    /// Build assert test fixtures by patching setdll-x64.exe's first import
-    /// descriptor name (KERNEL32.dll -> version.dll) and optionally inserting
-    /// an absolute-path marker into header padding. No repo sample ships a
-    /// version.dll-first PE, so mutants keep the assertion tests offline.
     fn assert_fixture(kind: &str) -> std::path::PathBuf {
         let repo = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("..")
@@ -538,12 +453,8 @@ mod tests {
             panic!("setdll/setdll-x64.exe missing; assert tests require it");
         }
         let mut data = std::fs::read(&source).unwrap();
-        // Locate the first import descriptor's name via the directory (same
-        // walk read_pe_import_names does) and overwrite it in place.
         let first = read_pe_import_names(&source).unwrap();
         assert_eq!(first[0], "KERNEL32.dll");
-        // find the descriptor name offset by scanning for the unique NUL-
-        // terminated string at the name RVA resolved through sections.
         if kind != "wrong_first" {
             let needle = b"KERNEL32.dll\0SHE";
             let pos = data
@@ -553,9 +464,6 @@ mod tests {
             data[pos..pos + 12].copy_from_slice(b"version.dll\0");
         }
         if kind == "absolute" {
-            // append the marker as an overlay: the loader and pelite ignore
-            // bytes past the last section, but the raw-byte regex scan the
-            // Python assertion performs sees them.
             data.extend_from_slice(b"C:\\Windows\\system32\\version.dll");
         }
         let dir = std::env::temp_dir().join(format!("pe_assert_{}", std::process::id()));
@@ -599,7 +507,6 @@ mod tests {
 
     #[test]
     fn assert_version_import_no_imports_error_text() {
-        // minimal_pe has no import directory: the "no import directory" error.
         let dir = std::env::temp_dir().join(format!("pe_assert_none_{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("noimports.exe");
@@ -631,9 +538,6 @@ mod tests {
         }
     }
 
-    /// The chrome++ components are re-synced on every upstream release, so they
-    /// cannot pin version info — but their machine type is what the ARM64 build
-    /// depends on, and it never changes.
     #[test]
     fn shipped_component_machines_are_stable() {
         let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");

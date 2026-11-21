@@ -1,13 +1,3 @@
-# Multi-target reusable pipeline for a browser repository.
-#
-# Callers keep their own triggers (push / schedule / workflow_dispatch) and pass
-# `targets` as a comma-separated list; every target in the list is checked,
-# built, verified, rendered and published as one shared Release. Adding an
-# architecture or a channel is a caller-side list edit, not a workflow rewrite.
-#
-# Smoke launches are decided per target by the engine: an arm64 payload on an
-# x64 runner runs the PE checks and skips the launch, so callers never split
-# `verify-targets` into an x64 step and a `--no-smoke` step again.
 name: Portable Browser Build
 
 on:
@@ -48,9 +38,6 @@ on:
         default: ""
 
 jobs:
-  # Upstream version discovery is a handful of HTTP calls and needs no Windows,
-  # so it runs on a Linux runner and the Windows job only starts when there is
-  # actually something to build.
   check:
     runs-on: ubuntu-latest
     permissions:

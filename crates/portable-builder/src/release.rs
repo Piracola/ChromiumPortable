@@ -1,13 +1,3 @@
-//! Owner: Wave3-B.
-//!
-//! Contract of record: release_check_contract.md and its addendum.
-//!
-//! Asset UPLOAD is deliberately NOT implemented: the workflow's
-//! softprops/action-gh-release step uploads build/assets/*.7z (contract
-//! boundary, multi_contract.md addendum 2 note).
-//!
-//! Porting notes live in docs/MIGRATION_RUST_TAURI.md section 4.6.
-
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, bail, Result};
@@ -19,14 +9,9 @@ use crate::log_fmt::info;
 use crate::tools::human_size;
 use crate::versions::{is_upgrade, should_create_new_release};
 
-/// release.py DEFAULT_SAMPLE_VERSION - the dry-run sample version fed into
-/// matcher-overlap checks and archive-name regexes.
 pub const DEFAULT_SAMPLE_VERSION: &str = "123.456.789.0";
-/// release.py DEFAULT_SAMPLE_DATE.
 pub const DEFAULT_SAMPLE_DATE: &str = "2099-12-31";
 
-/// release.py PLACEHOLDER_PATTERNS: the regex fragment substituted for each
-/// template placeholder when compiling archive_name into a matcher.
 pub const PLACEHOLDER_PATTERNS: [(&str, &str); 4] = [
     ("version", r"\d+(?:\.\d+)+"),
     ("package_version", r"\d+(?:\.\d+)+"),
@@ -34,7 +19,6 @@ pub const PLACEHOLDER_PATTERNS: [(&str, &str); 4] = [
     ("arch", r"[A-Za-z0-9][A-Za-z0-9.-]*"),
 ];
 
-/// One compiled asset matcher: the description string plus the predicate.
 pub struct AssetMatcher {
     pub description: String,
     pub predicate: Box<dyn Fn(&str) -> bool>,
@@ -67,8 +51,6 @@ fn output_dir_of(target: &Value) -> String {
         .to_string()
 }
 
-/// Python target.get("release", {}) - a missing release block reads as an
-/// empty mapping.
 pub fn target_release_config(target: &Value) -> Value {
     target
         .get("release")
@@ -76,9 +58,6 @@ pub fn target_release_config(target: &Value) -> Value {
         .unwrap_or_else(|| serde_json::json!({}))
 }
 
-/// Port of builder.py::format_value over a str.format context map: bare
-/// {name} fields only (the frozen crate formatter subset, carry-forward
-/// item 1). A missing key raises like Python's KeyError.
 pub fn format_value(template: &str, context: &[(String, String)]) -> Result<String> {
     let mut out = String::with_capacity(template.len());
     let bytes = template.as_bytes();
@@ -120,11 +99,6 @@ pub fn format_value(template: &str, context: &[(String, String)]) -> Result<Stri
     Ok(out)
 }
 
-/// Port of builder.py::build_context (the release-facing subset): the
-/// version / date / package_version fallbacks happen at the callers; here
-/// they are already resolved. The archive-stage keys read ARCHIVE_NAME /
-/// ARCHIVE_SHA256 / ARCHIVE_SIZE (empty when rendering before archiving)
-/// plus CHROME_PLUS_VERSION and run_url.
 pub fn build_context(
     target: &Value,
     version: &str,
@@ -166,8 +140,6 @@ pub fn build_context(
     ]
 }
 
-/// Port of release.py::github_headers - token optional, an empty GITHUB_TOKEN
-/// is falsy in Python so no Authorization header is emitted.
 pub fn github_headers() -> Vec<(String, String)> {
     let mut headers = vec![(
         "Accept".to_string(),
@@ -203,9 +175,6 @@ fn apply_headers(
     request
 }
 
-/// Port of release.py::latest_release. A missing/empty GITHUB_REPOSITORY
-/// prints the first-local-run notice and returns None; 404 maps to None (no
-/// release yet); anything else non-OK raises like raise_for_status.
 pub fn latest_release() -> Result<Option<Value>> {
     let repo = std::env::var("GITHUB_REPOSITORY").unwrap_or_default();
     if repo.is_empty() {
@@ -228,8 +197,6 @@ pub fn latest_release() -> Result<Option<Value>> {
     Ok(Some(response.json()?))
 }
 
-/// Port of release.py::extract_version - first d+.d+.d+.d+ run, found by the
-/// same greedy left-to-right scan Python re.search performs.
 pub fn extract_version(text: &str) -> Option<String> {
     if text.is_empty() {
         return None;
@@ -267,7 +234,6 @@ pub fn extract_version(text: &str) -> Option<String> {
     }
     None
 }
-/// Port of release.py::asset_context with fill_defaults=True.
 fn asset_context_filled(
     target: &Value,
     version: &str,
@@ -278,8 +244,6 @@ fn asset_context_filled(
     build_context(target, version, date, package_version)
 }
 
-/// Port of release.py::asset_context with fill_defaults=False: the bare
-/// skeleton used to compile archive_name templates into matchers.
 fn asset_context_skeleton(target: &Value) -> Vec<(String, String)> {
     vec![
         (
@@ -301,14 +265,12 @@ fn asset_context_skeleton(target: &Value) -> Vec<(String, String)> {
     ]
 }
 
-/// Port of release.py::asset_name_template.
 pub fn asset_name_template(target: &Value) -> String {
     target_str(target, "archive_name")
         .unwrap_or("{display_name}_Portable_{version}_{date}.7z")
         .to_string()
 }
 
-/// Port of release.py::render_asset_name.
 pub fn render_asset_name(
     target: &Value,
     version: &str,
@@ -339,7 +301,6 @@ fn compile_pattern(pattern: &str) -> Result<regex::Regex> {
         .map_err(|exc| anyhow!("invalid matcher regex {pattern:?}: {exc}"))
 }
 
-/// Port of release.py::archive_name_regex, returned as pattern text.
 pub fn archive_name_regex_text(target: &Value) -> Result<String> {
     let template = asset_name_template(target);
     let context = asset_context_skeleton(target);
@@ -407,7 +368,6 @@ fn asset_match_string(value: &Value) -> String {
     }
 }
 
-/// Port of release.py::asset_matchers - the ordered matcher chain.
 pub fn asset_matchers(target: &Value) -> Result<Vec<AssetMatcher>> {
     let release = target_release_config(target);
     let mut matchers: Vec<AssetMatcher> = Vec::new();
@@ -501,8 +461,6 @@ pub fn asset_matchers(target: &Value) -> Result<Vec<AssetMatcher>> {
     Ok(matchers)
 }
 
-/// Port of release.py::matching_assets_for_target - the first matcher with
-/// any hit wins; (matches, Some(description)) or ([], None).
 pub fn matching_assets_for_target<'a>(
     assets: &'a [Value],
     target: &Value,
@@ -521,8 +479,6 @@ pub fn matching_assets_for_target<'a>(
     Ok((Vec::new(), None))
 }
 
-/// Port of release.py::target_match_description - ", "-joined descriptions or
-/// "(none)" for an empty chain.
 pub fn target_match_description(target: &Value) -> Result<String> {
     let descriptions: Vec<String> = asset_matchers(target)?
         .into_iter()
@@ -535,8 +491,6 @@ pub fn target_match_description(target: &Value) -> Result<String> {
     })
 }
 
-/// Port of release.py::release_version - version_pattern against the body
-/// first (group 1), then extract_version over the tag, then over the body.
 pub fn release_version(release: Option<&Value>, target: &Value) -> Option<String> {
     let release = release?;
     let release_config = target_release_config(target);
@@ -560,8 +514,6 @@ pub fn release_version(release: Option<&Value>, target: &Value) -> Option<String
     extract_version(tag).or_else(|| extract_version(body))
 }
 
-/// Port of release.py::assert_body_versions. expectations is the ordered
-/// list of (target_name, pattern, expected_version).
 pub fn assert_body_versions(
     body: &str,
     expectations: &[(String, Option<String>, Option<String>)],
@@ -619,7 +571,6 @@ pub fn assert_body_versions(
     Ok(())
 }
 
-/// Python str(bool): "true" / "false".
 fn bool_py(value: bool) -> String {
     if value {
         "true".to_string()
@@ -628,8 +579,6 @@ fn bool_py(value: bool) -> String {
     }
 }
 
-/// Port of builder.py::get_version_info - provider config copy + _workdir,
-/// dispatched over the four provider modules (Value-based API).
 pub fn get_version_info(target: &Value, workdir: Option<&Path>) -> Result<Value> {
     let mut provider_config = target
         .get("provider")
@@ -646,10 +595,6 @@ pub fn get_version_info(target: &Value, workdir: Option<&Path>) -> Result<Value>
     crate::providers::get_package(&provider_config)
 }
 
-/// The frozen five-branch decision tree, factored out for the golden replay
-/// (release_check_contract.md). Pure over its inputs; the caller does the
-/// printing so the log lines stay exactly where Python's if/elif chain emits
-/// them.
 pub fn decide_update_needed(
     force_build: bool,
     current_version: Option<&str>,
@@ -671,9 +616,6 @@ pub fn decide_update_needed(
     }
 }
 
-/// True when the version advances in place on the existing release rather than
-/// minting a new one: there is an upgrade, we did not opt into a new release,
-/// and the version actually moved.
 fn is_in_place_version_advance(
     update_needed: bool,
     create_new_release: bool,
@@ -687,9 +629,6 @@ fn is_in_place_version_advance(
         && is_upgrade(upstream, current.unwrap_or(""))
 }
 
-/// Port of release.py::check_updates - the frozen five-branch decision tree
-/// plus the env blob (UPDATE_NEEDED / UPSTREAM_VERSION / CREATE_NEW_RELEASE /
-/// MINOR_UPDATE, with RELEASE_ID / RELEASE_TAG appended when present).
 pub fn check_updates(target: &Value, workdir: &Path) -> Result<Vec<(String, String)>> {
     let event_name = std::env::var("GITHUB_EVENT_NAME").unwrap_or_default();
     let force_build = event_name == "workflow_dispatch";
@@ -781,11 +720,6 @@ pub fn check_updates(target: &Value, workdir: &Path) -> Result<Vec<(String, Stri
     Ok(values)
 }
 
-/// Port of release.py::render_release (single target). Version fallback
-/// chain: argument > BUILT_VERSION > BROWSER_VERSION > UPSTREAM_VERSION;
-/// date chain: argument > BUILD_DATE > today. Body lands in
-/// build/release_body.md (UTF-8, no BOM) and the env carries RELEASE_TAG /
-/// RELEASE_TITLE / RELEASE_BODY_PATH.
 pub fn render_release(
     target: &Value,
     workdir: &Path,
@@ -857,12 +791,10 @@ pub fn render_release(
     }))
 }
 
-/// Python datetime.now().strftime("%Y-%m-%d") via chrono.
 pub fn today() -> String {
     chrono::Local::now().format("%Y-%m-%d").to_string()
 }
 
-/// Port of release.py::delete_release_asset - 204 is the only success code.
 pub fn delete_release_asset(asset_id: i64) -> Result<()> {
     let repo = std::env::var("GITHUB_REPOSITORY").unwrap_or_default();
     let client = api_client()?;
@@ -881,7 +813,6 @@ pub fn delete_release_asset(asset_id: i64) -> Result<()> {
     Ok(())
 }
 
-/// Port of release.py::get_release_assets - raise_for_status then .assets.
 pub fn get_release_assets(release_id: i64) -> Result<Vec<Value>> {
     let repo = std::env::var("GITHUB_REPOSITORY").unwrap_or_default();
     let client = api_client()?;
@@ -901,7 +832,6 @@ pub fn get_release_assets(release_id: i64) -> Result<Vec<Value>> {
         .unwrap_or_default())
 }
 
-/// Port of release.py::find_matching_release_assets.
 pub fn find_matching_release_assets(release_id: i64, target: &Value) -> Result<Vec<Value>> {
     let assets = get_release_assets(release_id)?;
     Ok(matching_assets_for_target(&assets, target)?
@@ -911,9 +841,6 @@ pub fn find_matching_release_assets(release_id: i64, target: &Value) -> Result<V
         .collect())
 }
 
-/// Port of release.py::find_latest_target_asset - sort key chain
-/// updated_at > updatedAt > created_at > createdAt > "" (reverse-sorted,
-/// first wins; Python sorted(..., key=sort_key, reverse=True)[0]).
 pub fn find_latest_target_asset(release_id: i64, target: &Value) -> Result<Option<Value>> {
     let mut matches = find_matching_release_assets(release_id, target)?;
     if matches.is_empty() {
@@ -934,9 +861,6 @@ fn sort_key_rev(asset: &Value) -> std::cmp::Reverse<String> {
     std::cmp::Reverse(String::new())
 }
 
-/// Port of release.py::download_release_asset - browser_download_url first;
-/// the API url path swaps the Accept header to application/octet-stream
-/// (different auth behavior between the two URL kinds); 1 MiB streaming.
 pub fn download_release_asset(asset: &Value, destination: &Path) -> Result<PathBuf> {
     if let Some(parent) = destination.parent() {
         std::fs::create_dir_all(parent)?;
@@ -980,9 +904,6 @@ pub fn download_release_asset(asset: &Value, destination: &Path) -> Result<PathB
     Ok(destination.to_path_buf())
 }
 
-/// Port of release.py::delete_target_assets - matcher-hit sweep plus the
-/// diagnostic line when nothing matched (Python: description or
-/// 'no matcher').
 pub fn delete_target_assets(release_id: i64, target: &Value) -> Result<()> {
     let assets = get_release_assets(release_id)?;
     let (matches, description) = matching_assets_for_target(&assets, target)?;
@@ -1009,9 +930,6 @@ pub fn delete_target_assets(release_id: i64, target: &Value) -> Result<()> {
     Ok(())
 }
 
-/// Port of release.py::update_release. No RELEASE_ID prints the softprops
-/// hand-off line and returns; the PATCH body carries body text only, with
-/// name+tag_name added on MINOR_UPDATE=true.
 pub fn update_release(target: &Value, workdir: &Path) -> Result<()> {
     let release_id = std::env::var("RELEASE_ID").unwrap_or_default();
     if release_id.is_empty() {

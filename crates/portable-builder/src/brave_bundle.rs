@@ -1,14 +1,3 @@
-//! BCJ2 + LZMA decode for Brave/Omaha metainstallers.
-//!
-//! - the outer LZMA_ALONE stream decodes with lzma-rs,
-//! - the inner BCJ2 container uses a range decoder (standard probability
-//!   table, branch pattern scan, address stream ordering),
-//! - the resulting tar is unpacked with the tar crate, flat-file only
-//!   (member.isfile, basename only), like Python's tarfile usage.
-//!
-//! Golden: _migration/pe-golden/discovery/brave.json drives the discovery-level
-//! test; the BCJ2 unit tests below keep the decoder itself pinned.
-
 use std::path::Path;
 
 use anyhow::{anyhow, bail, Result};
@@ -221,8 +210,6 @@ pub fn extract_brave_metainstaller(
     Ok(extracted)
 }
 
-/// Marker so discovery can detect Brave metainstallers and report them
-/// accurately instead of failing deep inside extraction.
 pub fn is_brave_metainstaller_name(file_name: &str) -> bool {
     let lowered = file_name.to_lowercase();
     lowered.contains("brave") && (lowered.ends_with(".exe") || lowered.contains("installer"))

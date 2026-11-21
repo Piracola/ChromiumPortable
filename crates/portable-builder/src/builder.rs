@@ -1,7 +1,3 @@
-//! Owner: Wave3-A (contract: _migration/pe-golden/builder_archive_contract.md
-//! + addendum; goldens build_context_reference.json).
-//!
-
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -60,8 +56,6 @@ pub fn format_value(template: &str, context: &[(String, String)]) -> Result<Stri
     Ok(out)
 }
 
-/// builder.py::build_context. Archive facts come from env (populated by the
-/// archive stage); run_url from the GitHub CI env chain.
 pub fn build_context(
     target: &Value,
     version: Option<&str>,
@@ -120,8 +114,6 @@ pub fn build_context(
     ])
 }
 
-/// Reads `key` from a target object as a string; JSON numbers and booleans
-/// render Python-style (`true`/`false`), anything else is `None`.
 fn target_str(target: &Value, key: &str) -> Option<String> {
     match target.get(key) {
         Some(Value::String(s)) => Some(s.clone()),
@@ -139,8 +131,6 @@ fn env_or_empty(name: &str) -> String {
     std::env::var(name).unwrap_or_default()
 }
 
-/// builder.py::get_version_info - provider dispatch with the optional
-/// _workdir injection (script provider resolves relative paths against it).
 pub fn get_version_info(target: &Value, workdir: Option<&Path>) -> Result<Value> {
     let mut provider_config = target.get("provider").cloned().unwrap_or_else(|| json!({}));
     if let Some(workdir) = workdir {
@@ -154,7 +144,6 @@ pub fn get_version_info(target: &Value, workdir: Option<&Path>) -> Result<Value>
     crate::providers::get_package(&provider_config)
 }
 
-/// The staged tree plus everything the injection step needs.
 pub struct Staged {
     pub stage_dir: PathBuf,
     pub app_root: PathBuf,
@@ -167,8 +156,6 @@ pub struct Staged {
     pub chrome_plus_version: Option<String>,
 }
 
-/// builder.py::prepare_package. Returns the discovery result for auto
-/// layout or the version-root pointers for the fixed layouts.
 pub enum Prepared {
     Auto {
         temp_dir: PathBuf,
@@ -397,18 +384,6 @@ pub fn prepare_package(target: &Value, workdir: &Path, package: &Value) -> Resul
     }
 }
 
-/// Repack a flat portable-browser archive into version-root layout, the
-/// generalization of Helium_Portable/scripts/helium_package.py::
-/// prepare_builder_archive (chrome.exe to <root>/, everything else under
-/// <root>/<version>/).
-///
-/// `kind` currently accepts only "version_root" — move the extracted single
-/// root directory's contents into <version_root_name>/<exe_name> +
-/// <version_root_name>/<version>/ in place. The version is discovered from
-/// `<dir>/<version>.manifest` (the script's chromium_version() rule; Helium
-/// upstream ships its release version there). The extracted tree may be flat
-/// at temp_dir root or nested one level (the upstream zip wraps everything in
-/// a folder); both are handled.
 pub fn repack_flat_package(
     temp_dir: &Path,
     kind: &str,
@@ -598,8 +573,6 @@ fn copy_tree(source: &Path, destination: &Path) -> Result<()> {
     Ok(())
 }
 
-/// builder.py::resolve_chrome_plus_ini - the three-layer chrome++.ini
-/// resolution. Returns (text, encoding) or None when nothing applies.
 fn resolve_chrome_plus_ini(
     target: &Value,
     workdir: &Path,
@@ -686,14 +659,6 @@ fn resolve_chrome_plus_ini(
     Ok(Some((text, encoding)))
 }
 
-/// setdll only rewrites an import table, so a host-runnable build patches
-/// either PE architecture - but it cannot execute on a foreign host. An x64
-/// runner building an ARM64 package therefore must NOT pick setdll-arm64.exe
-/// (it fails with "not compatible with the version of Windows you're running").
-/// Use the target's own tool only when this host can run it; otherwise x64,
-/// which runs natively on x64 and under emulation on Windows on Arm. Release
-/// bundles ship x64 only, so the native branch matters only for a source build
-/// on Windows on Arm.
 pub fn default_setdll_name(arch: &str) -> String {
     if arch == "arm64" && cfg!(target_arch = "aarch64") {
         "setdll-arm64.exe".to_string()
@@ -702,8 +667,6 @@ pub fn default_setdll_name(arch: &str) -> String {
     }
 }
 
-/// builder.py::copy_chrome_plus - version.dll + setdll into the staged
-/// tree, then the ini layers. staged is mutated in place.
 pub fn copy_chrome_plus(
     target: &Value,
     workdir: &Path,
@@ -804,9 +767,6 @@ pub fn copy_chrome_plus(
     Ok(())
 }
 
-/// Decode subprocess bytes the way Python text=True does on Windows: the
-/// console code page (setdll emits OEM code page output - risk R4), with
-/// replacement characters for undecodable bytes.
 fn decode_oem_output(bytes: &[u8]) -> String {
     if bytes.is_empty() {
         return String::new();
@@ -849,17 +809,6 @@ fn collect_files(root: &Path) -> Vec<PathBuf> {
     out
 }
 
-/// builder.py::inject_dll - setdll /t probe, /d:<relpath> injection,
-/// portable-import assertion, backup + tool cleanup.
-/// `os.path.relpath(dll, exe_dir)` for the setdll `/d:` argument (Python
-/// builder.py). Walk both component lists to their common ancestor, emit `..`
-/// for each exe-dir level below it, then the remaining dll components.
-///
-/// A plain `strip_prefix` is wrong whenever the DLL is not a descendant of the
-/// exe dir — the chrome_stable shape (exe at `App\<ver>\chrome.exe`, dll at
-/// `App\version.dll`) — because the fallback was an ABSOLUTE path, which setdll
-/// writes verbatim into the import descriptor; verify.rs then rejects the
-/// resulting non-portable import. (review-Wave3 finding 1, HIGH.)
 fn relpath_from(dll: &Path, from_dir: &Path) -> String {
     let dll_comps: Vec<_> = dll.components().collect();
     let dir_comps: Vec<_> = from_dir.components().collect();
@@ -985,10 +934,6 @@ pub fn inject_dll(target: &Value, staged: &mut Staged) -> Result<()> {
         .parent()
         .map(Path::to_path_buf)
         .unwrap_or_else(|| PathBuf::from("."));
-    // os.path.relpath(version_dll, start=exe_dir); a cross-drive ValueError
-    // falls back to the absolute path. canonicalize() can hand back a \\?\
-    // verbatim prefix; strip it on BOTH paths first so the drive components
-    // compare like Path.anchor (case-insensitive) and strip_prefix works.
     fn strip_verbatim(path: &Path) -> PathBuf {
         let text = path.to_string_lossy();
         let text = text
@@ -1055,8 +1000,6 @@ pub fn inject_dll(target: &Value, staged: &mut Staged) -> Result<()> {
         setdll_target.display()
     ));
 
-    // setdll leaves an un-injected backup beside the target. Shipping it
-    // wastes space and hands users a copy that writes to their profile.
     let exe_name = setdll_target
         .file_name()
         .map(|n| n.to_string_lossy().into_owned())
@@ -1100,23 +1043,16 @@ pub fn output_dir_path(base: &Path, target: &Value) -> PathBuf {
         .fold(base.to_path_buf(), |path, part| path.join(part))
 }
 
-/// builder.py::finalize - move the staged app into build/release, write
-/// version.txt, copy the start script beside it (release root, not app dir).
 pub fn finalize(target: &Value, workdir: &Path, staged: &Staged) -> Result<PathBuf> {
     let release_dir = workdir.join("build").join("release");
     let final_app_dir = output_dir_path(&release_dir, target);
 
     std::fs::create_dir_all(&release_dir)?;
-    // output_dir 允许是相对路径：Edge 必须落在 `Microsoft\Edge\Application`
-    // 这样的官方路径形态下，渠道识别才会是 Stable。rename 不会替我们造中间目录，
-    // 所以先把父目录补齐。
     if let Some(parent) = final_app_dir.parent() {
         std::fs::create_dir_all(parent)?;
     }
     remove_path(&final_app_dir);
     if final_app_dir.exists() {
-        // remove_path 重试后仍删不掉（句柄被长期占用）：给出指向残骸的明确错误，
-        // 而不是让下面的 rename 报一个含糊的 os error 145。
         return Err(anyhow::anyhow!(
             "无法清理旧的输出目录（可能被杀毒软件或资源管理器占用）: {}",
             final_app_dir.display()
@@ -1143,10 +1079,6 @@ pub fn finalize(target: &Value, workdir: &Path, staged: &Staged) -> Result<PathB
     Ok(final_app_dir)
 }
 
-/// builder.py::_complete_build - stage, inject, forbid-check, finalize,
-/// and publish the five env keys (+ CHROME_PLUS_VERSION when present).
-/// A package/directory version mismatch warns and keeps the directory
-/// version.
 pub fn complete_build(
     target: &Value,
     workdir: &Path,
@@ -1207,7 +1139,6 @@ pub fn complete_build(
     }))
 }
 
-/// builder.py::build_target - resolve upstream, then the full pipeline.
 pub fn build_target(target: &Value, workdir: &Path, builder_dir: Option<&str>) -> Result<Value> {
     let package = get_version_info(target, Some(workdir))?;
     let builder_dir = builder_dir.map(PathBuf::from);
@@ -1221,8 +1152,6 @@ pub fn build_target(target: &Value, workdir: &Path, builder_dir: Option<&str>) -
     complete_build(target, workdir, &package, &prepared, builder_dir.as_deref())
 }
 
-/// builder.py::_safe_output_name - [<>:"/\\|?*]+ -> "_", strip " .",
-/// empty -> fallback ("Browser").
 pub fn safe_output_name(value: &str, fallback: &str) -> String {
     let mut cleaned = String::with_capacity(value.len());
     let mut last_underscore = false;
@@ -1245,9 +1174,6 @@ pub fn safe_output_name(value: &str, fallback: &str) -> String {
     }
 }
 
-/// builder.py::build_package_file - the GUI and build-package entry point.
-/// Synthesizes an auto-layout target, builds, and cleans build/temp in
-/// finally semantics (no second unpacked copy left behind).
 pub fn build_package_file(
     package_path: &Path,
     workdir: &Path,
@@ -1335,9 +1261,6 @@ pub fn build_package_file(
     result
 }
 
-/// builder.py::archive_target - 7z a -t7z -mx=9 over build/release (or the
-/// given source dir), version/date fallback chains preserved, existing
-/// archive removed first, env facts written.
 pub fn archive_target(
     target: &Value,
     workdir: &Path,
@@ -1419,7 +1342,6 @@ pub fn archive_target(
     }
 
     let archive_abs = archive_path.canonicalize().unwrap_or_else(|_| {
-        // canonicalize fails on missing files; make the parent absolute.
         let parent = assets_dir
             .canonicalize()
             .unwrap_or_else(|_| assets_dir.clone());
@@ -1553,7 +1475,6 @@ mod tests {
         }
     }
 
-    /// Golden: build_context_reference.json safe_output (Python _safe_output_name).
     #[test]
     fn safe_output_name_matches_golden() {
         assert_eq!(safe_output_name("", "Browser"), "Browser");
@@ -1567,8 +1488,6 @@ mod tests {
         assert_eq!(safe_output_name("a/b\\c", "Browser"), "a_b_c");
     }
 
-    /// output_dir 允许是相对路径：finalize 必须替我们把中间目录造出来
-    /// （Edge 的 `Microsoft\Edge\Application` 外壳），否则 rename 会失败。
     #[test]
     fn finalize_creates_nested_output_dir() {
         let workdir =
@@ -1623,7 +1542,6 @@ mod tests {
         remove_path(&workdir);
     }
 
-    /// Golden: build_context_reference.json context_full.
     #[test]
     fn build_context_matches_golden() {
         let target = json!({
@@ -1807,8 +1725,6 @@ mod tests {
         );
     }
 
-    /// CI builds ARM64 packages on x64 runners, where setdll-arm64.exe refuses
-    /// to start (os error 216), so the default must follow the host.
     #[cfg(not(target_arch = "aarch64"))]
     #[test]
     fn setdll_default_follows_the_host_not_the_target() {

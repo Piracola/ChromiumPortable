@@ -26,7 +26,7 @@
 
 全部是轻量 tag，所以 `%(creatordate)` 反映的是提交时间，不是打 tag 的时间。
 
-关键一点：**子仓库的 `setdll/` 不存在**，chrome++ 的 DLL 只活在引擎包里（`scripts/stage-dist.ps1` 把 `setdll/` 打进 zip），而子仓库用 `gh release download "$env:BUILDER_REF"` 取包，只认 tag。所以「chrome++ 更新」这件事的完整链路是：同步提交 → 重切 `v2` → `release-engine.yml` 出包 → 派发子仓库。2026-11-17 之前这条链断了两次（PAT 缺 `actions:write`、派发传 commit sha 而下载只认 tag），1.20.0 / 1.20.1 因此压在仓库里没出厂，现已修好并写进 `CLAUDE.md` 的 Traps。
+关键一点：**子仓库的 `setdll/` 不存在**，chrome++ 的 DLL 只活在引擎包里（`scripts/stage-dist.ps1` 把 `setdll/` 打进 zip），而子仓库用 `gh release download "$env:BUILDER_REF"` 取包，只认 tag。所以「chrome++ 更新」这件事的完整链路是：同步提交 → 重切 `v2` → `release-engine.yml` 出包 → 派发子仓库。2026-11-17 之前这条链断了两次（PAT 缺 `actions:write`、派发传 commit sha 而下载只认 tag），1.20.0 / 1.20.1 因此压在仓库里没出厂，现已修好并写进工作区 `AGENTS.md` 的「Chromium 系的坑」。
 
 ## 三、有意为之的设计（看着可疑，但都是承重墙）
 

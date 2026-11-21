@@ -1,0 +1,155 @@
+name: Watch upstream versions
+
+# 每日版本检查的唯一入口（子仓库的 push / PR 仍会自己 check，只是不再定时）。
+# 读各子仓库的 browser.json 和已发布 Release，用引擎的 check-targets 判定有没有
+# 新版本，需要更新时向子仓库派发构建请求。判定结果只写进运行摘要（run summary），
+# 真正的版本状态仍然存在子仓库的 Release 正文里——多存一份就会多一处漂移。
+#
+# 健壮性：每个子仓库一条独立的矩阵分支，fail-fast 关闭。任一分支（下载引擎、
+# 拉配置、检查、派发）失败只废掉自己，另外两条照常跑完。
+
+on:
+  schedule:
+    # 一天两次：GitHub 的定时任务偶尔整次丢掉，多一次机会。
+    - cron: "0 6,18 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 只检查版本，不派发构建。
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: watch-upstream
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        # targets 与各子仓库 build.yml 的 targets 保持一致：这里多一个/少一个，
+        # 判定和实际构建就会错位。
+        include:
+          - repository: Piracola/Chrome-Portable
+            targets: chrome_stable,chrome_beta,chrome_stable_arm64,chrome_beta_arm64
+          - repository: Piracola/Edge_Portable
+            targets: edge_stable,edge_arm64
+          - repository: Piracola/Helium_Portable
+            targets: helium_stable,helium_arm64
+    env:
+      BUILDER_REF: v2
+      CHILD: ${{ matrix.repository }}
+      TARGETS: ${{ matrix.targets }}
+    steps:
+      - name: Download engine bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ENGINE_REPO: ${{ github.repository }}
+        run: |
+          gh release download "$BUILDER_REF" --repo "$ENGINE_REPO" \
+            --pattern 'portable-builder-linux-x64.zip*' --dir _engine
+          (cd _engine && sha256sum -c portable-builder-linux-x64.zip.sha256)
+          unzip -q _engine/portable-builder-linux-x64.zip -d _engine
+          chmod +x _engine/portable-builder-linux-x64/portable-builder
+
+      # check 判的是子仓库已发布的 Release，所以先要有子仓库的 browser.json。
+      # 优先用 PAT，拿不到内容权限时退回公开的 raw 地址（三个子仓库都是 public）。
+      - name: Fetch child config
+        env:
+          GH_TOKEN: ${{ secrets.CHILD_REPO_TOKEN }}
+        run: |
+          if ! gh api "repos/$CHILD/contents/browser.json" \
+            -H 'Accept: application/vnd.github.raw' > browser.json 2>/dev/null; then
+            echo "PAT could not read $CHILD/browser.json; falling back to the public raw URL"
+            curl -fsSL "https://raw.githubusercontent.com/$CHILD/main/browser.json" -o browser.json
+          fi
+
+      # 引擎的 check 认 GITHUB_REPOSITORY：必须覆写，判定才落在子仓库的 Release 上。
+      # 只能在命令前做 shell 赋值——GITHUB_* 是 GitHub 保留的默认变量，写在 env: 块里
+      # 会被忽略（那会把主仓库自己的 Release 当判定对象，天天判成要重建）。
+      # 事件名继承本工作流：定时跑按 flag 判，手动跑全部判为需要。
+      - name: Check upstream versions
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.CHILD_REPO_TOKEN }}
+        run: |
+          echo "checking $CHILD"
+          GITHUB_REPOSITORY="$CHILD" _engine/portable-builder-linux-x64/portable-builder \
+            --config browser.json --workdir . check-targets "$TARGETS"
+
+      # 读不到子仓库的 Release 时，check 会把 current 全判成 None（等于天天都要重建）。
+      # 这是最阴的静默失败，所以这里用匿名接口复核一次：真有 Release 而 check 没看见，
+      # 说明 token 没有该仓库的 contents: read，直接炸掉这一条腿。
+      - name: Guard against an unreadable child release
+        if: env.RELEASE_ID == ''
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 \
+            "https://api.github.com/repos/$CHILD/releases/latest")
+          case "$code" in
+            200) echo "$CHILD has a published release but check saw none; the token cannot read that repo's releases" >&2
+                 exit 1 ;;
+            404) echo "$CHILD has no release yet; first build will create one" ;;
+            *)   echo "warning: could not verify $CHILD releases (HTTP $code); continuing" ;;
+          esac
+
+      - name: Summarize
+        if: always()
+        env:
+          CHECK_ENV: ${{ steps.check.outputs.env_json }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+
+          try:
+              data = json.loads(os.environ.get("CHECK_ENV") or "{}")
+          except json.JSONDecodeError:
+              data = {}
+
+          rows = []
+          for key, value in data.items():
+              if not key.startswith("UPSTREAM_"):
+                  continue
+              prefix = key[len("UPSTREAM_"):]
+              rows.append((prefix, value, data.get(f"{prefix}_UPDATE", "")))
+
+          lines = [f"### {os.environ['CHILD']}", ""]
+          if rows:
+              lines += ["| target | upstream | update |", "| --- | --- | --- |"]
+              lines += [f"| {name} | {upstream} | {update} |" for name, upstream, update in rows]
+          else:
+              lines += ["no check results"]
+          lines += [
+              "",
+              f"UPDATE_NEEDED={data.get('UPDATE_NEEDED', '')}  "
+              f"CREATE_NEW_RELEASE={data.get('CREATE_NEW_RELEASE', '')}  "
+              f"RELEASE_TAG={data.get('RELEASE_TAG', '')}",
+          ]
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as handle:
+              handle.write("\n".join(lines) + "\n")
+          PY
+
+      # 派发走 workflow_dispatch，子仓库那边等于强制重建该仓库的全部 target
+      # （引擎对 workflow_dispatch 一视同仁），正好把旧资产整批换掉，不会留下
+      # 同名旧包。
+      - name: Dispatch child build
+        if: env.UPDATE_NEEDED == 'true' && inputs.dry_run != true
+        env:
+          GH_TOKEN: ${{ secrets.CHILD_REPO_TOKEN }}
+        run: |
+          for attempt in 1 2 3; do
+            if gh workflow run build.yml --repo "$CHILD" --ref main -f "builder_ref=$BUILDER_REF"; then
+              echo "dispatched $CHILD for $TARGETS"
+              exit 0
+            fi
+            echo "dispatch attempt $attempt failed; retrying in 15s"
+            sleep 15
+          done
+          echo "could not dispatch $CHILD" >&2
+          exit 1

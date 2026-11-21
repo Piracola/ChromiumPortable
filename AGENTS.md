@@ -12,8 +12,9 @@ cargo build -p portable-builder --release    # 引擎 CLI
 target\release\portable-builder.exe --workdir . build-package <安装包> --archive
 ```
 
-产品渠道 CI 入口是 reusable workflow（v2：子仓库从本仓库 Release 下载预编译引擎包）；
-单浏览器按需构建用 `build-browser.yml`。下载站生成不变：`cd docs; python tools/generate.py`。
+产品渠道 CI 入口是 reusable workflow（v2：子仓库从本仓库 Release 下载预编译引擎包），子仓库自身只剩
+push / PR / 手动三个触发；每日的上游版本检查在本仓库的 `watch-upstream.yml`，判定需要更新才向子仓库
+派发构建。单浏览器按需构建用 `build-browser.yml`。下载站生成不变：`cd docs; python tools/generate.py`。
 
 ## 技术栈
 
